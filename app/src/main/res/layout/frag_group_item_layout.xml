@@ -32,4 +32,11 @@
         android:layout_margin="@dimen/mar_4dp"
         android:layout_toRightOf="@+id/imageContainer"/>
 
+    <View
+        android:background="@color/border_grey"
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_alignBottom="@id/group_name"
+        android:layout_alignParentBottom="true"/>
+
 </RelativeLayout>

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,12 +42,14 @@ public class GroupFragment extends Fragment {
     private static final String TAG = GroupFragment.class.getSimpleName();
     private TextView emptyTextView;
     private RecyclerView mRecyclerView;
+    private ProgressBar mProgressBar;
     private LinearLayoutManager mLinearLayout;
     private ParseUser mCurrentUser;
     private List<Contact> mContactList;
     private List<Group> mGroupList = new ArrayList<>();
     private GroupAdapter mGroupAdapter;
     private String phoneId="", phoneNumber="";
+    private Handler mHandler = new Handler();
 
     public GroupFragment() {
         // Required empty public constructor
@@ -61,6 +65,7 @@ public class GroupFragment extends Fragment {
                              Bundle savedInstanceState) {
         Typeface typeface = Typeface.createFromAsset(getActivity().getAssets(), "fonts/RobotoCondensed-Bold.ttf");
         View view = inflater.inflate(R.layout.fragment_group, container, false);
+        mProgressBar = (ProgressBar) view.findViewById(R.id.progressBar);
         emptyTextView = (TextView) view.findViewById(R.id.empty_view);
         emptyTextView.setTypeface(typeface);
         mRecyclerView = (RecyclerView) view.findViewById(R.id.group_rv);
@@ -72,6 +77,7 @@ public class GroupFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        mProgressBar.setVisibility(View.VISIBLE);
 
         if(ParseUser.getCurrentUser() != null){
             mCurrentUser = ParseUser.getCurrentUser();
@@ -104,6 +110,7 @@ public class GroupFragment extends Fragment {
     }
 
     private void fetchGroupList(){
+        showProgressBar();
         ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
         query.whereEqualTo(ParseConstant.CREATOR_COLUMN, mCurrentUser.getUsername());
         query.orderByDescending(ParseConstant.UPDATED_AT);
@@ -140,5 +147,29 @@ public class GroupFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void showProgressBar() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if(mGroupList.size() == 0){
+                                    emptyTextView.setVisibility(View.VISIBLE);
+                                    mProgressBar.setVisibility(View.GONE);
+                                }else if(mGroupList.size() > 0){
+                                    mProgressBar.setVisibility(View.GONE);
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        }).start();
     }
 }

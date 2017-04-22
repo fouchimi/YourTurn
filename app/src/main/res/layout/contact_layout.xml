@@ -57,7 +57,7 @@
             android:textAppearance="?android:attr/textAppearanceLarge" />
 
         <View
-            android:background="#9E9E9E"
+            android:background="@color/border_grey"
             android:layout_width="match_parent"
             android:layout_height="1px"/>
     </LinearLayout>
