@@ -222,7 +222,6 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
                         contact.getPhoneNumber().equals(phoneNumber)){
                     int position = cursor.getPosition();
                     mAdapter.setSelected(position, true);
-                    Log.d(TAG, "Found");
                     break;
                 }
             }
@@ -340,10 +339,10 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
 
         @SuppressLint("InlinedApi")
         final static String SELECTION = (Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME) +
-                "<>''" + " AND " + ContactsContract.CommonDataKinds.Phone.IS_PRIMARY + "=1";
+                "<>''" + " AND " +  ContactsContract.CommonDataKinds.Phone.IS_PRIMARY + "=1";
 
         @SuppressLint("InlinedApi")
-        final static String SORT_ORDER = Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME;
+        final static String SORT_ORDER = Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + "LIMIT 1";
 
         @SuppressLint("InlinedApi")
         final static String[] PROJECTION = {

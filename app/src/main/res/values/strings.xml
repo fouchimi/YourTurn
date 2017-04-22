@@ -13,7 +13,13 @@
     <string name="app_id">LHkNxyEd8sTQmUtNxyEdsBJaUv</string>
     <string name="master_key">kBxQmIsA43P9Oo73Sa1n9</string>
     <string name="server">https://messapp34.herokuapp.com/parse/</string>
-    <string name="required_group_name">Please type group name: Alphabets only allowed</string>
+    <string name="required_group_name">Please enter group name, only alphanumeric allowed</string>
     <string name="preference_file_key">login_credentials</string>
+    <string name="groups">Groups</string>
+    <string name="activities">Latest Activities</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="group_fragment_label">No Group(s)</string>
+    <string name="lat_update_label">No activitie(s)</string>
 
 </resources>

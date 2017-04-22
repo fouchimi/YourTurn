@@ -6,11 +6,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
@@ -24,6 +30,8 @@ import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseUser;
 import com.parse.SignUpCallback;
+import com.social.yourturn.fragments.GroupFragment;
+import com.social.yourturn.fragments.LatestUpdateFragment;
 import com.social.yourturn.utils.ParseConstant;
 
 
@@ -34,8 +42,10 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_ALL = 0;
     private String mDeviceMetaData = "";
     private String[] permissions = {Manifest.permission.READ_CONTACTS, Manifest.permission.READ_PHONE_STATE};
-    private String phoneId="";
-    private String phoneNumber= "";
+    private String phoneId="", phoneNumber= "";
+    private SectionsPagerAdapter mSectionsPagerAdapter;
+    private ViewPager mViewPager;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,13 +54,20 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        mSectionsPagerAdapter = new SectionsPagerAdapter((getSupportFragmentManager()));
+
+        mViewPager = (ViewPager) findViewById(R.id.container);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout.setupWithViewPager(mViewPager);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-               Intent intent = new Intent(MainActivity.this, ContactActivity.class);
-               MainActivity.this.startActivity(intent);
+                Intent intent = new Intent(MainActivity.this, ContactActivity.class);
+                MainActivity.this.startActivity(intent);
             }
         });
 
@@ -81,6 +98,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
+        if(isConnected()){
+            // Load groups here.
+        }else {
+            //Display dialog box here
+        }
+    }
+
+    private boolean isConnected(){
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(cm.getActiveNetworkInfo() != null) return true;
+        return false;
     }
 
     private void requestAllPermissions(Activity context, String[] permissions){
@@ -170,6 +199,41 @@ public class MainActivity extends AppCompatActivity {
     private String getDeviceMetaData(){
         TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         return telephonyManager.getDeviceId() + " " + telephonyManager.getLine1Number();
+    }
+
+
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        public SectionsPagerAdapter(FragmentManager fm){
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            switch (position){
+                case 0:
+                    return new GroupFragment();
+                case 1:
+                    return new LatestUpdateFragment();
+            }
+            return null;
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position){
+                case 0:
+                    return getString(R.string.groups);
+                case 1:
+                    return getString(R.string.activities);
+            }
+            return super.getPageTitle(position);
+        }
     }
 
 
