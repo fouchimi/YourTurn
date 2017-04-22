@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="@dimen/layout_margin"
+    android:paddingLeft="@dimen/layout_margin"
+    android:paddingRight="@dimen/layout_margin"
+    style="@style/listViewActivatedStyle">
+
+    <FrameLayout
+        android:layout_margin="@dimen/pad_4dp"
+        android:layout_width="@dimen/thumbnail_52dp"
+        android:layout_height="@dimen/thumbnail_52dp">
+
+        <ImageView
+            android:id="@+id/thumbnail"
+            android:layout_width="@dimen/thumbnail_52dp"
+            android:layout_height="@dimen/thumbnail_52dp">
+        </ImageView>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/selected"
+                android:layout_width="@dimen/check_24dp"
+                android:layout_height="@dimen/check_24dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                android:src="@drawable/ic_check_circle_white_24dp" />
+
+        </RelativeLayout>
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingRight="@dimen/pad_16dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/username"
+            android:layout_width="match_parent"
+            android:layout_height="?android:attr/listPreferredItemHeight"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:fontFamily="sans-serif-light"
+            android:textColor="@android:color/black"
+            android:gravity="center_vertical"
+            android:textSize="22sp"
+            android:paddingLeft="@dimen/pad_8dp"
+            android:layout_gravity="center"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <View
+            android:background="#9E9E9E"
+            android:layout_width="match_parent"
+            android:layout_height="1px"/>
+    </LinearLayout>
+
+</LinearLayout>

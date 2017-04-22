@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">YourTurn</string>
+    <string name="action_settings">Settings</string>
+    <string name="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+    <string name="search_hint">Find Contacts</string>
+    <string name="menu_search">Search Contacts </string>
+    <string name="group_name">Enter group name</string>
+    <string name="group_creation_label">Provide a group name and optional group icon</string>
+    <string name="participantText">Participants</string>
+    <string name="new_group_label">New Group</string>
+
+    <!-- HEROKU APP CONFIGURATION -->
+    <string name="app_id">LHkNxyEd8sTQmUtNxyEdsBJaUv</string>
+    <string name="master_key">kBxQmIsA43P9Oo73Sa1n9</string>
+    <string name="server">https://messapp34.herokuapp.com/parse/</string>
+    <string name="required_group_name">Please type group name: Alphabets only allowed</string>
+    <string name="preference_file_key">login_credentials</string>
+
+</resources>
