@@ -55,14 +55,6 @@ public class Contact implements Parcelable, Serializable {
         return  position;
     }
 
-    public void setSelected(boolean selected) {
-        this.selected = selected;
-    }
-
-    public boolean isSelected() {
-        return selected;
-    }
-
     @Override
     public int describeContents() {
         return 0;
@@ -92,4 +84,25 @@ public class Contact implements Parcelable, Serializable {
             return new Contact[size];
         }
     };
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == null) return false;
+        if (other == this) return true;
+        if (!(other instanceof Contact))return false;
+        Contact contact = (Contact) other;
+        if(this.getId().equals(contact.getId()) && (
+                this.getName().equals(contact.getName()))
+                && this.getPhoneNumber().equals(contact.getPhoneNumber())) return true;
+        else return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 31 * result + id.hashCode();
+        result = 31 * result + name.hashCode();
+        result = 31 * result + phoneNumber.hashCode();
+        return result;
+    }
 }

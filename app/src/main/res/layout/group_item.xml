@@ -6,8 +6,8 @@
     android:weightSum="1">
 
     <FrameLayout
-        android:layout_width="@dimen/thumbnail_52dp"
-        android:layout_height="@dimen/thumbnail_52dp"
+        android:layout_width="@dimen/pic_size"
+        android:layout_height="@dimen/pic_size"
         android:layout_margin="@dimen/mar_8dp">
 
         <ImageView

@@ -8,38 +8,45 @@
     android:paddingRight="@dimen/layout_margin"
     style="@style/listViewActivatedStyle">
 
-    <FrameLayout
-        android:layout_margin="@dimen/pad_4dp"
-        android:layout_width="@dimen/thumbnail_52dp"
-        android:layout_height="@dimen/thumbnail_52dp">
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="?android:attr/listPreferredItemHeight"
+        android:layout_margin="@dimen/pad_8dp"
+        android:layout_marginBottom="@dimen/mar_4dp">
 
-        <ImageView
-            android:id="@+id/thumbnail"
-            android:layout_width="@dimen/thumbnail_52dp"
-            android:layout_height="@dimen/thumbnail_52dp">
-        </ImageView>
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+        <FrameLayout
+            android:layout_width="@dimen/pic_size"
+            android:layout_height="@dimen/pic_size">
 
             <ImageView
-                android:id="@+id/selected"
-                android:layout_width="@dimen/check_24dp"
-                android:layout_height="@dimen/check_24dp"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentRight="true"
-                android:src="@drawable/ic_check_circle_white_24dp" />
+                android:id="@+id/thumbnail"
+                android:layout_width="@dimen/pic_size"
+                android:layout_height="@dimen/pic_size"
+                android:layout_gravity="center">
+            </ImageView>
 
-        </RelativeLayout>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-    </FrameLayout>
+                <ImageView
+                    android:id="@+id/selected"
+                    android:layout_width="@dimen/check_24dp"
+                    android:layout_height="@dimen/check_24dp"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentRight="true"
+                    android:src="@drawable/ic_check_circle_white_24dp" />
+
+            </RelativeLayout>
+
+        </FrameLayout>
+    </LinearLayout>
 
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:paddingRight="@dimen/pad_16dp"
-        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="?android:attr/listPreferredItemHeight"
+        android:paddingRight="@dimen/pad_8dp"
+        android:layout_marginTop="@dimen/pad_8dp"
         android:orientation="vertical">
 
         <TextView
@@ -60,6 +67,7 @@
             android:background="@color/border_grey"
             android:layout_width="match_parent"
             android:layout_height="1px"/>
+
     </LinearLayout>
 
 </LinearLayout>

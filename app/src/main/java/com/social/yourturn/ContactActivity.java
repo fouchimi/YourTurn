@@ -280,8 +280,12 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
             removeFromRecyclerView(contact);
         }else {
             mAdapter.setSelected(position, true);
-            mSelectedContactList.add(contact);
-            mContactList.add(contact);
+            if(!mSelectedContactList.contains(contact)){
+                mSelectedContactList.add(contact);
+            }
+            if(!mContactList.contains(contact)){
+                mContactList.add(contact);
+            }
             mRecyclerView.smoothScrollToPosition(mSelectedContactAdapter.getItemCount());
         }
 

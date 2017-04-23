@@ -33,12 +33,14 @@ public class GroupListActivity extends AppCompatActivity {
         mActionBarToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mActionBarToolbar);
 
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
         mRecyclerView = (RecyclerView) findViewById(R.id.members_rv);
 
         Intent intent = getIntent();
         if(intent != null) {
             Group group = intent.getParcelableExtra(GroupFragment.GROUP_KEY);
-            Log.d(TAG, "Group name: " + group.getName());
             getSupportActionBar().setTitle(group.getName());
             mContactList = group.getContactList();
             mAdapter = new MemberGroupAdapter(this, mContactList);
