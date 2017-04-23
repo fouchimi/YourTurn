@@ -29,11 +29,11 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
 
     private final static String TAG = CustomAdapter.class.getSimpleName();
     private Context mContext;
-    private ArrayList<Contact> mCursorList;
+    private ArrayList<Contact> mContactList;
 
     public CustomAdapter(Context context, ArrayList<Contact> cursorList){
         this.mContext = context;
-        mCursorList = cursorList;
+        mContactList = cursorList;
     }
 
     @Override
@@ -45,7 +45,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
 
     @Override
     public void onBindViewHolder(CustomViewHolder holder, int position) {
-        Contact contact = mCursorList.get(position);
+        Contact contact = mContactList.get(position);
         final String displayName = contact.getName();
 
         Log.d(TAG, String.valueOf(position));
@@ -78,7 +78,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
 
     @Override
     public int getItemCount() {
-        return mCursorList.size();
+        return mContactList.size();
     }
 
     public static class CustomViewHolder extends RecyclerView.ViewHolder {

@@ -2,6 +2,7 @@ package com.social.yourturn.fragments;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
@@ -24,6 +26,7 @@ import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.social.yourturn.GroupListActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.adapters.GroupAdapter;
 import com.social.yourturn.models.Contact;
@@ -45,11 +48,12 @@ public class GroupFragment extends Fragment {
     private ProgressBar mProgressBar;
     private LinearLayoutManager mLinearLayout;
     private ParseUser mCurrentUser;
-    private List<Contact> mContactList;
-    private List<Group> mGroupList = new ArrayList<>();
+    private ArrayList<Contact> mContactList;
+    private ArrayList<Group> mGroupList = new ArrayList<>();
     private GroupAdapter mGroupAdapter;
     private String phoneId="", phoneNumber="";
     private Handler mHandler = new Handler();
+    public static final String GROUP_KEY = "Group";
 
     public GroupFragment() {
         // Required empty public constructor
@@ -71,6 +75,35 @@ public class GroupFragment extends Fragment {
         mRecyclerView = (RecyclerView) view.findViewById(R.id.group_rv);
         mLinearLayout = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(mLinearLayout);
+
+        mRecyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+                View child = mRecyclerView.findChildViewUnder(e.getX(), e.getY());
+                if(child != null){
+                    int position = mRecyclerView.getChildAdapterPosition(child);
+                    Log.d(TAG, "Position: " + position);
+                    mGroupAdapter = (GroupAdapter) mRecyclerView.getAdapter();
+                    Group group = mGroupAdapter.getGroup(position);
+                    Intent intent = new Intent(getActivity(), GroupListActivity.class);
+                    intent.putExtra(GroupFragment.GROUP_KEY, group);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    getActivity().startActivity(intent);
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+
+            }
+
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
+            }
+        });
         return view;
     }
 
@@ -120,7 +153,7 @@ public class GroupFragment extends Fragment {
                 if(e == null){
                     Log.d(TAG, "Size: " + groupList.size());
                     for(ParseObject contactObject : groupList){
-                        mContactList = new ArrayList<Contact>();
+                        mContactList = new ArrayList<>();
                         String groupName = contactObject.getString(ParseConstant.GROUP_NAME);
                         String friendList = contactObject.getString(ParseConstant.MEMBERS_COLUMN);
                         String groupThumbnail = contactObject.getString(ParseConstant.THUMBNAIL_COLUMN);

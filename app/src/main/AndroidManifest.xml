@@ -41,8 +41,12 @@
             android:name=".GroupActivity"
             android:label="@string/new_group_label"
             android:parentActivityName=".ContactActivity"
-            android:theme="@style/AppTheme"></activity>
-        <activity android:name=".GroupListActivity"></activity>
+            android:theme="@style/AppTheme" />
+        <activity
+            android:screenOrientation="portrait"
+            android:parentActivityName=".MainActivity"
+            android:name=".GroupListActivity"
+            android:theme="@style/AppTheme" />
     </application>
 
 </manifest>

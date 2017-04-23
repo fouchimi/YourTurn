@@ -83,10 +83,6 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         selectionArray.delete(key);
     }
 
-    public SparseBooleanArray getSelectionArray(){
-        return selectionArray;
-    }
-
     public void clearSelection(){
         selectionArray.clear();
     }

@@ -12,7 +12,7 @@ import android.widget.TextView;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Group;
 
-import java.util.List;
+import java.util.ArrayList;
 
 
 /**
@@ -23,9 +23,9 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
 
     private final static String TAG = GroupAdapter.class.getSimpleName();
     private Context mContext;
-    private List<Group> mGroupList;
+    private ArrayList<Group> mGroupList;
 
-    public GroupAdapter(Context context, List<Group> groupList){
+    public GroupAdapter(Context context, ArrayList<Group> groupList){
         mContext = context;
         mGroupList = groupList;
     }
@@ -46,6 +46,10 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
             holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
         }
 
+    }
+
+    public Group getGroup(int position){
+        return mGroupList.get(position);
     }
 
     @Override
