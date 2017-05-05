@@ -30,10 +30,10 @@ import com.social.yourturn.utils.ImagePicker;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
+import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -89,12 +89,7 @@ public class GroupActivity extends AppCompatActivity {
         Intent intent = getIntent();
         if(intent != null) {
             mContactList = intent.getParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT);
-            Time dayTime = new Time();
-            dayTime.setToNow();
-
-            int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
-
-            dayTime = new Time();
+            DateTime dayTime = new DateTime();
             for(Contact contact : mContactList) {
                 ContentValues userValues = new ContentValues();
                 Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
@@ -103,7 +98,8 @@ public class GroupActivity extends AppCompatActivity {
                     userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, contact.getPhoneNumber());
                     userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, contact.getId());
                     userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, contact.getName());
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_DATE, dayTime.setJulianDay(julianStartDay));
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
                     cVVectorUsers.add(userValues);
                 }
                 friendList +=  contact.getId()+ " " + contact.getName() + " " + contact.getPhoneNumber() + ",";
@@ -148,12 +144,9 @@ public class GroupActivity extends AppCompatActivity {
                                 if(e == null){
                                     Log.d(TAG, "Group Table Created !");
                                     Intent intent = new Intent(GroupActivity.this, MainActivity.class);
-                                    Time dayTime = new Time();
-                                    dayTime.setToNow();
 
-                                    int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
+                                    DateTime dayTime = new DateTime();
 
-                                    dayTime = new Time();
                                     Vector<ContentValues> cVVector = new Vector<>();
                                     int i=0;
                                     for(Contact contact : mContactList){
@@ -162,7 +155,8 @@ public class GroupActivity extends AppCompatActivity {
                                         groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getId());
                                         if(groupThumbnailPath != null)
                                             groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnailPath);
-                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_DATE, dayTime.setJulianDay(julianStartDay + i));
+                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
+                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
                                         i++;
                                         cVVector.add(groupValues);
                                     }

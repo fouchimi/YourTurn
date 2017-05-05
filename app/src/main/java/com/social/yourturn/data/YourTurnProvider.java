@@ -116,9 +116,9 @@ public class YourTurnProvider extends ContentProvider {
     }
 
     private void normalizeDate(ContentValues values){
-        if(values.containsKey(YourTurnContract.UserEntry.COLUMN_USER_DATE)){
-            long dateValue = values.getAsLong(YourTurnContract.UserEntry.COLUMN_USER_DATE);
-            values.put(YourTurnContract.UserEntry.COLUMN_USER_DATE, YourTurnContract.normalizeDate(dateValue));
+        if(values.containsKey(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE)){
+            long dateValue = values.getAsLong(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE);
+            values.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, YourTurnContract.normalizeDate(dateValue));
         }
     }
 

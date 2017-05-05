@@ -41,7 +41,8 @@ public class YourTurnContract {
         public static final String COLUMN_USER_PHONE_NUMBER = "phone_number";
         public static final String COLUMN_USER_PASSWORD = "password";
         public static final String COLUMN_USER_THUMBNAIL = "thumbnail";
-        public static final String COLUMN_USER_DATE = "date";
+        public static final String COLUMN_USER_CREATED_DATE = "created_date";
+        public static final String COLUMN_USER_UPDATED_DATE = "updated_date";
 
         public static Uri buildUserUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);
@@ -60,7 +61,8 @@ public class YourTurnContract {
         public static final String COLUMN_USER_KEY = "usr_contact_id";
         public static final String COLUMN_GROUP_NAME = "group_name";
         public static final String COLUMN_GROUP_THUMBNAIL = "group_thumbnail";
-        public static final String COLUMN_GROUP_DATE = "date";
+        public static final String COLUMN_GROUP_CREATED_DATE = "created_date";
+        public static final String COLUMN_GROUP_UPDATED_DATE = "updated_date";
 
         public static Uri buildGroupUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);

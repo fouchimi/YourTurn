@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                         mCurrentUser = user;
                     }else {
                         Log.d(TAG, e.getMessage());
-                        Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                        //Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 }
             });
@@ -156,26 +156,6 @@ public class MainActivity extends AppCompatActivity {
 
                     Log.d(TAG, "Phone Id: " + phoneId);
                     Log.d(TAG, "Phone number: " + phoneNumber);
-
-                    /*ContentValues userValues = new ContentValues();
-
-                    Time dayTime = new Time();
-                    dayTime.setToNow();
-
-                    int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
-
-                    // now we work exclusively in UTC
-                    dayTime = new Time();
-
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, "");
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_DEVICE_ID, phoneId);
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, "");
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PASSWORD, "");
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, phoneNumber);
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, "");
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_DATE, dayTime.setJulianDay(julianStartDay));
-
-                    getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, userValues);*/
 
                     mCurrentUser = new ParseUser();
                     mCurrentUser.setUsername(phoneId);

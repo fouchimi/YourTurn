@@ -25,5 +25,6 @@
     <string name="lat_update_label">No Activities</string>
 
     <string name="content_authority">com.social.yourturn</string>
+    <string name="createdOn">created on</string>
 
 </resources>

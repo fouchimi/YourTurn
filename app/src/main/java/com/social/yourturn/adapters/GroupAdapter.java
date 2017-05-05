@@ -15,6 +15,7 @@ import com.social.yourturn.GroupActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Group;
 import com.social.yourturn.utils.ParseConstant;
+import com.social.yourturn.utils.Utils;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -48,7 +49,9 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         Group group = mGroupList.get(position);
         Log.d(TAG, group.getName());
         holder.groupName.setText(group.getName());
+        String formattedDate = Utils.formatDate(group.getDateInMillis());
         holder.groupNumber.setText(String.valueOf(group.getContactList().size()));
+        holder.createdDate.setText(mContext.getString(R.string.createdOn) + " " + formattedDate);
         if(group.getThumbnail()== null || group.getThumbnail().isEmpty()){
             holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
         }else {
@@ -72,12 +75,14 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         public ImageView groupThumbnail;
         public TextView groupName;
         public TextView groupNumber;
+        public TextView createdDate;
 
         public GroupViewHolder(View itemView) {
             super(itemView);
             this.groupName = (TextView) itemView.findViewById(R.id.group_name);
             this.groupNumber = (TextView) itemView.findViewById(R.id.group_number);
             this.groupThumbnail = (ImageView) itemView.findViewById(R.id.group_thumbnail);
+            this.createdDate = (TextView) itemView.findViewById(R.id.createdDate);
         }
     }
 }

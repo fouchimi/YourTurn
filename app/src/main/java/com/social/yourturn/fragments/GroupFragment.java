@@ -104,7 +104,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if(id == LOADER_ID){
-            return new CursorLoader(getActivity(), YourTurnContract.GroupEntry.CONTENT_URI, null, null, null, null);
+            return new CursorLoader(getActivity(), YourTurnContract.GroupEntry.CONTENT_URI, null, null, null, YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE + " DESC");
         }
         return null;
     }
@@ -121,6 +121,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 while (data.moveToNext()){
                     String groupName = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME));
                     String groupThumbnail = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL));
+                    long dateInMillis = data.getLong(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE));
                     String userId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_USER_KEY));
                     Cursor cursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_ID + " = " + userId, null, null);
                     cursor.moveToNext();
@@ -132,6 +133,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                         groupNameList.add(groupName);
                         mGroup = new Group();
                         mGroup.setName(groupName);
+                        mGroup.setDateInMillis(dateInMillis);
                         if(groupThumbnail.length() > 0) {
                             mGroup.setThumbnail(groupThumbnail);
                         }
@@ -145,6 +147,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                         mContactList = new ArrayList<>();
                         mGroup = new Group();
                         mGroup.setName(groupName);
+                        mGroup.setDateInMillis(dateInMillis);
                         if(groupThumbnail.length() > 0) {
                             mGroup.setThumbnail(groupThumbnail);
                         }

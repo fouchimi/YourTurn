@@ -7,7 +7,9 @@
         android:id="@+id/imageContainer"
         android:layout_marginTop="@dimen/mar_8dp"
         android:layout_marginLeft="@dimen/mar_8dp"
+        android:layout_marginStart="@dimen/mar_8dp"
         android:layout_marginRight="@dimen/mar_4dp"
+        android:layout_marginEnd="@dimen/mar_4dp"
         android:layout_width="?android:attr/listPreferredItemHeight"
         android:layout_height="?android:attr/listPreferredItemHeight">
 

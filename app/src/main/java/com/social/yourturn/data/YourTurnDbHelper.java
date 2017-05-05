@@ -32,7 +32,8 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 UserEntry.COLUMN_USER_DEVICE_ID + " TEXT, " +
                 UserEntry.COLUMN_USER_PHONE_NUMBER + " TEXT, " +
                 UserEntry.COLUMN_USER_THUMBNAIL + " TEXT, " +
-                UserEntry.COLUMN_USER_DATE + " INTEGER NOT NULL " +
+                UserEntry.COLUMN_USER_CREATED_DATE + " INTEGER NOT NULL, " +
+                UserEntry.COLUMN_USER_UPDATED_DATE + " INTEGER NOT NULL" +
                 ");";
 
          final String SQL_CREATE_GROUP_TABLE = "CREATE TABLE " + GroupEntry.TABLE_NAME + " (" +
@@ -40,7 +41,8 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 GroupEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
                 GroupEntry.COLUMN_GROUP_NAME + " TEXT NOT NULL, " +
                 GroupEntry.COLUMN_GROUP_THUMBNAIL + " TEXT NULL, " +
-                GroupEntry.COLUMN_GROUP_DATE + " INTEGER NOT NULL, " +
+                GroupEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
+                GroupEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
                 "FOREIGN KEY (" + GroupEntry.COLUMN_USER_KEY + ") REFERENCES " +
                 UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE CASCADE ON UPDATE NO ACTION"
                 + ");";

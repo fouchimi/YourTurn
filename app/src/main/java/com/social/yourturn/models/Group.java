@@ -12,6 +12,7 @@ import java.util.ArrayList;
 public class Group implements Parcelable{
     private String name;
     private String thumbnail;
+    private long dateInMillis;
     private ArrayList<Contact> contactList = new ArrayList<>();
 
     public Group(){
@@ -49,6 +50,7 @@ public class Group implements Parcelable{
     private Group(Parcel in){
         name = in.readString();
         thumbnail = in.readString();
+        dateInMillis = in.readLong();
         in.readTypedList(contactList, Contact.CREATOR);
     }
 
@@ -56,6 +58,7 @@ public class Group implements Parcelable{
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(name);
         dest.writeString(thumbnail);
+        dest.writeLong(dateInMillis);
         dest.writeTypedList(contactList);
     }
 
@@ -83,5 +86,13 @@ public class Group implements Parcelable{
 
     public void setThumbnail(String thumbnail) {
         this.thumbnail = thumbnail;
+    }
+
+    public void setDateInMillis(long dateInMillis) {
+        this.dateInMillis = dateInMillis;
+    }
+
+    public long getDateInMillis() {
+        return dateInMillis;
     }
 }
