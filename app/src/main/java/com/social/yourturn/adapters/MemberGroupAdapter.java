@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.social.yourturn.DrawableProvider;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.utils.CircularImageView;
 
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -42,13 +43,9 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
     @Override
     public void onBindViewHolder(MemberViewHolder holder, int position) {
         Contact contact = mContactList.get(position);
-        DrawableProvider mProvider = new DrawableProvider(mContext);
         String displayName = contact.getName();
-        String initials = "";
-        if(displayName.split(" ").length == 1) initials = displayName.substring(0, 2);
-        else initials = WordUtils.initials(displayName).substring(0, 2);
-        final Drawable drawable = mProvider.getRound(displayName, initials);
-        holder.imageView.setImageDrawable(drawable);
+
+        holder.imageView.setImageResource(R.drawable.default_profile);
         holder.nameTextView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
     }
 
@@ -60,12 +57,12 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
 
     public class MemberViewHolder extends RecyclerView.ViewHolder{
         TextView nameTextView;
-        ImageView imageView;
+        CircularImageView imageView;
 
         public MemberViewHolder(View itemView){
             super(itemView);
             nameTextView = (TextView) itemView.findViewById(R.id.member_name);
-            imageView = (ImageView) itemView.findViewById(R.id.member_thumbnail);
+            imageView = (CircularImageView) itemView.findViewById(R.id.member_thumbnail);
         }
     }
 }

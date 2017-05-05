@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -47,6 +48,12 @@
             android:parentActivityName=".MainActivity"
             android:name=".GroupListActivity"
             android:theme="@style/AppTheme" />
+
+        <provider
+            android:authorities="@string/content_authority"
+            android:name=".data.YourTurnProvider"
+            android:exported="false"
+            android:syncable="true" />
     </application>
 
 </manifest>

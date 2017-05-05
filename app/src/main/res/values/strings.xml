@@ -18,8 +18,12 @@
     <string name="groups">Groups</string>
     <string name="activities">Latest Activities</string>
 
+    <string name="pick_image_intent_text">Choose group photo</string>
+
     <!-- TODO: Remove or change this placeholder text -->
     <string name="group_fragment_label">No Group(s)</string>
-    <string name="lat_update_label">No activitie(s)</string>
+    <string name="lat_update_label">No Activities</string>
+
+    <string name="content_authority">com.social.yourturn</string>
 
 </resources>

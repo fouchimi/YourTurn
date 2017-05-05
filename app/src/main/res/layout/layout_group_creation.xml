@@ -11,22 +11,25 @@
     android:background="@android:color/white">
 
 
-    <ImageView
+    <com.social.yourturn.utils.CircularImageView
         android:id="@+id/groupImageView"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
-        android:layout_marginLeft="@dimen/mar_16dp"
-        android:layout_marginStart="@dimen/mar_16dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="@dimen/pic_size"
+        android:layout_height="@dimen/pic_size"
         android:baselineAlignBottom="true"
-        android:src="@drawable/ic_photo_camera_black_36dp"
+        android:onClick="snapGroupPhoto"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="@dimen/mar_16dp"
+        android:layout_marginLeft="@dimen/mar_16dp"
+        android:layout_marginBottom="@dimen/mar_8dp"
+        android:src="@drawable/ic_group_black_36dp"
+        app:layout_constraintBottom_toTopOf="@+id/groupTextViewLabel"
+        app:layout_constraintVertical_bias="0.0" />
 
     <EditText
         android:id="@+id/groupNameText"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/pic_size"
         android:layout_marginEnd="@dimen/mar_8dp"
         android:layout_marginLeft="@dimen/mar_8dp"
         android:layout_marginRight="@dimen/mar_8dp"
@@ -40,7 +43,10 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toRightOf="@+id/groupImageView"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/groupImageView"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/groupTextViewLabel"
@@ -50,7 +56,7 @@
         android:layout_marginLeft="@dimen/mar_16dp"
         android:layout_marginRight="@dimen/mar_16dp"
         android:layout_marginStart="@dimen/mar_8dp"
-        android:layout_marginTop="@dimen/mar_8dp"
+        android:layout_marginTop="18dp"
         android:padding="@dimen/pad_8dp"
         android:hint="@string/group_creation_label"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -65,7 +71,7 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginStart="@dimen/mar_8dp"
-        android:layout_marginTop="3dp"
+        android:layout_marginTop="11dp"
         android:padding="@dimen/pad_8dp"
         android:text="@string/participantText"
         app:layout_constraintHorizontal_bias="0.0"
@@ -96,9 +102,8 @@
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/selected_rv"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginBottom="0dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginEnd="@dimen/mar_8dp"
         android:layout_marginLeft="@dimen/mar_8dp"
         android:layout_marginRight="@dimen/mar_8dp"

@@ -14,6 +14,10 @@ public class Group implements Parcelable{
     private String thumbnail;
     private ArrayList<Contact> contactList = new ArrayList<>();
 
+    public Group(){
+
+    }
+
     public Group(String name, String thumbnail, ArrayList<Contact> contactList){
         this.name = name;
         this.thumbnail = thumbnail;
@@ -68,4 +72,16 @@ public class Group implements Parcelable{
         }
 
     };
+
+    public void setContactList(ArrayList<Contact> contactList) {
+        this.contactList = contactList;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setThumbnail(String thumbnail) {
+        this.thumbnail = thumbnail;
+    }
 }

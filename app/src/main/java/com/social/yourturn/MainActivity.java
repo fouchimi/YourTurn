@@ -2,6 +2,7 @@ package com.social.yourturn;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
@@ -20,6 +22,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -28,11 +31,15 @@ import android.widget.Toast;
 
 import com.parse.LogInCallback;
 import com.parse.ParseException;
+import com.parse.ParseObject;
 import com.parse.ParseUser;
 import com.parse.SignUpCallback;
+import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.fragments.LatestUpdateFragment;
 import com.social.yourturn.utils.ParseConstant;
+
+import java.io.File;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -41,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private ParseUser mCurrentUser;
     private static final int PERMISSION_ALL = 0;
     private String mDeviceMetaData = "";
-    private String[] permissions = {Manifest.permission.READ_CONTACTS, Manifest.permission.READ_PHONE_STATE};
+    private String[] permissions = {Manifest.permission.READ_CONTACTS, Manifest.permission.READ_PHONE_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     private String phoneId="", phoneNumber= "";
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
@@ -78,12 +85,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+        if(isConnected()){
+            // Load groups here.
+        }else {
+            //Display dialog box here
+        }
+
         SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-        phoneId = sharedPref.getString(ParseConstant.USERNAME, "");
-        phoneNumber = sharedPref.getString(ParseConstant.PASSWORD, "");
+        phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
+        phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
 
         Log.d(TAG, "Phone ID from Shared Preferences: " + phoneId);
-        Log.d(TAG,  "Phone Number from Shared Preferences: " + phoneNumber);
+        Log.d(TAG, "Phone Number from Shared Preferences: " + phoneNumber);
 
         if(!phoneId.equals("") && !phoneNumber.equals("")){
             ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
@@ -99,11 +112,6 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        if(isConnected()){
-            // Load groups here.
-        }else {
-            //Display dialog box here
-        }
     }
 
     private boolean isConnected(){
@@ -138,7 +146,8 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, String.valueOf(grantResults.length));
                 if(grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                        && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+                        && grantResults[1] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[2] == PackageManager.PERMISSION_GRANTED){
                     Log.d(TAG, "permission granted");
                     mDeviceMetaData = getDeviceMetaData();
 
@@ -148,27 +157,50 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "Phone Id: " + phoneId);
                     Log.d(TAG, "Phone number: " + phoneNumber);
 
+                    /*ContentValues userValues = new ContentValues();
+
+                    Time dayTime = new Time();
+                    dayTime.setToNow();
+
+                    int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
+
+                    // now we work exclusively in UTC
+                    dayTime = new Time();
+
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, "");
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_DEVICE_ID, phoneId);
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, "");
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PASSWORD, "");
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, phoneNumber);
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, "");
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_DATE, dayTime.setJulianDay(julianStartDay));
+
+                    getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, userValues);*/
+
                     mCurrentUser = new ParseUser();
                     mCurrentUser.setUsername(phoneId);
                     mCurrentUser.setPassword(phoneNumber);
+                    mCurrentUser.put(ParseConstant.USER_ID_COLUMN, phoneId);
+                    mCurrentUser.put(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
+                    mCurrentUser.put(ParseConstant.USER_THUMBNAIL_COLUMN, "");
 
                     //Save login credentials in Shared Preferences document
                     SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
 
                     SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putString(ParseConstant.USERNAME, phoneId);
-                    editor.putString(ParseConstant.PASSWORD, phoneNumber);
+                    editor.putString(ParseConstant.USERNAME_COLUMN, phoneId);
+                    editor.putString(ParseConstant.PASSWORD_COLUMN, phoneNumber);
                     editor.commit();
 
                     mCurrentUser.signUpInBackground(new SignUpCallback() {
                         @Override
                         public void done(ParseException e) {
                             if(e == null){
-                                Log.d(TAG, "USER TABLE CREATED !");
+                                Log.d(TAG, "PARSE USER TABLE CREATED !");
                             }else {
                                 Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
                                 Log.d(TAG, e.getMessage());
-                                Log.d(TAG, "An error occured !");
+                                Log.d(TAG, "An error occur !");
                             }
                         }
                     });

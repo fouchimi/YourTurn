@@ -1,6 +1,8 @@
 package com.social.yourturn.adapters;
 
 import android.content.Context;
+import android.net.Uri;
+import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,9 +11,14 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.social.yourturn.GroupActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Group;
+import com.social.yourturn.utils.CircularImageView;
+import com.social.yourturn.utils.ParseConstant;
+import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.util.ArrayList;
 
 
@@ -44,6 +51,10 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         holder.groupName.setText(group.getName());
         if(group.getThumbnail()== null || group.getThumbnail().isEmpty()){
             holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
+        }else {
+            File file = new File(Environment.getExternalStorageDirectory()+ "/"+ ParseConstant.YOUR_TURN_FOLDER + "/" + group.getName() + "/" + group.getThumbnail());
+            Log.d(TAG, file.getName());
+            Picasso.with(mContext).load(file).into(holder.groupThumbnail);
         }
 
     }

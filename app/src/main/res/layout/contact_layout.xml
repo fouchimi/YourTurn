@@ -18,12 +18,12 @@
             android:layout_width="@dimen/pic_size"
             android:layout_height="@dimen/pic_size">
 
-            <ImageView
+            <com.social.yourturn.utils.CircularImageView
                 android:id="@+id/thumbnail"
                 android:layout_width="@dimen/pic_size"
                 android:layout_height="@dimen/pic_size"
-                android:layout_gravity="center">
-            </ImageView>
+                android:padding="16dp"
+                android:layout_gravity="center"/>
 
             <RelativeLayout
                 android:layout_width="match_parent"

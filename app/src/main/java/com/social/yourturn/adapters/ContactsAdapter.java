@@ -3,7 +3,6 @@ package com.social.yourturn.adapters;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.support.v4.widget.CursorAdapter;
 import android.text.style.TextAppearanceSpan;
 import android.util.SparseBooleanArray;
@@ -16,16 +15,14 @@ import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import com.social.yourturn.ContactActivity;
-import com.social.yourturn.DrawableProvider;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.utils.CircularImageView;
 
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 /**
@@ -63,7 +60,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
 
         final ViewHolder holder = new ViewHolder();
         holder.username = (TextView) itemLayout.findViewById(R.id.username);
-        holder.thumbnail = (ImageView) itemLayout.findViewById(R.id.thumbnail);
+        holder.thumbnail = (CircularImageView) itemLayout.findViewById(R.id.thumbnail);
         holder.selected = (ImageView) itemLayout.findViewById(R.id.selected);
 
         itemLayout.setTag(holder);
@@ -97,30 +94,9 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         contact.setPosition((mPosition++) % getCount());
         contactList.add(contact);
 
-        DrawableProvider mProvider = new DrawableProvider(mContext);
-        String initials = "";
-        Pattern p = Pattern.compile("[a-zA-Z_ ]");
-        Matcher m = p.matcher(displayName);
-        if(m.find()){
-            if(displayName.split(" ").length == 1) initials = displayName.substring(0, 2);
-            else initials = WordUtils.initials(displayName).substring(0, 2);
-            final Drawable drawable = mProvider.getRound(displayName, initials);
-            holder.thumbnail.setImageDrawable(drawable);
-            holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
-        }else {
-            Pattern pattern = Pattern.compile("[0-9]");
-            Matcher matcher = pattern.matcher(displayName);
-            if(matcher.find()){
-                if(displayName.startsWith("+")){
-                    initials = displayName.substring(1, 3);
-                }else {
-                    initials = displayName.substring(0, 2);
-                }
-                final Drawable drawable = mProvider.getRound(displayName, initials);
-                holder.thumbnail.setImageDrawable(drawable);
-                holder.username.setText(displayName);
-            }
-        }
+        holder.thumbnail.setImageResource(R.drawable.default_profile);
+        holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
+
         int position = cursor.getPosition();
         boolean isSelected = selectionArray.get(position);
         TextView usernameTextView = (TextView) view.findViewById(R.id.username);
@@ -165,7 +141,8 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
 
     private class ViewHolder {
         TextView username;
-        ImageView thumbnail, selected;
+        ImageView  selected;
+        CircularImageView thumbnail;
     }
 
 }

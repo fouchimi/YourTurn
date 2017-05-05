@@ -9,11 +9,11 @@
         android:layout_width="?android:attr/listPreferredItemHeight"
         android:layout_height="?android:attr/listPreferredItemHeight">
 
-        <ImageView
+        <com.social.yourturn.utils.CircularImageView
             android:id="@+id/group_thumbnail"
-            android:layout_width="?android:attr/listPreferredItemHeight"
-            android:layout_height="?android:attr/listPreferredItemHeight">
-        </ImageView>
+            android:layout_width="@dimen/pic_size"
+            android:layout_height="@dimen/pic_size"
+            android:layout_gravity="center_vertical"/>
 
     </FrameLayout>
 

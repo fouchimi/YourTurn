@@ -4,11 +4,14 @@ package com.social.yourturn.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -16,7 +19,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +31,7 @@ import com.parse.ParseUser;
 import com.social.yourturn.GroupListActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.adapters.GroupAdapter;
+import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.utils.ParseConstant;
 import com.social.yourturn.models.Group;
@@ -40,20 +43,19 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class GroupFragment extends Fragment {
+public class GroupFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = GroupFragment.class.getSimpleName();
     private TextView emptyTextView;
     private RecyclerView mRecyclerView;
-    private ProgressBar mProgressBar;
     private LinearLayoutManager mLinearLayout;
     private ParseUser mCurrentUser;
-    private ArrayList<Contact> mContactList;
+    private ArrayList<Contact> mContactList = new ArrayList<>();
     private ArrayList<Group> mGroupList = new ArrayList<>();
     private GroupAdapter mGroupAdapter;
     private String phoneId="", phoneNumber="";
-    private Handler mHandler = new Handler();
     public static final String GROUP_KEY = "Group";
+    private static final int LOADER_ID = 0;
 
     public GroupFragment() {
         // Required empty public constructor
@@ -69,7 +71,6 @@ public class GroupFragment extends Fragment {
                              Bundle savedInstanceState) {
         Typeface typeface = Typeface.createFromAsset(getActivity().getAssets(), "fonts/RobotoCondensed-Bold.ttf");
         View view = inflater.inflate(R.layout.fragment_group, container, false);
-        mProgressBar = (ProgressBar) view.findViewById(R.id.progressBar);
         emptyTextView = (TextView) view.findViewById(R.id.empty_view);
         emptyTextView.setTypeface(typeface);
         mRecyclerView = (RecyclerView) view.findViewById(R.id.group_rv);
@@ -110,40 +111,10 @@ public class GroupFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mProgressBar.setVisibility(View.VISIBLE);
-
-        if(ParseUser.getCurrentUser() != null){
-            mCurrentUser = ParseUser.getCurrentUser();
-            fetchGroupList();
-            Log.d(TAG, "Not logging in anymore");
-        }else {
-            SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
-            phoneId = sharedPref.getString(ParseConstant.USERNAME, "");
-            phoneNumber = sharedPref.getString(ParseConstant.PASSWORD, "");
-
-            Log.d(TAG, "Phone ID from Shared Preferences: " + phoneId);
-            Log.d(TAG,  "Phone Number from Shared Preferences: " + phoneNumber);
-
-            if(!phoneId.equals("") && !phoneNumber.equals("")){
-                ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
-                    @Override
-                    public void done(ParseUser user, ParseException e) {
-                        if(e == null){
-                            mCurrentUser = user;
-                            fetchGroupList();
-                        }else {
-                            Log.d(TAG, e.getMessage());
-                            Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    }
-                });
-            }
-        }
-
+        getActivity().getSupportLoaderManager().initLoader(0, null, this);
     }
 
     private void fetchGroupList(){
-        showProgressBar();
         ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
         query.whereEqualTo(ParseConstant.CREATOR_COLUMN, mCurrentUser.getUsername());
         query.orderByDescending(ParseConstant.UPDATED_AT);
@@ -182,27 +153,72 @@ public class GroupFragment extends Fragment {
         });
     }
 
-    private void showProgressBar() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(mGroupList.size() == 0){
-                                    emptyTextView.setVisibility(View.VISIBLE);
-                                    mProgressBar.setVisibility(View.GONE);
-                                }else if(mGroupList.size() > 0){
-                                    mProgressBar.setVisibility(View.GONE);
-                                }
-                            }
-                        });
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        if(id == LOADER_ID){
+            return new CursorLoader(getActivity(), YourTurnContract.GroupEntry.CONTENT_URI, null, null, null, null);
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        if(loader.getId() == LOADER_ID){
+            if(data == null){
+                Log.d(TAG, "Empty cursor");
+            }else {
+                List<String> groupNameList = new ArrayList<>();
+                Group mGroup = null;
+                boolean flag = true;
+                while (data.moveToNext()){
+                    String groupName = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME));
+                    String groupThumbnail = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL));
+                    String userId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_USER_KEY));
+                    Cursor cursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_ID + " = " + userId, null, null);
+                    cursor.moveToNext();
+                    String username = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+                    String phoneNumber = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
+                    Contact contact = new Contact(userId, username, phoneNumber);
+                    mContactList.add(contact);
+                    if(!groupNameList.contains(groupName) && flag){
+                        groupNameList.add(groupName);
+                        mGroup = new Group();
+                        mGroup.setName(groupName);
+                        if(groupThumbnail.length() > 0) {
+                            mGroup.setThumbnail(groupThumbnail);
+                        }
+                        flag = false;
+                    }else if(groupNameList.contains(groupName) && flag == false){
+                        continue;
+                    }else if(!groupNameList.contains(groupName) && flag == false){
+                        groupNameList.add(groupName);
+                        mGroup.setContactList(mContactList);
+                        mGroupList.add(mGroup);
+                        mContactList = new ArrayList<>();
+                        mGroup = new Group();
+                        mGroup.setName(groupName);
+                        if(groupThumbnail.length() > 0) {
+                            mGroup.setThumbnail(groupThumbnail);
+                        }
                     }
-                });
+                }
+                if(mContactList.size() > 0){
+                    mGroup.setContactList(mContactList);
+                    mGroupList.add(mGroup);
+                }
+
+                if(mGroupList.size() > 0){
+                    mRecyclerView.setVisibility(View.VISIBLE);
+                    emptyTextView.setVisibility(View.GONE);
+                    mGroupAdapter = new GroupAdapter(getActivity(), mGroupList);
+                    mRecyclerView.setAdapter(mGroupAdapter);
+                }
             }
-        }).start();
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }
