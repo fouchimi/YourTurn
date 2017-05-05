@@ -5,7 +5,9 @@
 
     <FrameLayout
         android:id="@+id/imageContainer"
-        android:layout_margin="@dimen/pad_4dp"
+        android:layout_marginTop="@dimen/mar_8dp"
+        android:layout_marginLeft="@dimen/mar_8dp"
+        android:layout_marginRight="@dimen/mar_4dp"
         android:layout_width="?android:attr/listPreferredItemHeight"
         android:layout_height="?android:attr/listPreferredItemHeight">
 
@@ -17,26 +19,104 @@
 
     </FrameLayout>
 
-    <TextView
-        android:id="@+id/group_name"
+    <RelativeLayout
+        android:id="@+id/lastModifiedDateContainer"
+        android:layout_toRightOf="@+id/imageContainer"
+        android:layout_toEndOf="@+id/imageContainer"
         android:layout_width="match_parent"
-        android:layout_height="?android:attr/listPreferredItemHeight"
-        android:ellipsize="end"
-        android:fontFamily="sans-serif-light"
-        android:gravity="center_vertical"
-        android:maxLines="1"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textColor="@android:color/black"
-        android:textSize="22sp"
-        android:padding="@dimen/pad_8dp"
-        android:layout_margin="@dimen/mar_4dp"
-        android:layout_toRightOf="@+id/imageContainer"/>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/mar_4dp">
+
+        <TextView
+            android:id="@+id/last_modified"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="@dimen/mar_8dp"
+            android:layout_marginEnd="@dimen/mar_8dp"
+            android:text="Sunday, 23" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/textContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/lastModifiedDateContainer"
+        android:layout_toRightOf="@+id/imageContainer"
+        android:layout_toEndOf="@+id/imageContainer">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/pad_8dp"
+                android:weightSum="3">
+
+                <TextView
+                    android:id="@+id/group_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-light"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:textColor="@android:color/black"
+                    android:textSize="@dimen/txt_22_sp"
+                    android:paddingLeft="@dimen/pad_8dp"
+                    android:paddingStart="@dimen/pad_8dp" />
+
+                <TextView
+                    android:id="@+id/group_number"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:textSize="@dimen/txt_22_sp"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:layout_marginLeft="@dimen/mar_8dp"
+                    android:layout_marginStart="@dimen/mar_8dp"/>
+
+            </LinearLayout>
+
+            <RelativeLayout
+                android:id="@+id/createdDateContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/createdDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="March 2017"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:paddingBottom="@dimen/mar_8dp"
+                    android:layout_marginRight="@dimen/mar_8dp"
+                    android:layout_marginEnd="@dimen/mar_8dp"/>
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+
+
+    </RelativeLayout>
 
     <View
         android:background="@color/border_grey"
         android:layout_width="match_parent"
         android:layout_height="1px"
-        android:layout_alignBottom="@id/group_name"
+        android:layout_alignBottom="@id/textContainer"
         android:layout_alignParentBottom="true"/>
 
 </RelativeLayout>

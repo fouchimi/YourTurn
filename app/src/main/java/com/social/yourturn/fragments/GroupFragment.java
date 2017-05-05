@@ -1,9 +1,7 @@
 package com.social.yourturn.fragments;
 
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -20,20 +18,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.parse.FindCallback;
-import com.parse.LogInCallback;
-import com.parse.ParseException;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
-import com.parse.ParseUser;
 import com.social.yourturn.GroupListActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.adapters.GroupAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.ParseConstant;
 import com.social.yourturn.models.Group;
 
 import java.util.ArrayList;
@@ -49,11 +38,9 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     private TextView emptyTextView;
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLinearLayout;
-    private ParseUser mCurrentUser;
     private ArrayList<Contact> mContactList = new ArrayList<>();
     private ArrayList<Group> mGroupList = new ArrayList<>();
     private GroupAdapter mGroupAdapter;
-    private String phoneId="", phoneNumber="";
     public static final String GROUP_KEY = "Group";
     private static final int LOADER_ID = 0;
 
@@ -112,45 +99,6 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         getActivity().getSupportLoaderManager().initLoader(0, null, this);
-    }
-
-    private void fetchGroupList(){
-        ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
-        query.whereEqualTo(ParseConstant.CREATOR_COLUMN, mCurrentUser.getUsername());
-        query.orderByDescending(ParseConstant.UPDATED_AT);
-        query.findInBackground(new FindCallback<ParseObject>() {
-            @Override
-            public void done(List<ParseObject> groupList, ParseException e) {
-                if(e == null){
-                    Log.d(TAG, "Size: " + groupList.size());
-                    for(ParseObject contactObject : groupList){
-                        mContactList = new ArrayList<>();
-                        String groupName = contactObject.getString(ParseConstant.GROUP_NAME);
-                        String friendList = contactObject.getString(ParseConstant.MEMBERS_COLUMN);
-                        String groupThumbnail = contactObject.getString(ParseConstant.THUMBNAIL_COLUMN);
-                        String[] chunks = friendList.split(",");
-                        for(String chunk : chunks){
-                            String[] contactStringArray = chunk.split(" ");
-                            Contact  contact = new Contact(contactStringArray[0], contactStringArray[1], contactStringArray[2]);
-                            mContactList.add(contact);
-                        }
-                        Group group = new Group(groupName, mContactList);
-                        mGroupList.add(group);
-                        Log.d(TAG, friendList);
-                    }
-
-                    if(mGroupList.size() > 0){
-                        mRecyclerView.setVisibility(View.VISIBLE);
-                        emptyTextView.setVisibility(View.GONE);
-                        mGroupAdapter = new GroupAdapter(getActivity(), mGroupList);
-                        mRecyclerView.setAdapter(mGroupAdapter);
-                    }
-
-                }else{
-                    Log.d(TAG, e.getMessage());
-                }
-            }
-        });
     }
 
     @Override

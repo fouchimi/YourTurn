@@ -2,7 +2,7 @@
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="layout_margin">8dp</dimen>
     <dimen name="thumbnail_size">60dp</dimen>
-    <dimen name="pic_size">60dp</dimen>
+    <dimen name="pic_size">56dp</dimen>
     <dimen name="check_24dp">24dp</dimen>
     <dimen name="cross_24dp">24dp</dimen>
     <dimen name="check_25dp">25dp</dimen>
@@ -20,4 +20,6 @@
     <dimen name="el_15dp">15dp</dimen>
     <dimen name="mar_24dp">24dp</dimen>
     <dimen name="pad_12dp">12dp</dimen>
+    <dimen name="mar_12dp">12dp</dimen>
+    <dimen name="txt_22_sp">22sp</dimen>
 </resources>
