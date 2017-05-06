@@ -26,5 +26,13 @@
 
     <string name="content_authority">com.social.yourturn</string>
     <string name="createdOn">created on</string>
+    <string name="split_bill">Split the bill</string>
+    <string name="dialog_custom_title">Enter total bill value below</string>
+    <string name="done">Done</string>
+    <string name="cancel">Cancel</string>
+    <string name="custom_dialog_error_validation">Please enter valid numeric value</string>
+    <string name="positive_error_validation">Please enter positive value only</string>
+    <string name="currency">$</string>
+    <string name="zero_default_values">0.00</string>
 
 </resources>

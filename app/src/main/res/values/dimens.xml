@@ -22,4 +22,10 @@
     <dimen name="pad_12dp">12dp</dimen>
     <dimen name="mar_12dp">12dp</dimen>
     <dimen name="txt_22_sp">22sp</dimen>
+    <dimen name="txt_100dp">100dp</dimen>
+    <dimen name="txt_80dp">80dp</dimen>
+    <dimen name="txt_45dp">45dp</dimen>
+    <dimen name="txt_22sp">22sp</dimen>
+    <dimen name="txt_15dp">15dp</dimen>
+    <dimen name="txt_20sp">20sp</dimen>
 </resources>

@@ -12,27 +12,15 @@ import java.io.Serializable;
 public class Contact implements Parcelable, Serializable {
     private String id;
     private String name;
-    private boolean selected;
     private String thumbnailUrl;
     private String phoneNumber;
     private int position;
-
-    public Contact(String id, String name){
-        this.id = id;
-        this.name = name;
-    }
+    private String share;
 
     public Contact(String id, String name, String phoneNumber){
         this.id = id;
         this.name = name;
         this.phoneNumber = phoneNumber;
-    }
-
-    public Contact(String id, String name, String phoneNumber, String thumbnailUrl){
-        this.id = id;
-        this.name = name;
-        this.phoneNumber = phoneNumber;
-        this.thumbnailUrl = thumbnailUrl;
     }
 
     public String getId() {
@@ -55,6 +43,14 @@ public class Contact implements Parcelable, Serializable {
         return  position;
     }
 
+    public String getShare() {
+        return share;
+    }
+
+    public void setShare(String share) {
+        this.share = share;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -65,6 +61,7 @@ public class Contact implements Parcelable, Serializable {
         name = in.readString();
         thumbnailUrl = in.readString();
         phoneNumber  = in.readString();
+        share = in.readString();
     }
 
     @Override
@@ -73,6 +70,7 @@ public class Contact implements Parcelable, Serializable {
         dest.writeString(name);
         dest.writeString(thumbnailUrl);
         dest.writeString(phoneNumber);
+        dest.writeString(share);
     }
 
     public static final Parcelable.Creator<Contact> CREATOR = new Parcelable.Creator<Contact>(){

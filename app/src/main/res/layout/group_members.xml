@@ -18,7 +18,7 @@
                 android:id="@+id/member_thumbnail"
                 android:layout_width="@dimen/pic_size"
                 android:layout_height="@dimen/pic_size"
-                android:padding="16dp"
+                android:padding="@dimen/pad_16dp"
                 android:layout_gravity="center"/>
 
         </FrameLayout>
@@ -26,22 +26,83 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:layout_weight="6"
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/member_name"
-                android:layout_width="match_parent"
+                android:layout_width="@dimen/txt_80dp"
                 android:layout_height="?android:attr/listPreferredItemHeight"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:layout_weight="2"
                 android:fontFamily="sans-serif-light"
                 android:textColor="@android:color/black"
                 android:gravity="center_vertical"
-                android:textSize="22sp"
+                android:textSize="@dimen/txt_22sp"
                 android:layout_marginLeft="@dimen/pad_12dp"
+                android:maxWidth="@dimen/txt_100dp"
                 android:layout_gravity="center"
                 android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/currencyTextView"
+                android:layout_width="@dimen/txt_15dp"
+                android:layout_height="@dimen/txt_45dp"
+                android:textStyle="bold"
+                android:textSize="@dimen/txt_22sp"
+                android:layout_marginLeft="@dimen/mar_4dp"
+                android:layout_gravity="center_vertical"
+                android:gravity="center_vertical"
+                android:layout_marginRight="@dimen/mar_4dp"
+                android:text="@string/currency"/>
+
+            <EditText
+                android:id="@+id/splitValue"
+                android:layout_width="@dimen/txt_45dp"
+                android:layout_height="@dimen/txt_45dp"
+                android:layout_weight="1"
+                android:textSize="@dimen/txt_20sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:fontFamily="sans-serif-light"
+                android:background="@android:color/transparent"
+                android:layout_gravity="center_vertical"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/zero_default_values"/>
+
+            <TextView
+                android:id="@+id/debitRecord"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:gravity="center_horizontal"
+                android:text="@string/zero_default_values"
+                android:textSize="@dimen/txt_20sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/holo_green_dark"
+                android:layout_marginLeft="@dimen/mar_4dp"
+                android:layout_marginRight="@dimen/mar_4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/creditRecord"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:gravity="center_vertical"
+                android:textStyle="bold"
+                android:text="@string/zero_default_values"
+                android:textSize="@dimen/txt_20sp"
+                android:layout_marginLeft="@dimen/mar_4dp"
+                android:layout_marginRight="@dimen/mar_4dp"
+                android:textColor="@android:color/holo_red_dark"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:layout_weight="1"/>
 
         </LinearLayout>
 
