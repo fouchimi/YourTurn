@@ -14,15 +14,14 @@
         android:orientation="horizontal">
 
         <FrameLayout
-            android:layout_width="@dimen/pic_size"
-            android:layout_height="@dimen/pic_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="center">
 
-            <com.social.yourturn.utils.CircularImageView
+            <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/thumbnail"
                 android:layout_width="@dimen/pic_size"
                 android:layout_height="@dimen/pic_size"
-                android:padding="16dp"
                 android:layout_gravity="center_vertical"/>
 
             <RelativeLayout

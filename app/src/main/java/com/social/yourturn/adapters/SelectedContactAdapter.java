@@ -1,6 +1,7 @@
 package com.social.yourturn.adapters;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,11 +11,12 @@ import android.widget.TextView;
 import com.social.yourturn.ContactActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.CircularImageView;
 
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.util.ArrayList;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 
 /**
@@ -37,6 +39,7 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
         final View view = LayoutInflater.from(mContext).inflate(R.layout.contact_item, null);
         final CustomViewHolder viewHolder = new CustomViewHolder(view);
 
+        Log.d(TAG, "");
         viewHolder.deleteIconView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -72,11 +75,11 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
     public static class CustomViewHolder extends RecyclerView.ViewHolder {
         public ImageView  deleteIconView;
         public TextView usernameView;
-        public CircularImageView thumbnailView;
+        public CircleImageView thumbnailView;
 
         public CustomViewHolder(View itemView) {
             super(itemView);
-            this.thumbnailView = (CircularImageView) itemView.findViewById(R.id.thumbnail);
+            this.thumbnailView = (CircleImageView) itemView.findViewById(R.id.thumbnail);
             this.usernameView = (TextView) itemView.findViewById(R.id.username);
             this.deleteIconView = (ImageView) itemView.findViewById(R.id.selected);
         }

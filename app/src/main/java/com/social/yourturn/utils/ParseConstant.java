@@ -23,6 +23,7 @@ public class ParseConstant {
     public static final String CREATOR_COLUMN = "user_id";
     public static final String MEMBERS_COLUMN = "member_id";
     public static final String THUMBNAIL_COLUMN = "group_thumbnail";
+    public static final String GROUP_THUMBNAIL_EXTENSION = "group_thumbnail.png";
 
 
     public static final String UPDATED_AT = "updatedAt";

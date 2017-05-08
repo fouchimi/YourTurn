@@ -12,26 +12,27 @@ import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.format.Time;
 import android.util.Log;
+import android.util.TimingLogger;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.parse.ParseException;
+import com.parse.ParseFile;
 import com.parse.ParseObject;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.social.yourturn.adapters.CustomAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.CircularImageView;
 import com.social.yourturn.utils.ImagePicker;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
@@ -40,6 +41,9 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import de.hdodenhof.circleimageview.CircleImageView;
+import id.zelory.compressor.Compressor;
 
 
 public class GroupActivity extends AppCompatActivity {
@@ -56,12 +60,14 @@ public class GroupActivity extends AppCompatActivity {
     private TextView mGroupTextView;
     private ParseUser mCurrentUser;
     private String friendList = "";
-    private CircularImageView mGroupImageView;
+    private CircleImageView mGroupImageView;
     private File mGroupDirectory = null, thumbnailFile = null;
     private ArrayList<Contact> mContactList;
     private String groupThumbnailPath ="";
     private Vector<ContentValues> cVVectorUsers = new Vector<>();
     private Bitmap mBitmap = null;
+    private byte[] groupImageByteData;
+    private ParseFile pFile = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +83,7 @@ public class GroupActivity extends AppCompatActivity {
         fb = (FloatingActionButton) findViewById(R.id.fab);
         mGroupTextView = (TextView) findViewById(R.id.groupNameText);
         mParticipantView = (TextView) findViewById(R.id.participantsTextView);
-        mGroupImageView = (CircularImageView) findViewById(R.id.groupImageView);
+        mGroupImageView = (CircleImageView) findViewById(R.id.groupImageView);
         mRecyclerView = (RecyclerView) findViewById(R.id.selected_rv);
 
 
@@ -124,12 +130,25 @@ public class GroupActivity extends AppCompatActivity {
                 if(m.find() && groupName.length() > 0){
                     if(isDuplicateGroupName(groupName)){
                         Log.d(TAG, "Duplicate group name");
-                        Toast.makeText(GroupActivity.this, "Duplicate group name", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_error, Toast.LENGTH_SHORT).show();
                         return;
                     }else {
-                        ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
+                        // save file locally
+                        if(thumbnailFile != null){
+                            saveThumbnailFile(thumbnailFile, mBitmap);
+                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                            mBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                            groupImageByteData = stream.toByteArray();
+                            pFile = new ParseFile(ParseConstant.GROUP_THUMBNAIL_EXTENSION, groupImageByteData);
+                        }
+                        //Creating  group object to save remotely
+                        final ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
                         groupTable.put(ParseConstant.GROUP_NAME, groupName);
-                        groupTable.put(ParseConstant.THUMBNAIL_COLUMN, groupThumbnailPath);
+                        if(pFile != null) {
+                            groupTable.put(ParseConstant.THUMBNAIL_COLUMN, pFile);
+                        }else {
+                            groupTable.put(ParseConstant.THUMBNAIL_COLUMN, "");
+                        }
                         groupTable.put(ParseConstant.CREATOR_COLUMN, mCurrentUser.getUsername());
                         groupTable.put(ParseConstant.MEMBERS_COLUMN, friendList);
                         if(cVVectorUsers.size() > 0) {
@@ -148,7 +167,6 @@ public class GroupActivity extends AppCompatActivity {
                                     DateTime dayTime = new DateTime();
 
                                     Vector<ContentValues> cVVector = new Vector<>();
-                                    int i=0;
                                     for(Contact contact : mContactList){
                                         ContentValues groupValues = new ContentValues();
                                         groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
@@ -157,7 +175,7 @@ public class GroupActivity extends AppCompatActivity {
                                             groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnailPath);
                                         groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
                                         groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
-                                        i++;
+                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, contact.getId());
                                         cVVector.add(groupValues);
                                     }
                                     if ( cVVector.size() > 0 ) {
@@ -166,13 +184,11 @@ public class GroupActivity extends AppCompatActivity {
                                         GroupActivity.this.getContentResolver().bulkInsert(YourTurnContract.GroupEntry.CONTENT_URI, cvArray);
                                         Log.d(TAG, "Group Bulk insert successful");
                                     }
-                                    Toast.makeText(GroupActivity.this, "Your new group have been created !", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(GroupActivity.this, R.string.new_group_creation, Toast.LENGTH_LONG).show();
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                     GroupActivity.this.startActivity(intent);
-                                    if(thumbnailFile != null){
-                                        saveThumbnailFile(thumbnailFile, mBitmap);
-                                    }
                                     mGroupTextView.setText("");
+                                    fb.hide();
                                 }else {
                                     Log.d(TAG, e.getMessage());
                                 }
@@ -192,7 +208,11 @@ public class GroupActivity extends AppCompatActivity {
             Log.d(TAG, "Enter group name first");
             Toast.makeText(this, "Please type group name first", Toast.LENGTH_LONG).show();
         }else {
-            if(isGroupCreated(groupName)){
+            if(!isGroupCreated(groupName)){
+                createGroup();
+                Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
+                startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
+            }else {
                 Log.d(TAG, "Choose different group name");
                 Toast.makeText(this, "Duplicate group name", Toast.LENGTH_LONG).show();
                 if(mGroupDirectory.isDirectory()){
@@ -201,10 +221,6 @@ public class GroupActivity extends AppCompatActivity {
                         mGroupDirectory = null;
                     }
                 }
-            }else {
-                createGroup();
-                Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
-                startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
             }
         }
         return;
@@ -212,8 +228,10 @@ public class GroupActivity extends AppCompatActivity {
 
     private boolean isGroupCreated(String groupName){
         mGroupDirectory = new File(Environment.getExternalStorageDirectory(), ParseConstant.YOUR_TURN_FOLDER +  "/" + groupName);
-        if(mGroupDirectory.exists()) return true;
-        return false;
+        if(!mGroupDirectory.exists()){
+            return false;
+        }
+        return true;
     }
 
     private void createGroup(){
@@ -235,7 +253,6 @@ public class GroupActivity extends AppCompatActivity {
             case PICK_IMAGE_ID:
                 mBitmap = ImagePicker.getImageFromResult(this, resultCode, data, mGroupImageView);
                 mGroupImageView.setImageBitmap(mBitmap);
-
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                 String imageFileName = "IMAGE_" + timeStamp + "_";
 
@@ -250,8 +267,11 @@ public class GroupActivity extends AppCompatActivity {
 
     private void saveThumbnailFile(File file, Bitmap bitmap){
         try {
+
             FileOutputStream out = new FileOutputStream(file);
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            mBitmap = Compressor.getDefault(this).compressToBitmap(thumbnailFile);
+            thumbnailFile = Compressor.getDefault(this).compressToFile(thumbnailFile);
             out.flush();
             out.close();
         } catch (Exception e) {

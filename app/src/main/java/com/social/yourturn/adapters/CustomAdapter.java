@@ -11,11 +11,12 @@ import android.widget.TextView;
 
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.CircularImageView;
 
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.util.ArrayList;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 
 /**
@@ -57,14 +58,14 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
     }
 
     public static class CustomViewHolder extends RecyclerView.ViewHolder {
-        public CircularImageView thumbnailView;
+        public CircleImageView thumbnailView;
         public TextView usernameView;
 
         public CustomViewHolder(View itemView) {
             super(itemView);
             Log.d(TAG, String.valueOf(itemView.getX()));
             Log.d(TAG, String.valueOf(itemView.getY()));
-            this.thumbnailView = (CircularImageView) itemView.findViewById(R.id.thumbnail);
+            this.thumbnailView = (CircleImageView) itemView.findViewById(R.id.thumbnail);
             this.usernameView = (TextView) itemView.findViewById(R.id.username);
         }
     }

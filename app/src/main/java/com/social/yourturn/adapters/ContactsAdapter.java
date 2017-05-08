@@ -17,12 +17,13 @@ import android.widget.TextView;
 import com.social.yourturn.ContactActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.CircularImageView;
 
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 
 /**
@@ -56,11 +57,11 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        final View itemLayout = mInflater.inflate(R.layout.contact_layout, parent, false);
+        final View itemLayout = mInflater.from(mContext).inflate(R.layout.contact_layout, parent, false);
 
         final ViewHolder holder = new ViewHolder();
         holder.username = (TextView) itemLayout.findViewById(R.id.username);
-        holder.thumbnail = (CircularImageView) itemLayout.findViewById(R.id.thumbnail);
+        holder.thumbnail = (CircleImageView) itemLayout.findViewById(R.id.thumbnail);
         holder.selected = (ImageView) itemLayout.findViewById(R.id.selected);
 
         itemLayout.setTag(holder);
@@ -142,7 +143,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
     private class ViewHolder {
         TextView username;
         ImageView  selected;
-        CircularImageView thumbnail;
+        CircleImageView thumbnail;
     }
 
 }

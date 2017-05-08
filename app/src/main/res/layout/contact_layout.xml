@@ -12,34 +12,30 @@
         android:layout_width="wrap_content"
         android:layout_height="?android:attr/listPreferredItemHeight"
         android:layout_margin="@dimen/pad_8dp"
+        android:orientation="vertical"
         android:layout_marginBottom="@dimen/mar_4dp">
 
         <FrameLayout
-            android:layout_width="@dimen/pic_size"
-            android:layout_height="@dimen/pic_size">
+            android:layout_width="@dimen/thumbnail_size"
+            android:layout_height="wrap_content">
 
-            <com.social.yourturn.utils.CircularImageView
+            <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/thumbnail"
                 android:layout_width="@dimen/pic_size"
                 android:layout_height="@dimen/pic_size"
-                android:padding="16dp"
-                android:layout_gravity="center"/>
+                android:layout_gravity="center_vertical" />
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <ImageView
-                    android:id="@+id/selected"
-                    android:layout_width="@dimen/check_24dp"
-                    android:layout_height="@dimen/check_24dp"
-                    android:layout_alignParentBottom="true"
-                    android:layout_alignParentRight="true"
-                    android:src="@drawable/ic_check_circle_white_24dp" />
-
-            </RelativeLayout>
+            <ImageView
+                android:id="@+id/selected"
+                android:layout_width="@dimen/check_24dp"
+                android:layout_height="@dimen/check_24dp"
+                android:layout_gravity="end"
+                android:layout_marginTop="@dimen/mar_24dp"
+                android:layout_marginLeft="@dimen/mar_12dp"
+                android:src="@drawable/ic_check_circle_white_24dp" />
 
         </FrameLayout>
+
     </LinearLayout>
 
     <LinearLayout

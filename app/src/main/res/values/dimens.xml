@@ -1,7 +1,7 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="layout_margin">8dp</dimen>
-    <dimen name="thumbnail_size">60dp</dimen>
+    <dimen name="thumbnail_size">62dp</dimen>
     <dimen name="pic_size">56dp</dimen>
     <dimen name="check_24dp">24dp</dimen>
     <dimen name="cross_24dp">24dp</dimen>

@@ -2,8 +2,6 @@ package com.social.yourturn;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.os.Environment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,24 +12,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import com.social.yourturn.adapters.MemberGroupAdapter;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Group;
-import com.social.yourturn.utils.CircularImageView;
-import com.social.yourturn.utils.ParseConstant;
-import com.squareup.picasso.Picasso;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 

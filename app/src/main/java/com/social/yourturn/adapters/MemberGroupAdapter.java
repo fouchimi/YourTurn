@@ -1,26 +1,21 @@
 package com.social.yourturn.adapters;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.social.yourturn.DrawableProvider;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.CircularImageView;
 
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.util.ArrayList;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 /**
  * Created by ousma on 4/22/2017.
@@ -72,13 +67,13 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
 
     public class MemberViewHolder extends RecyclerView.ViewHolder {
         TextView nameTextView;
-        CircularImageView imageView;
+        CircleImageView imageView;
         EditText splitValueEditText;
 
         public MemberViewHolder(View itemView){
             super(itemView);
             nameTextView = (TextView) itemView.findViewById(R.id.member_name);
-            imageView = (CircularImageView) itemView.findViewById(R.id.member_thumbnail);
+            imageView = (CircleImageView) itemView.findViewById(R.id.member_thumbnail);
             splitValueEditText = (EditText) itemView.findViewById(R.id.splitValue);
         }
     }

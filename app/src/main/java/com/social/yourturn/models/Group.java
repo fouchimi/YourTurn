@@ -13,21 +13,11 @@ public class Group implements Parcelable{
     private String name;
     private String thumbnail;
     private long dateInMillis;
+    private String groupCreator;
     private ArrayList<Contact> contactList = new ArrayList<>();
 
     public Group(){
 
-    }
-
-    public Group(String name, String thumbnail, ArrayList<Contact> contactList){
-        this.name = name;
-        this.thumbnail = thumbnail;
-        this.contactList = contactList;
-    }
-
-    public Group(String name, ArrayList<Contact> contactList){
-        this.name = name;
-        this.contactList = contactList;
     }
 
     public String getName() {
@@ -36,6 +26,14 @@ public class Group implements Parcelable{
 
     public String getThumbnail() {
         return thumbnail;
+    }
+
+    public void setGroupCreator(String groupCreator) {
+        this.groupCreator = groupCreator;
+    }
+
+    public String getGroupCreator() {
+        return groupCreator;
     }
 
     public ArrayList<Contact> getContactList() {
@@ -51,6 +49,7 @@ public class Group implements Parcelable{
         name = in.readString();
         thumbnail = in.readString();
         dateInMillis = in.readLong();
+        groupCreator = in.readString();
         in.readTypedList(contactList, Contact.CREATOR);
     }
 
@@ -59,6 +58,7 @@ public class Group implements Parcelable{
         dest.writeString(name);
         dest.writeString(thumbnail);
         dest.writeLong(dateInMillis);
+        dest.writeString(groupCreator);
         dest.writeTypedList(contactList);
     }
 

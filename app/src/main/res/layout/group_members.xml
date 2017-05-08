@@ -10,16 +10,15 @@
         android:layout_margin="@dimen/pad_8dp">
 
         <FrameLayout
-            android:layout_width="@dimen/pic_size"
-            android:layout_height="@dimen/pic_size"
+            android:layout_width="@dimen/thumbnail_size"
+            android:layout_height="wrap_content"
             android:layout_gravity="center">
 
-            <com.social.yourturn.utils.CircularImageView
+            <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/member_thumbnail"
                 android:layout_width="@dimen/pic_size"
                 android:layout_height="@dimen/pic_size"
-                android:padding="@dimen/pad_16dp"
-                android:layout_gravity="center"/>
+                android:layout_gravity="center_vertical"/>
 
         </FrameLayout>
 
@@ -63,6 +62,7 @@
                 android:layout_height="@dimen/txt_45dp"
                 android:layout_weight="1"
                 android:textSize="@dimen/txt_20sp"
+                android:inputType="numberDecimal"
                 android:textStyle="bold"
                 android:textColor="@android:color/black"
                 android:fontFamily="sans-serif-light"
@@ -70,6 +70,7 @@
                 android:layout_gravity="center_vertical"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:scrollHorizontally="true"
                 android:text="@string/zero_default_values"/>
 
             <TextView

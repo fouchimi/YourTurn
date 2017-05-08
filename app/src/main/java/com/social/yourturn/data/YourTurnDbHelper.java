@@ -43,6 +43,7 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 GroupEntry.COLUMN_GROUP_THUMBNAIL + " TEXT NULL, " +
                 GroupEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
                 GroupEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
+                GroupEntry.COLUMN_GROUP_CREATOR + " TEXT NOT NULL, " +
                 "FOREIGN KEY (" + GroupEntry.COLUMN_USER_KEY + ") REFERENCES " +
                 UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE CASCADE ON UPDATE NO ACTION"
                 + ");";
