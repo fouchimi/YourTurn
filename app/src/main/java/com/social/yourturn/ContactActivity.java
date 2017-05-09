@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Build;
@@ -205,9 +206,22 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         if(loader.getId() == ContactsQuery.QUERY_ID){
-            mAdapter.swapCursor(cursor);
-            mTotalContact = cursor.getCount();
-            updateListView(cursor);
+            //Remove duplicates contacts
+            MatrixCursor newCursor = new MatrixCursor(ContactsQuery.PROJECTION);
+            if (cursor.moveToFirst()) {
+                String lastName = "";
+                do {
+                    if (cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)).compareToIgnoreCase(lastName) != 0) {
+
+                        newCursor.addRow(new Object[]{cursor.getString(ContactsQuery.ID), cursor.getString(ContactsQuery.LOOKUP_KEY), cursor.getString(ContactsQuery.DISPLAY_NAME),
+                        cursor.getString(ContactsQuery.PHONE_NUMBER), cursor.getString(ContactsQuery.SORT_KEY)});
+                        lastName =cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                    }
+                } while (cursor.moveToNext());
+            }
+            mAdapter.swapCursor(newCursor);
+            mTotalContact = newCursor.getCount();
+            updateListView(newCursor);
         }
     }
 
@@ -343,10 +357,10 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
 
         @SuppressLint("InlinedApi")
         final static String SELECTION = (Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME) +
-                "<>''" + " AND " +  ContactsContract.CommonDataKinds.Phone.IS_PRIMARY + "=1";
+                "<>''" + " AND " +  ContactsContract.CommonDataKinds.Phone.HAS_PHONE_NUMBER + "=1" + " AND " + ContactsContract.CommonDataKinds.Phone.IN_VISIBLE_GROUP + "=1";
 
         @SuppressLint("InlinedApi")
-        final static String SORT_ORDER = Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + "LIMIT 1";
+        final static String SORT_ORDER = Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE LOCALIZED ASC";
 
         @SuppressLint("InlinedApi")
         final static String[] PROJECTION = {
