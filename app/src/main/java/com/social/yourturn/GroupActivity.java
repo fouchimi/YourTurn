@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -13,7 +14,6 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.util.TimingLogger;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +38,7 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -68,6 +69,8 @@ public class GroupActivity extends AppCompatActivity {
     private Bitmap mBitmap = null;
     private byte[] groupImageByteData;
     private ParseFile pFile = null;
+    private Task mTask = null;
+    private String groupName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,7 +127,7 @@ public class GroupActivity extends AppCompatActivity {
         fb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final String groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
+                groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
                 Pattern p = Pattern.compile("^[a-zA-Z0-9_\\s]+$");
                 Matcher m = p.matcher(groupName);
                 if(m.find() && groupName.length() > 0){
@@ -133,73 +136,41 @@ public class GroupActivity extends AppCompatActivity {
                         Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_error, Toast.LENGTH_SHORT).show();
                         return;
                     }else {
-                        // save file locally
-                        if(thumbnailFile != null){
-                            saveThumbnailFile(thumbnailFile, mBitmap);
-                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                            mBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
-                            groupImageByteData = stream.toByteArray();
-                            pFile = new ParseFile(ParseConstant.GROUP_THUMBNAIL_EXTENSION, groupImageByteData);
-                        }
-                        //Creating  group object to save remotely
-                        final ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
-                        groupTable.put(ParseConstant.GROUP_NAME, groupName);
-                        if(pFile != null) {
-                            groupTable.put(ParseConstant.THUMBNAIL_COLUMN, pFile);
-                        }else {
-                            groupTable.put(ParseConstant.THUMBNAIL_COLUMN, "");
-                        }
-                        groupTable.put(ParseConstant.CREATOR_COLUMN, mCurrentUser.getUsername());
-                        groupTable.put(ParseConstant.MEMBERS_COLUMN, friendList);
-                        if(cVVectorUsers.size() > 0) {
-                            ContentValues[] cvArray = new ContentValues[cVVectorUsers.size()];
-                            cVVectorUsers.toArray(cvArray);
-                            Log.d(TAG, "Users Bulk insert successful");
-                            GroupActivity.this.getContentResolver().bulkInsert(YourTurnContract.UserEntry.CONTENT_URI, cvArray);
-                        }
-                        groupTable.saveInBackground(new SaveCallback() {
-                            @Override
-                            public void done(ParseException e) {
-                                if(e == null){
-                                    Log.d(TAG, "Group Table Created !");
-                                    Intent intent = new Intent(GroupActivity.this, MainActivity.class);
-
-                                    DateTime dayTime = new DateTime();
-
-                                    Vector<ContentValues> cVVector = new Vector<>();
-                                    for(Contact contact : mContactList){
-                                        ContentValues groupValues = new ContentValues();
-                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
-                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getId());
-                                        if(groupThumbnailPath != null)
-                                            groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnailPath);
-                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
-                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
-                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, contact.getId());
-                                        cVVector.add(groupValues);
-                                    }
-                                    if ( cVVector.size() > 0 ) {
-                                        ContentValues[] cvArray = new ContentValues[cVVector.size()];
-                                        cVVector.toArray(cvArray);
-                                        GroupActivity.this.getContentResolver().bulkInsert(YourTurnContract.GroupEntry.CONTENT_URI, cvArray);
-                                        Log.d(TAG, "Group Bulk insert successful");
-                                    }
-                                    Toast.makeText(GroupActivity.this, R.string.new_group_creation, Toast.LENGTH_LONG).show();
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                    GroupActivity.this.startActivity(intent);
-                                    mGroupTextView.setText("");
-                                    fb.hide();
-                                }else {
-                                    Log.d(TAG, e.getMessage());
-                                }
-                            }
-                        });
+                        mTask = new Task();
+                        mTask.execute(thumbnailFile);
                     }
                 }else {
                     Toast.makeText(GroupActivity.this, R.string.required_group_name, Toast.LENGTH_LONG).show();
                 }
             }
         });
+    }
+
+    private void dumpGroupValuesInContentProvider(final String groupName){
+        if(groupName.length() > 0){
+            DateTime dayTime = new DateTime();
+
+            Vector<ContentValues> cVVector = new Vector<>();
+            for(Contact contact : mContactList){
+                ContentValues groupValues = new ContentValues();
+                groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
+                groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getId());
+                if(groupThumbnailPath != null)
+                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnailPath);
+                groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
+                groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
+                groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, contact.getId());
+                cVVector.add(groupValues);
+            }
+            if ( cVVector.size() > 0 ) {
+                ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                cVVector.toArray(cvArray);
+                GroupActivity.this.getContentResolver().bulkInsert(YourTurnContract.GroupEntry.CONTENT_URI, cvArray);
+                Log.d(TAG, "Group Bulk insert successful");
+            }
+        }else {
+            Log.d(TAG, "Group Name cannot be left empty !!!");
+        }
     }
 
     public void snapGroupPhoto(View view){
@@ -269,7 +240,7 @@ public class GroupActivity extends AppCompatActivity {
         try {
 
             FileOutputStream out = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out);
             mBitmap = Compressor.getDefault(this).compressToBitmap(thumbnailFile);
             thumbnailFile = Compressor.getDefault(this).compressToFile(thumbnailFile);
             out.flush();
@@ -278,4 +249,84 @@ public class GroupActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(mTask != null) {
+            if(mTask.getStatus().equals(AsyncTask.Status.RUNNING)){
+                mTask.cancel(true);
+            }
+        }
+    }
+
+    private class Task extends AsyncTask<File, Void, ParseFile>{
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Log.d(TAG, "Task has started !");
+        }
+
+        @Override
+        protected ParseFile doInBackground(File... params) {
+            if(isCancelled()){
+                return null;
+            }else {
+                File thumbnailFile = params[0];
+                if(thumbnailFile != null) {
+                    saveThumbnailFile(thumbnailFile, mBitmap);
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    mBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                    groupImageByteData = stream.toByteArray();
+                    pFile = new ParseFile(ParseConstant.GROUP_THUMBNAIL_EXTENSION, groupImageByteData);
+                }
+            }
+            return pFile;
+        }
+
+        @Override
+        protected void onPostExecute(ParseFile pFile) {
+            super.onPostExecute(pFile);
+            final ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
+            groupTable.put(ParseConstant.GROUP_NAME, groupName);
+            if(pFile != null) {
+                groupTable.put(ParseConstant.THUMBNAIL_COLUMN, pFile);
+            }
+            groupTable.put(ParseConstant.CREATOR_COLUMN, mCurrentUser.getUsername());
+            groupTable.put(ParseConstant.MEMBERS_COLUMN, friendList);
+
+            if(cVVectorUsers.size() > 0) {
+                ContentValues[] cvArray = new ContentValues[cVVectorUsers.size()];
+                cVVectorUsers.toArray(cvArray);
+                Log.d(TAG, "Users bulk insert successful");
+                GroupActivity.this.getContentResolver().bulkInsert(YourTurnContract.UserEntry.CONTENT_URI, cvArray);
+            }
+
+            groupTable.saveInBackground(new SaveCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if(e == null){
+                        Log.d(TAG, "Group table created!");
+                        Intent intent = new Intent(GroupActivity.this, MainActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        dumpGroupValuesInContentProvider(groupName);
+                        Toast.makeText(GroupActivity.this, R.string.new_group_creation, Toast.LENGTH_LONG).show();
+                        GroupActivity.this.startActivity(intent);
+                        fb.hide();
+                        mGroupTextView.setText("");
+                    }else {
+                        Log.d(TAG, e.getMessage());
+                    }
+                }
+            });
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            Log.d(TAG, "Background job cancelled");
+        }
+    }
+
 }
