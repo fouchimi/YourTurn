@@ -38,6 +38,7 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
 
          final String SQL_CREATE_GROUP_TABLE = "CREATE TABLE " + GroupEntry.TABLE_NAME + " (" +
                 GroupEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                GroupEntry.COLUMN_GROUP_ID + " TEXT NOT NULL, " +
                 GroupEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
                 GroupEntry.COLUMN_GROUP_NAME + " TEXT NOT NULL, " +
                 GroupEntry.COLUMN_GROUP_THUMBNAIL + " TEXT NULL, " +

@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.parse.ParseUser;
 import com.social.yourturn.adapters.MemberGroupAdapter;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.models.Contact;
@@ -53,6 +54,10 @@ public class GroupListActivity extends AppCompatActivity {
             Group group = intent.getParcelableExtra(GroupFragment.GROUP_KEY);
             getSupportActionBar().setTitle(group.getName());
             mContactList = group.getContactList();
+            Contact contact = new Contact();
+            contact.setName("You");
+            contact.setPhoneNumber(ParseUser.getCurrentUser().getUsername());
+            mContactList.add(contact);
             mAdapter = new MemberGroupAdapter(this, mContactList);
             mLinearLayout = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
             mRecyclerView.setLayoutManager(mLinearLayout);

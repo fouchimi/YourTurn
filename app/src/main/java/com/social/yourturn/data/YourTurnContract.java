@@ -58,6 +58,7 @@ public class YourTurnContract {
 
         public static final String TABLE_NAME = "groups";
 
+        public static final String COLUMN_GROUP_ID = "group_id";
         public static final String COLUMN_USER_KEY = "usr_contact_id";
         public static final String COLUMN_GROUP_NAME = "group_name";
         public static final String COLUMN_GROUP_THUMBNAIL = "group_thumbnail";

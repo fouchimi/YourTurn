@@ -10,6 +10,7 @@ import java.util.ArrayList;
  */
 
 public class Group implements Parcelable{
+    private String groupId;
     private String name;
     private String thumbnail;
     private long dateInMillis;
@@ -18,6 +19,14 @@ public class Group implements Parcelable{
 
     public Group(){
 
+    }
+
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+    }
+
+    public String getGroupId() {
+        return groupId;
     }
 
     public String getName() {
@@ -46,6 +55,7 @@ public class Group implements Parcelable{
     }
 
     private Group(Parcel in){
+        groupId = in.readString();
         name = in.readString();
         thumbnail = in.readString();
         dateInMillis = in.readLong();
@@ -55,6 +65,7 @@ public class Group implements Parcelable{
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(groupId);
         dest.writeString(name);
         dest.writeString(thumbnail);
         dest.writeLong(dateInMillis);

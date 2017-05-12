@@ -87,6 +87,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 Group mGroup = null;
                 boolean flag = true;
                 while (data.moveToNext()){
+                    String groupId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_ID));
                     String groupName = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME));
                     String groupThumbnail = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL));
                     Log.d(TAG, "Group Thumbnail: " + groupThumbnail);
@@ -102,6 +103,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                     if(!groupNameList.contains(groupName) && flag){
                         groupNameList.add(groupName);
                         mGroup = new Group();
+                        mGroup.setGroupId(groupId);
                         mGroup.setName(groupName);
                         mGroup.setDateInMillis(dateInMillis);
                         if(userId.equals(groupCreatorId)) {
@@ -119,6 +121,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                         mGroupList.add(mGroup);
                         mContactList = new ArrayList<>();
                         mGroup = new Group();
+                        mGroup.setGroupId(groupId);
                         mGroup.setName(groupName);
                         mGroup.setDateInMillis(dateInMillis);
                         if(userId.equals(groupCreatorId)) {

@@ -17,6 +17,10 @@ public class Contact implements Parcelable, Serializable {
     private int position;
     private String share;
 
+    public Contact() {
+
+    }
+
     public Contact(String id, String name, String phoneNumber){
         this.id = id;
         this.name = name;
@@ -27,8 +31,16 @@ public class Contact implements Parcelable, Serializable {
         return id;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public String getPhoneNumber() {

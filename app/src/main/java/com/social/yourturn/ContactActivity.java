@@ -32,6 +32,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.parse.ParseUser;
 import com.social.yourturn.adapters.ContactsAdapter;
 import com.social.yourturn.adapters.SelectedContactAdapter;
 import com.social.yourturn.models.Contact;

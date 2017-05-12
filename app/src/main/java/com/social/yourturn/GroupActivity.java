@@ -150,13 +150,14 @@ public class GroupActivity extends AppCompatActivity {
         });
     }
 
-    private void dumpGroupValuesInContentProvider(final String groupName){
+    private void dumpGroupValuesInContentProvider(final String groupId, final String groupName){
         if(groupName.length() > 0){
             DateTime dayTime = new DateTime();
 
             Vector<ContentValues> cVVector = new Vector<>();
             for(Contact contact : mContactList){
                 ContentValues groupValues = new ContentValues();
+                groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getId());
                 if(groupThumbnailPath != null)
@@ -309,7 +310,7 @@ public class GroupActivity extends AppCompatActivity {
                 public void done(ParseException e) {
                     if(e == null){
                         Log.d(TAG, "Group table created!");
-                        dumpGroupValuesInContentProvider(groupName);
+                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName);
                         Toast.makeText(GroupActivity.this, R.string.new_group_creation, Toast.LENGTH_LONG).show();
                         List<ParseObject> list = new ArrayList<>();
                         for(Contact contact : mContactList){

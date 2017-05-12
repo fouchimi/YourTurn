@@ -63,9 +63,7 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         Group group = mGroupList.get(position);
         Log.d(TAG, group.getName());
         holder.groupName.setText(group.getName());
-        String formattedDate = Utils.formatDate(group.getDateInMillis());
-        holder.groupNumber.setText(String.valueOf(group.getContactList().size()));
-        holder.createdDate.setText(mContext.getString(R.string.createdOn) + " " + formattedDate);
+        holder.groupNumber.setText(String.valueOf(group.getContactList().size()+1));
         if(group.getThumbnail()== null || group.getThumbnail().isEmpty()){
             holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
         }else if(group.getThumbnail().length() > 0 && group.getGroupCreator() != null && group.getGroupCreator().length() > 0) {
@@ -75,7 +73,7 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         }else {
             holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
             ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
-            query.getFirstInBackground(new GetCallback<ParseObject>() {
+            query.getInBackground(group.getGroupId(), new GetCallback<ParseObject>() {
                 @Override
                 public void done(ParseObject object, ParseException e) {
                     ParseFile parseFile = (ParseFile) object.get(ParseConstant.THUMBNAIL_COLUMN);
@@ -101,14 +99,12 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         public CircleImageView groupThumbnail;
         public TextView groupName;
         public TextView groupNumber;
-        public TextView createdDate;
 
         public GroupViewHolder(View itemView) {
             super(itemView);
             this.groupName = (TextView) itemView.findViewById(R.id.group_name);
             this.groupNumber = (TextView) itemView.findViewById(R.id.group_number);
             this.groupThumbnail = (CircleImageView) itemView.findViewById(R.id.group_thumbnail);
-            this.createdDate = (TextView) itemView.findViewById(R.id.createdDate);
         }
     }
 
