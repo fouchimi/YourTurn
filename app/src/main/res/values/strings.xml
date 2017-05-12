@@ -37,5 +37,6 @@
     <string name="duplicate_group_name_error">Duplicate group name</string>
     <string name="new_group_creation">Your new group have been created !</string>
     <string name="duplicate_group_name_err">Duplicate group name</string>
+    <string name="prompt_group_name">Please type group name first</string>
 
 </resources>

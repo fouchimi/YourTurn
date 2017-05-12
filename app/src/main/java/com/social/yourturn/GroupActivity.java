@@ -179,21 +179,21 @@ public class GroupActivity extends AppCompatActivity {
 
     public void snapGroupPhoto(View view){
         final String groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
-        if(groupName.length() <=0 ){
+        Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
+                YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
+        if(c.getCount() > 0){
+            Toast.makeText(this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
+            return;
+        }else if(groupName.length() <= 0) {
             Log.d(TAG, "Enter group name first");
-            Toast.makeText(this, "Please type group name first", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.prompt_group_name, Toast.LENGTH_LONG).show();
+        }else if(!isGroupCreated(groupName)){
+            createGroup();
+            Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
+            startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
         }else {
-            if(!isGroupCreated(groupName)){
-                createGroup();
-                Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
-                startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
-            }else if(isGroupCreated(groupName) && mGroupDirectory.list().length == 0){
-                Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
-                startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
-                Log.d(TAG, "Choose different group name");
-            }else if(isGroupCreated(groupName) && mGroupDirectory.list().length > 0){
-                Toast.makeText(this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
-            }
+            Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
+            startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
         }
         return;
     }
