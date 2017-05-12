@@ -36,5 +36,6 @@
     <string name="zero_default_values">0.00</string>
     <string name="duplicate_group_name_error">Duplicate group name</string>
     <string name="new_group_creation">Your new group have been created !</string>
+    <string name="duplicate_group_name_err">Duplicate group name</string>
 
 </resources>

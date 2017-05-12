@@ -20,10 +20,13 @@ public class ParseConstant {
     // Group table with columns
     public static final String GROUP_TABLE = "Groups";
     public static final String GROUP_NAME = "group_name";
-    public static final String CREATOR_COLUMN = "user_id";
+    public static final String USER_ID = "user_id";
     public static final String MEMBERS_COLUMN = "member_id";
     public static final String THUMBNAIL_COLUMN = "group_thumbnail";
     public static final String GROUP_THUMBNAIL_EXTENSION = "group_thumbnail.png";
+
+    public static final String GROUP_MEMBER_TABLE = "Member_Group";
+    public static final String GROUP_MEMBER_TABLE_ID = "group_id";
 
 
     public static final String UPDATED_AT = "updatedAt";

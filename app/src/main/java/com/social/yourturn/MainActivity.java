@@ -158,8 +158,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "Phone number: " + phoneNumber);
 
                     mCurrentUser = new ParseUser();
-                    mCurrentUser.setUsername(phoneId);
-                    mCurrentUser.setPassword(phoneNumber);
+                    mCurrentUser.setUsername(phoneNumber);
+                    mCurrentUser.setPassword(phoneId);
                     mCurrentUser.put(ParseConstant.USER_ID_COLUMN, phoneId);
                     mCurrentUser.put(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
                     mCurrentUser.put(ParseConstant.USER_THUMBNAIL_COLUMN, "");

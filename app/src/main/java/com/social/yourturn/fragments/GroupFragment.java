@@ -89,6 +89,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 while (data.moveToNext()){
                     String groupName = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME));
                     String groupThumbnail = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL));
+                    Log.d(TAG, "Group Thumbnail: " + groupThumbnail);
                     String groupCreatorId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR));
                     long dateInMillis = data.getLong(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE));
                     String userId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_USER_KEY));
