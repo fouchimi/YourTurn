@@ -2,7 +2,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.social.yourturn.fragments.GroupFragment">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context="com.social.yourturn.fragments.GroupFragment"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    app:layout_scrollFlags="scroll|enterAlways">
 
     <ProgressBar
         android:id="@+id/progressBar"

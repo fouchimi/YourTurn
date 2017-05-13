@@ -7,5 +7,6 @@
     <color name="green">#ff67bf74</color>
     <color name="grey">#eeeeee</color>
     <color name="boldGrey">#9E9E9E</color>
-    <color name="border_grey">#9E9E9E</color>
+    <color name="lightGrey">#E0E0E0</color>
+    <color name="red">#EF5350</color>
 </resources>

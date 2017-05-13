@@ -14,18 +14,24 @@
     <dimen name="txt_62dp">62dp</dimen>
     <dimen name="mar_2dp">2dp</dimen>
     <dimen name="mar_4dp">4dp</dimen>
+    <dimen name="mar_6dp">6dp</dimen>
     <dimen name="mar_8dp">8dp</dimen>
+    <dimen name="mar_9dp">9dp</dimen>
     <dimen name="mar_16dp">16dp</dimen>
+    <dimen name="mar_18dp">18dp</dimen>
+    <dimen name="mar_20dp">20dp</dimen>
     <dimen name="mar_32dp">32dp</dimen>
+    <dimen name="mar_60dp">60dp</dimen>
+    <dimen name="mar_72dp">72dp</dimen>
     <dimen name="el_15dp">15dp</dimen>
     <dimen name="mar_24dp">24dp</dimen>
     <dimen name="pad_12dp">12dp</dimen>
     <dimen name="mar_12dp">12dp</dimen>
-    <dimen name="txt_22_sp">22sp</dimen>
     <dimen name="txt_100dp">100dp</dimen>
     <dimen name="txt_80dp">80dp</dimen>
     <dimen name="txt_45dp">45dp</dimen>
     <dimen name="txt_22sp">22sp</dimen>
-    <dimen name="txt_15dp">15dp</dimen>
+    <dimen name="txt_15sp">15dp</dimen>
     <dimen name="txt_20sp">20sp</dimen>
+    <dimen name="w_15dp">15dp</dimen>
 </resources>

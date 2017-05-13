@@ -39,5 +39,9 @@
     <string name="duplicate_group_name_err">Duplicate group name</string>
     <string name="prompt_group_name">Please type group name first</string>
     <string name="edit_profile">Edit profile</string>
+    <string name="profile_text">Profile</string>
+    <string name="username">Fouchimi Ousmane</string>
+    <string name="edit_your_name">Edit your name</string>
+    <string name="profile_warning">This is not your username or pin, this name will be visible to your YourTurn contacts only.</string>
 
 </resources>
