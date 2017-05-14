@@ -72,6 +72,7 @@ public class GroupActivity extends AppCompatActivity {
     private Task mTask = null;
     private String groupName;
     private int saveCount = 0;
+    private Intent chooseImageIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,12 +133,19 @@ public class GroupActivity extends AppCompatActivity {
                 Pattern p = Pattern.compile("^[a-zA-Z0-9_\\s]+$");
                 Matcher m = p.matcher(groupName);
                 if(m.find() && groupName.length() > 0){
-                    if(isDuplicateGroupName(groupName)){
-                        Log.d(TAG, "Duplicate group name");
-                        Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_error, Toast.LENGTH_SHORT).show();
+                    Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
+                            YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
+                    if(c.getCount() > 0){
+                        Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
                         return;
-                    }else {
+                    } else {
                         if(saveCount == 0){
+                            if(!isGroupCreated(groupName)) createGroup();
+                            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                            String imageFileName = "IMAGE_" + timeStamp + "_";
+
+                            groupThumbnailPath = imageFileName + timeStamp + ".jpg";
+                            thumbnailFile = new File(mGroupDirectory, groupThumbnailPath);
                             saveCount++;
                             mTask = new Task();
                             mTask.execute(thumbnailFile);
@@ -179,24 +187,11 @@ public class GroupActivity extends AppCompatActivity {
     }
 
     public void snapGroupPhoto(View view){
-        final String groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
-        Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
-                YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
-        if(c.getCount() > 0){
-            Toast.makeText(this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
-            return;
-        }else if(groupName.length() <= 0) {
-            Log.d(TAG, "Enter group name first");
-            Toast.makeText(this, R.string.prompt_group_name, Toast.LENGTH_LONG).show();
-        }else if(!isGroupCreated(groupName)){
-            createGroup();
-            Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
-            startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
-        }else {
-            Intent chooseImageIntent = ImagePicker.getPickImageIntent(this);
-            startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
+        if(mBitmap != null) {
+            mGroupImageView.setImageResource(R.drawable.ic_group_black_36dp);
         }
-        return;
+        chooseImageIntent = ImagePicker.getPickImageIntent(this);
+        startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
     }
 
     private boolean isGroupCreated(String groupName){
@@ -213,12 +208,6 @@ public class GroupActivity extends AppCompatActivity {
         }
     }
 
-    private boolean isDuplicateGroupName(String groupName){
-        Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
-                YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
-        if(c.getCount() > 0) return true;
-        else return false;
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -226,11 +215,6 @@ public class GroupActivity extends AppCompatActivity {
             case PICK_IMAGE_ID:
                 mBitmap = ImagePicker.getImageFromResult(this, resultCode, data, mGroupImageView);
                 mGroupImageView.setImageBitmap(mBitmap);
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-                String imageFileName = "IMAGE_" + timeStamp + "_";
-
-                groupThumbnailPath = imageFileName + timeStamp + ".jpg";
-                thumbnailFile = new File(mGroupDirectory, groupThumbnailPath);
                 break;
             default:
                 super.onActivityResult(requestCode, resultCode, data);

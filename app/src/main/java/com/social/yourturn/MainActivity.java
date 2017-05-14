@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -204,6 +206,18 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
         if (id == R.id.action_edit_profile) {
             Intent intent = new Intent(this, ProfileActivity.class);
+            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+            phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
+            Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
+                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
+            if(c.getCount() <= 0) {
+                Log.d(TAG, "No records found !");
+/*                String username = c.getString(c.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+                intent.putExtra(ParseConstant.USERNAME_COLUMN, username);*/
+                intent.putExtra(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
+            }else {
+
+            }
             startActivity(intent);
             return true;
         }

@@ -59,9 +59,15 @@
             android:syncable="true" />
 
         <activity
-            android:screenOrientation="portrait"
+            android:name=".ProfileActivity"
             android:parentActivityName=".MainActivity"
-            android:name=".ProfileActivity"></activity>
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:screenOrientation="portrait"
+            android:parentActivityName=".ProfileActivity"
+            android:name=".EditProfileNameActivity"
+            android:windowSoftInputMode="adjustResize"/>
     </application>
 
 </manifest>

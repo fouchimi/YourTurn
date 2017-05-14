@@ -28,6 +28,7 @@ public class ParseConstant {
     public static final String GROUP_MEMBER_TABLE = "Member_Group";
     public static final String GROUP_MEMBER_TABLE_ID = "group_id";
 
+    public static final String COLUMN_NAME = "name";
 
     public static final String UPDATED_AT = "updatedAt";
     public static final String CREATED_AT = "createdAt";
