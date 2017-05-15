@@ -164,14 +164,13 @@ public class MainActivity extends AppCompatActivity {
                     mCurrentUser.setPassword(phoneId);
                     mCurrentUser.put(ParseConstant.USER_ID_COLUMN, phoneId);
                     mCurrentUser.put(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
-                    mCurrentUser.put(ParseConstant.USER_THUMBNAIL_COLUMN, "");
 
                     //Save login credentials in Shared Preferences document
                     SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
 
                     SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putString(ParseConstant.USERNAME_COLUMN, phoneId);
-                    editor.putString(ParseConstant.PASSWORD_COLUMN, phoneNumber);
+                    editor.putString(ParseConstant.USERNAME_COLUMN, phoneNumber);
+                    editor.putString(ParseConstant.PASSWORD_COLUMN, phoneId);
                     editor.commit();
 
                     mCurrentUser.signUpInBackground(new SignUpCallback() {
@@ -212,8 +211,6 @@ public class MainActivity extends AppCompatActivity {
                     YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
             if(c.getCount() <= 0) {
                 Log.d(TAG, "No records found !");
-/*                String username = c.getString(c.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
-                intent.putExtra(ParseConstant.USERNAME_COLUMN, username);*/
                 intent.putExtra(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
             }else {
 

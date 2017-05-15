@@ -18,13 +18,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.parse.GetCallback;
+import com.parse.LogInCallback;
+import com.parse.ParseException;
+import com.parse.ParseFile;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.parse.SaveCallback;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.utils.ImagePicker;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.io.FileUtils;
+import org.joda.time.DateTime;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,7 +44,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class ProfileActivity extends AppCompatActivity {
 
     private static final String TAG = ProfileActivity.class.getSimpleName();
-    private String phoneNumber = "";
+    private String phoneNumber, phoneId;
     private TextView usernameTextView;
     private CircleImageView mImageProfileView;
     private TextView phoneNumberTextView;
@@ -45,6 +53,9 @@ public class ProfileActivity extends AppCompatActivity {
     private File mProfileDir, profilePicFile;
     private static final String USER_PROFILE_DIR = "user_profile";
     private String groupThumbnailPath;
+    private byte[] groupImageByteData;
+    private ParseFile pFile;
+    private ParseUser mCurrentUser;
 
     private static final  int PICK_IMAGE_ID = 2014;
 
@@ -65,8 +76,33 @@ public class ProfileActivity extends AppCompatActivity {
         phoneNumberTextView = (TextView) findViewById(R.id.phoneNumberField);
         mImageProfileView = (CircleImageView) findViewById(R.id.profile_picture);
 
-        phoneNumber = ParseUser.getCurrentUser().getUsername();
+        mCurrentUser = ParseUser.getCurrentUser();
 
+        if(mCurrentUser != null) {
+            phoneNumber = mCurrentUser.getUsername();
+        }else {
+            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+            phoneNumber = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
+            phoneId = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
+
+            ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
+                @Override
+                public void done(ParseUser user, ParseException e) {
+                    if(e == null){
+                        mCurrentUser = user;
+                    }else {
+                        Log.d(TAG, e.getMessage());
+                    }
+                }
+            });
+        }
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "On Resume");
         phoneNumberTextView.setText(phoneNumber);
         Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
                 YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
@@ -137,6 +173,10 @@ public class ProfileActivity extends AppCompatActivity {
             try {
                 FileOutputStream out = new FileOutputStream(params[0]);
                 mBitmap.compress(Bitmap.CompressFormat.JPEG, 70, out);
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                mBitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
+                groupImageByteData = stream.toByteArray();
+                pFile = new ParseFile(ParseConstant.GROUP_THUMBNAIL_EXTENSION, groupImageByteData);
                 out.flush();
                 out.close();
             } catch (Exception e) {
@@ -152,14 +192,54 @@ public class ProfileActivity extends AppCompatActivity {
                 mImageProfileView.setImageBitmap(bitmap);
 
                 //save in content provider
-                ContentValues userProfileValues = new ContentValues();
-                userProfileValues.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, groupThumbnailPath);
-                int id =  getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, userProfileValues,
-                        YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null);
-                if(id > 0) {
-                    Log.d(TAG, String.valueOf(id));
-                    Toast.makeText(ProfileActivity.this, R.string.thumbnail_updated_msg, Toast.LENGTH_SHORT).show();
+                ContentValues userValues = new ContentValues();
+                DateTime dayTime = new DateTime();
+                int id;
+                Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
+                if(cursor.getCount() <=0 ){
+                    // Insert
+                    Log.d(TAG, "Not available in content provider");
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, 0);
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, phoneNumber);
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, groupThumbnailPath);
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
+                    getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, userValues);
+                }else {
+                    // Update
+                    Log.d(TAG, "Updating content provider");
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, groupThumbnailPath);
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
+                    getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, userValues,
+                            YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + phoneNumber, null);
                 }
+
+                Toast.makeText(ProfileActivity.this, R.string.thumbnail_updated_msg, Toast.LENGTH_SHORT).show();
+
+                ParseQuery<ParseUser> query = ParseUser.getQuery();
+                query.whereEqualTo(ParseConstant.USERNAME_COLUMN, phoneNumber);
+                query.getFirstInBackground(new GetCallback<ParseUser>() {
+                    @Override
+                    public void done(ParseUser currentUser, ParseException e) {
+                        if(e == null) {
+                            Log.d(TAG, "Found User");
+                            if(pFile != null) {
+                                currentUser.put(ParseConstant.USER_THUMBNAIL_COLUMN, pFile);
+                            }
+                            currentUser.saveInBackground(new SaveCallback() {
+                                @Override
+                                public void done(ParseException e) {
+                                    if(e == null) {
+                                        Toast.makeText(ProfileActivity.this, R.string.thumbnail_updated_msg, Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                        }else {
+                            Log.d(TAG, "No results found !");
+                            Log.d(TAG, e.getMessage());
+                        }
+                    }
+                });
             }
         }
     }
