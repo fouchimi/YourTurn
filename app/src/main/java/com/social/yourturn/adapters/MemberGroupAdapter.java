@@ -1,6 +1,9 @@
 package com.social.yourturn.adapters;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,11 +11,15 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.social.yourturn.R;
+import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -45,7 +52,16 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
         Contact contact = mContactList.get(position);
         String displayName = contact.getName();
         if(displayName != null) displayName = displayName.toLowerCase();
-        holder.imageView.setImageResource(R.drawable.default_profile);
+        Cursor cursor = mContext.getContentResolver().
+                query(YourTurnContract.UserEntry.CONTENT_URI, null,
+                        YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
+        cursor.moveToNext();
+        String thumbnail = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL));
+        if(cursor.getCount() > 0 && thumbnail != null && thumbnail.length() > 0) {
+            Glide.with(mContext).load(new File(Environment.getExternalStorageDirectory().toString() + "/" + ParseConstant.USER_PROFILE_DIR + "/" +  thumbnail)).into(holder.imageView);
+        }else {
+            holder.imageView.setImageResource(R.drawable.default_profile);
+        }
         holder.nameTextView.setText(WordUtils.capitalize(displayName, null));
         if(contact.getShare() == null || contact.getShare().length() == 0) {
             holder.splitValueEditText.setText(mContext.getString(R.string.zero_default_values));
@@ -77,4 +93,5 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
             splitValueEditText = (EditText) itemView.findViewById(R.id.splitValue);
         }
     }
+
 }

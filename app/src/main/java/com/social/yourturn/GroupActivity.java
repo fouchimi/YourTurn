@@ -1,7 +1,9 @@
 package com.social.yourturn;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
@@ -18,6 +20,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseObject;
@@ -52,7 +55,7 @@ public class GroupActivity extends AppCompatActivity {
     private final static String TAG = GroupActivity.class.getSimpleName();
     private static final int PICK_IMAGE_ID = 12;
     private RecyclerView mRecyclerView;
-    private final static int NUM_COLUMS = 5;
+    private final static int NUM_COLUMNS = 5;
     private CustomAdapter mAdapter;
     private TextView mParticipantView ;
     private int selectedCount = 0;
@@ -70,7 +73,7 @@ public class GroupActivity extends AppCompatActivity {
     private byte[] groupImageByteData;
     private ParseFile pFile = null;
     private Task mTask = null;
-    private String groupName;
+    private String groupName, phoneId, phoneNumber;
     private int saveCount = 0;
     private Intent chooseImageIntent;
 
@@ -91,11 +94,40 @@ public class GroupActivity extends AppCompatActivity {
         mGroupImageView = (CircleImageView) findViewById(R.id.groupImageView);
         mRecyclerView = (RecyclerView) findViewById(R.id.selected_rv);
 
-
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, NUM_COLUMS));
+        mRecyclerView.setLayoutManager(new GridLayoutManager(this, NUM_COLUMNS));
 
         mCurrentUser = ParseUser.getCurrentUser();
-        Log.d(TAG, "Username: " + mCurrentUser.getUsername());
+        /*Log.d(TAG, "Username: " + mCurrentUser.getUsername());
+        mCurrentUser = ParseUser.getCurrentUser();
+        Log.d(TAG, "Username: " + mCurrentUser.getUsername());*/
+
+        if(mCurrentUser == null) {
+            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+            phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
+            phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
+
+            Log.d(TAG, "Phone ID from Shared Preferences: " + phoneId);
+            Log.d(TAG, "Phone Number from Shared Preferences: " + phoneNumber);
+
+            if(!phoneId.equals("") && !phoneNumber.equals("")){
+                ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
+                    @Override
+                    public void done(ParseUser user, ParseException e) {
+                        if(e == null){
+                            mCurrentUser = user;
+                            Log.d(TAG, "Current User: " + mCurrentUser.getUsername());
+                        }else {
+                            Log.d(TAG, e.getMessage());
+                            //Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+            }
+        }else {
+            Log.d(TAG, "Username: " + mCurrentUser.getUsername());
+        }
+
+        /*mRecyclerView.setLayoutManager(new GridLayoutManager(this, NUM_COLUMS));
 
         Intent intent = getIntent();
         if(intent != null) {
@@ -123,10 +155,10 @@ public class GroupActivity extends AppCompatActivity {
             mParticipantView.setText(mParticipantView.getText().toString() + " " +  selectedCount + "/" + totalContact);
             mAdapter = new CustomAdapter(this, mContactList);
             mRecyclerView.setAdapter(mAdapter);
-        }
+        }*/
 
 
-        fb.setOnClickListener(new View.OnClickListener() {
+        /*fb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
@@ -155,7 +187,7 @@ public class GroupActivity extends AppCompatActivity {
                     Toast.makeText(GroupActivity.this, R.string.required_group_name, Toast.LENGTH_LONG).show();
                 }
             }
-        });
+        });*/
     }
 
     private void dumpGroupValuesInContentProvider(final String groupId, final String groupName){

@@ -8,7 +8,7 @@ import com.parse.ParseInstallation;
  * Created by ousmane on 4/18/17.
  */
 
-public class ParseAppplication extends Application {
+public class ParseApplication extends Application {
 
     @Override
     public void onCreate() {
@@ -18,7 +18,7 @@ public class ParseAppplication extends Application {
         Parse.initialize(new Parse.Configuration.Builder(this)
                 .applicationId(getString(R.string.app_id))
                 .server(getString(R.string.server))
-                .clientKey("")
+                .clientKey(null)
                 .build());
 
         // Need to register GCM token

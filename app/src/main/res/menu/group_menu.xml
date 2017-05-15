@@ -5,6 +5,14 @@
     tools:context="social.com.yourturn.GroupListActivity">
 
     <item
+        android:id="@+id/validateButton"
+        android:orderInCategory="98"
+        android:title="@string/validate"
+        android:visible="false"
+        android:icon="@drawable/ic_check_circle"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/splitMenuAction"
         android:orderInCategory="99"
         android:title="@string/split_bill"

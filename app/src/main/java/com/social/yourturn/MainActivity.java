@@ -171,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putString(ParseConstant.USERNAME_COLUMN, phoneNumber);
                     editor.putString(ParseConstant.PASSWORD_COLUMN, phoneId);
-                    editor.commit();
+                    editor.apply();
 
                     mCurrentUser.signUpInBackground(new SignUpCallback() {
                         @Override

@@ -16,6 +16,9 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.parse.FunctionCallback;
+import com.parse.ParseCloud;
+import com.parse.ParseException;
 import com.parse.ParseUser;
 import com.social.yourturn.adapters.MemberGroupAdapter;
 import com.social.yourturn.fragments.GroupFragment;
@@ -26,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class GroupListActivity extends AppCompatActivity {
 
@@ -35,6 +39,7 @@ public class GroupListActivity extends AppCompatActivity {
     private ArrayList<Contact> mContactList = new ArrayList<>();
     private Toolbar mActionBarToolbar;
     private LinearLayoutManager mLinearLayout;
+    private boolean isVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +73,8 @@ public class GroupListActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.group_menu, menu);
+        MenuItem item = menu.findItem(R.id.validateButton);
+        item.setVisible(isVisible);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -79,6 +86,27 @@ public class GroupListActivity extends AppCompatActivity {
                 return true;
             case R.id.splitMenuAction :
                 showDialogBox();
+                return true;
+            case R.id.validateButton :
+                // Kick off push notification here
+                String recipients ="";
+                for(Contact contact : mContactList){
+                    recipients += contact.getPhoneNumber()+",";
+                }
+                recipients = recipients.substring(0, recipients.length()-1);
+                HashMap<String, Object> payload = new HashMap<>();
+                payload.put("title", ParseUser.getCurrentUser().getUsername());
+                payload.put("alert", "First push");
+                payload.put("recipients", recipients);
+                ParseCloud.callFunctionInBackground("pushChannel", payload, new FunctionCallback<String>() {
+                    @Override
+                    public void done(String success, ParseException e) {
+                        if(e == null){
+                            Log.d(TAG, "Push notification sent successfully");
+                            Toast.makeText(GroupListActivity.this, "Push sent successfully !!!", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -106,12 +134,13 @@ public class GroupListActivity extends AppCompatActivity {
                         }else {
                             Log.d(TAG, "" + floatValue);
                             for(Contact contact : mContactList){
-                                DecimalFormat df = new DecimalFormat();
-                                df.setMaximumFractionDigits(2);
+                                DecimalFormat df = new DecimalFormat("#.00");
 
                                 contact.setShare(df.format((floatValue / mContactList.size())));
                             }
                             mAdapter.notifyDataSetChanged();
+                            isVisible = true;
+                            invalidateOptionsMenu();
                         }
                     }else {
                         Toast.makeText(getApplicationContext(), R.string.custom_dialog_error_validation, Toast.LENGTH_LONG).show();

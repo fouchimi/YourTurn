@@ -32,4 +32,7 @@ public class ParseConstant {
 
     public static final String UPDATED_AT = "updatedAt";
     public static final String CREATED_AT = "createdAt";
+
+    //Directory constants
+    public static final String USER_PROFILE_DIR = "user_profile";
 }

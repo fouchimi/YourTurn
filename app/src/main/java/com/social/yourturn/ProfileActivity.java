@@ -51,7 +51,6 @@ public class ProfileActivity extends AppCompatActivity {
     private Intent chooseImageIntent;
     private Bitmap mBitmap = null;
     private File mProfileDir, profilePicFile;
-    private static final String USER_PROFILE_DIR = "user_profile";
     private String groupThumbnailPath;
     private byte[] groupImageByteData;
     private ParseFile pFile;
@@ -111,7 +110,7 @@ public class ProfileActivity extends AppCompatActivity {
             usernameTextView.setText(cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME)));
             String thumbnail = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL));
             if(thumbnail != null && thumbnail.length() > 0) {
-                Glide.with(this).load(new File(Environment.getExternalStorageDirectory().toString() + "/" + USER_PROFILE_DIR + "/" +  thumbnail)).into(mImageProfileView);
+                Glide.with(this).load(new File(Environment.getExternalStorageDirectory().toString() + "/" + ParseConstant.USER_PROFILE_DIR + "/" +  thumbnail)).into(mImageProfileView);
             }
         }
     }
@@ -134,7 +133,7 @@ public class ProfileActivity extends AppCompatActivity {
         switch(requestCode) {
             case PICK_IMAGE_ID:
                 mBitmap = ImagePicker.getImageFromResult(this, resultCode, data, mImageProfileView);
-                mProfileDir = new File(Environment.getExternalStorageDirectory().toString()+ "/" + USER_PROFILE_DIR);
+                mProfileDir = new File(Environment.getExternalStorageDirectory().toString()+ "/" + ParseConstant.USER_PROFILE_DIR);
                 if(mProfileDir != null && !mProfileDir.exists()){
                     mProfileDir.mkdirs();
                 }else {
