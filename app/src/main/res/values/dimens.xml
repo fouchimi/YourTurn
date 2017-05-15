@@ -17,6 +17,7 @@
     <dimen name="mar_6dp">6dp</dimen>
     <dimen name="mar_8dp">8dp</dimen>
     <dimen name="mar_9dp">9dp</dimen>
+    <dimen name="mar_15dp">15dp</dimen>
     <dimen name="mar_16dp">16dp</dimen>
     <dimen name="mar_18dp">18dp</dimen>
     <dimen name="mar_20dp">20dp</dimen>
@@ -34,4 +35,8 @@
     <dimen name="txt_15sp">15dp</dimen>
     <dimen name="txt_20sp">20sp</dimen>
     <dimen name="w_15dp">15dp</dimen>
+    <dimen name="profile_pic_size">180dp</dimen>
+
+    <dimen name="design_fab_size_mini">40dp</dimen>
+    <dimen name="h_200dp">200dp</dimen>
 </resources>

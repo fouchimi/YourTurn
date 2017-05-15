@@ -48,5 +48,7 @@
     <string name="cancel_text">Cancel</string>
     <string name="edit_name">Edit Name</string>
     <string name="your_yourturn_contact_name">Your YourTurn contact name</string>
+    <string name="choose_profile_image">Choose profile Image</string>
+    <string name="thumbnail_updated_msg">thumbnail updated !</string>
 
 </resources>

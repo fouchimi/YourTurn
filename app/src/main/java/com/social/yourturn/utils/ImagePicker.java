@@ -32,7 +32,7 @@ public class ImagePicker {
     private static final String TAG  = ImagePicker.class.getSimpleName();
     private static final String TEMP_IMAGE_NAME ="tempImage";
 
-    public static Intent getPickImageIntent(Context context){
+    public static Intent getPickImageIntent(Context context, String title){
         Intent chooserIntent = null;
         List<Intent> intentList = new ArrayList<>();
 
@@ -47,7 +47,7 @@ public class ImagePicker {
 
         if(intentList.size() > 0){
             int index = intentList.size() - 1;
-            chooserIntent = Intent.createChooser(intentList.remove(index), context.getString(R.string.pick_image_intent_text));
+            chooserIntent = Intent.createChooser(intentList.remove(index), title);
             chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentList.toArray(new Parcelable[]{}));
         }
 

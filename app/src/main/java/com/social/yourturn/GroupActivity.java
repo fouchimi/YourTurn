@@ -190,7 +190,7 @@ public class GroupActivity extends AppCompatActivity {
         if(mBitmap != null) {
             mGroupImageView.setImageResource(R.drawable.ic_group_black_36dp);
         }
-        chooseImageIntent = ImagePicker.getPickImageIntent(this);
+        chooseImageIntent = ImagePicker.getPickImageIntent(this, getString(R.string.pick_image_intent_text));
         startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
     }
 
