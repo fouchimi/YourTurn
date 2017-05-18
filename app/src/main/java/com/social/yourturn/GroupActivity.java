@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
@@ -20,10 +21,14 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.parse.GetCallback;
 import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.social.yourturn.adapters.CustomAdapter;
@@ -42,6 +47,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -97,10 +103,87 @@ public class GroupActivity extends AppCompatActivity {
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, NUM_COLUMNS));
 
         mCurrentUser = ParseUser.getCurrentUser();
-        /*Log.d(TAG, "Username: " + mCurrentUser.getUsername());
-        mCurrentUser = ParseUser.getCurrentUser();
-        Log.d(TAG, "Username: " + mCurrentUser.getUsername());*/
 
+        login();
+
+        Intent intent = getIntent();
+        if(intent != null) {
+            mContactList = intent.getParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT);
+            DateTime dayTime = new DateTime();
+            String contactPhoneNumber = null;
+            for(Contact contact : mContactList) {
+                ContentValues userValues = new ContentValues();
+                PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+                try {
+                    contactPhoneNumber = phoneUtil.format(phoneUtil.parse(contact.getPhoneNumber(), Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+                    Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(contactPhoneNumber), null, null);
+                    if(c != null && c.getCount() == 0) {
+                        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, contactPhoneNumber);
+                        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, contact.getId());
+                        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, contact.getName());
+                        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
+                        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
+                        cVVectorUsers.add(userValues);
+                    }
+                    if(c != null) c.close();
+                } catch (NumberParseException e) {
+                    e.printStackTrace();
+                }
+
+                StringBuilder builder = new StringBuilder();
+                builder.append(contact.getId());
+                builder.append(":");
+                builder.append(contact.getName());
+                builder.append(":");
+                builder.append(contactPhoneNumber);
+                builder.append(",");
+                friendList +=  builder.toString();
+            }
+            friendList = friendList.substring(0, friendList.length()-1);
+            Log.d(TAG, friendList);
+            Bundle bundle = intent.getExtras();
+            selectedCount = mContactList.size();
+            totalContact = bundle.getInt(ContactActivity.TOTAL_COUNT);
+            mParticipantView.setText(mParticipantView.getText().toString() + " " +  selectedCount + "/" + totalContact);
+            mAdapter = new CustomAdapter(this, mContactList);
+            mRecyclerView.setAdapter(mAdapter);
+        }
+
+
+        fb.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
+                Pattern p = Pattern.compile("^[a-zA-Z0-9_\\s]+$");
+                Matcher m = p.matcher(groupName);
+                if(m.find() && groupName.length() > 0){
+                    Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
+                            YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
+                    if(c != null && c.getCount() > 0){
+                        Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
+                        return;
+                    } else {
+                        if(saveCount == 0){
+                            if(!isGroupCreated(groupName)) createGroup();
+                            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                            String imageFileName = "IMAGE_" + timeStamp + "_";
+
+                            groupThumbnailPath = imageFileName + timeStamp + ".jpg";
+                            thumbnailFile = new File(mGroupDirectory, groupThumbnailPath);
+                            saveCount++;
+                            mTask = new Task();
+                            mTask.execute(thumbnailFile);
+                        }
+                    }
+                    if(c != null ) c.close();
+                }else {
+                    Toast.makeText(GroupActivity.this, R.string.required_group_name, Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    private void login(){
         if(mCurrentUser == null) {
             SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
             phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
@@ -126,71 +209,9 @@ public class GroupActivity extends AppCompatActivity {
         }else {
             Log.d(TAG, "Username: " + mCurrentUser.getUsername());
         }
-
-        /*mRecyclerView.setLayoutManager(new GridLayoutManager(this, NUM_COLUMS));
-
-        Intent intent = getIntent();
-        if(intent != null) {
-            mContactList = intent.getParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT);
-            DateTime dayTime = new DateTime();
-            for(Contact contact : mContactList) {
-                ContentValues userValues = new ContentValues();
-                Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                        YourTurnContract.UserEntry.COLUMN_USER_ID + " = " + DatabaseUtils.sqlEscapeString(contact.getId()), null, null);
-                if(c.getCount() == 0) {
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, contact.getPhoneNumber());
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, contact.getId());
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, contact.getName());
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
-                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
-                    cVVectorUsers.add(userValues);
-                }
-                friendList +=  contact.getId()+ " " + contact.getName() + " " + contact.getPhoneNumber() + ",";
-            }
-            friendList = friendList.substring(0, friendList.length()-1);
-            Log.d(TAG, friendList);
-            Bundle bundle = intent.getExtras();
-            selectedCount = mContactList.size();
-            totalContact = bundle.getInt(ContactActivity.TOTAL_COUNT);
-            mParticipantView.setText(mParticipantView.getText().toString() + " " +  selectedCount + "/" + totalContact);
-            mAdapter = new CustomAdapter(this, mContactList);
-            mRecyclerView.setAdapter(mAdapter);
-        }*/
-
-
-        /*fb.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
-                Pattern p = Pattern.compile("^[a-zA-Z0-9_\\s]+$");
-                Matcher m = p.matcher(groupName);
-                if(m.find() && groupName.length() > 0){
-                    Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
-                            YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
-                    if(c.getCount() > 0){
-                        Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
-                        return;
-                    } else {
-                        if(saveCount == 0){
-                            if(!isGroupCreated(groupName)) createGroup();
-                            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-                            String imageFileName = "IMAGE_" + timeStamp + "_";
-
-                            groupThumbnailPath = imageFileName + timeStamp + ".jpg";
-                            thumbnailFile = new File(mGroupDirectory, groupThumbnailPath);
-                            saveCount++;
-                            mTask = new Task();
-                            mTask.execute(thumbnailFile);
-                        }
-                    }
-                }else {
-                    Toast.makeText(GroupActivity.this, R.string.required_group_name, Toast.LENGTH_LONG).show();
-                }
-            }
-        });*/
     }
 
-    private void dumpGroupValuesInContentProvider(final String groupId, final String groupName){
+    private void dumpGroupValuesInContentProvider(final String groupId, final String groupName, final String groupThumbnail){
         if(groupName.length() > 0){
             DateTime dayTime = new DateTime();
 
@@ -199,12 +220,20 @@ public class GroupActivity extends AppCompatActivity {
                 ContentValues groupValues = new ContentValues();
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
-                groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getId());
-                if(groupThumbnailPath != null)
-                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnailPath);
+
+                PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+                try {
+                    String contactPhoneNumber = phoneUtil.format(phoneUtil.parse(contact.getPhoneNumber(), Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+                    String currentPhoneNumber = phoneUtil.format(phoneUtil.parse(getCurrentPhoneNumber(), Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contactPhoneNumber);
+                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, currentPhoneNumber);
+                }catch (NumberParseException e){
+                    Log.d(TAG, e.getMessage());
+                }
+
+                groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnail);
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
-                groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, contact.getId());
                 cVVector.add(groupValues);
             }
             if ( cVVector.size() > 0 ) {
@@ -309,9 +338,9 @@ public class GroupActivity extends AppCompatActivity {
             final ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
             groupTable.put(ParseConstant.GROUP_NAME, groupName);
             if(pFile != null) {
-                groupTable.put(ParseConstant.THUMBNAIL_COLUMN, pFile);
+                groupTable.put(ParseConstant.GROUP_THUMBNAIL_COLUMN, pFile);
             }
-            groupTable.put(ParseConstant.USER_ID, mCurrentUser.getUsername());
+            groupTable.put(ParseConstant.USER_ID_COLUMN, mCurrentUser.getUsername());
             groupTable.put(ParseConstant.MEMBERS_COLUMN, friendList);
 
             if(cVVectorUsers.size() > 0) {
@@ -326,14 +355,43 @@ public class GroupActivity extends AppCompatActivity {
                 public void done(ParseException e) {
                     if(e == null){
                         Log.d(TAG, "Group table created!");
-                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName);
-                        Toast.makeText(GroupActivity.this, R.string.new_group_creation, Toast.LENGTH_LONG).show();
+
+                        ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
+                        query.getInBackground(groupTable.getObjectId(), new GetCallback<ParseObject>() {
+                            @Override
+                            public void done(ParseObject row, ParseException e) {
+                                if(e == null){
+                                    ParseFile parseFile = (ParseFile) row.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
+                                    if(parseFile != null) {
+                                        String imageUrl = parseFile.getUrl();
+                                        Uri imageUri = Uri.parse(imageUrl);
+                                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, imageUri.toString());
+                                    }else {
+                                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, "");
+                                    }
+                                    Toast.makeText(GroupActivity.this, R.string.new_group_creation, Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+
                         List<ParseObject> list = new ArrayList<>();
+                        Contact currentContact = new Contact();
+                        currentContact.setPhoneNumber(getCurrentPhoneNumber());
+
+                        mContactList.add(currentContact);
                         for(Contact contact : mContactList){
                             final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
                             member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
-                            member_group_table.put(ParseConstant.USER_ID, contact.getPhoneNumber());
-                            list.add(member_group_table);
+                            String contactPhoneNumber = null;
+                            PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+                            try {
+                                contactPhoneNumber = phoneUtil.format(phoneUtil.parse(contact.getPhoneNumber(), Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+                                member_group_table.put(ParseConstant.USER_ID_COLUMN, contactPhoneNumber);
+                                list.add(member_group_table);
+                            } catch (NumberParseException ex) {
+                                Log.d(TAG, ex.getMessage());
+                                ex.printStackTrace();
+                            }
                         }
 
                         ParseObject.saveAllInBackground(list, new SaveCallback() {
@@ -360,6 +418,11 @@ public class GroupActivity extends AppCompatActivity {
             super.onCancelled();
             Log.d(TAG, "Background job cancelled");
         }
+    }
+
+    public String getCurrentPhoneNumber(){
+        SharedPreferences sharedRef = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
+        return sharedRef.getString(ParseConstant.USERNAME_COLUMN, "");
     }
 
 }

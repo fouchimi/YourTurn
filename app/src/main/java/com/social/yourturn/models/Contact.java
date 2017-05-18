@@ -16,6 +16,7 @@ public class Contact implements Parcelable, Serializable {
     private String phoneNumber;
     private int position;
     private String share;
+    private boolean isOwner;
 
     public Contact() {
 
@@ -25,6 +26,10 @@ public class Contact implements Parcelable, Serializable {
         this.id = id;
         this.name = name;
         this.phoneNumber = phoneNumber;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getId() {
@@ -63,6 +68,22 @@ public class Contact implements Parcelable, Serializable {
         this.share = share;
     }
 
+    public boolean isOwner() {
+        return isOwner;
+    }
+
+    public void setOwner(boolean owner) {
+        isOwner = owner;
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
+
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -74,6 +95,7 @@ public class Contact implements Parcelable, Serializable {
         thumbnailUrl = in.readString();
         phoneNumber  = in.readString();
         share = in.readString();
+        isOwner = in.readByte() != 0;
     }
 
     @Override
@@ -83,6 +105,8 @@ public class Contact implements Parcelable, Serializable {
         dest.writeString(thumbnailUrl);
         dest.writeString(phoneNumber);
         dest.writeString(share);
+        dest.writeByte((byte) (isOwner ? 1 : 0));
+
     }
 
     public static final Parcelable.Creator<Contact> CREATOR = new Parcelable.Creator<Contact>(){

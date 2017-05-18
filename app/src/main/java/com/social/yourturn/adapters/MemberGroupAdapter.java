@@ -3,8 +3,11 @@ package com.social.yourturn.adapters;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +15,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.parse.FindCallback;
+import com.parse.GetCallback;
+import com.parse.GetDataCallback;
+import com.parse.ParseException;
+import com.parse.ParseFile;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
 import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
@@ -21,6 +32,7 @@ import org.apache.commons.lang3.text.WordUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -52,16 +64,25 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
         Contact contact = mContactList.get(position);
         String displayName = contact.getName();
         if(displayName != null) displayName = displayName.toLowerCase();
-        Cursor cursor = mContext.getContentResolver().
-                query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                        YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
-        cursor.moveToNext();
-        String thumbnail = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL));
-        if(cursor.getCount() > 0 && thumbnail != null && thumbnail.length() > 0) {
-            Glide.with(mContext).load(new File(Environment.getExternalStorageDirectory().toString() + "/" + ParseConstant.USER_PROFILE_DIR + "/" +  thumbnail)).into(holder.imageView);
-        }else {
-            holder.imageView.setImageResource(R.drawable.default_profile);
-        }
+        holder.imageView.setImageResource(R.drawable.default_profile);
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
+        query.getFirstInBackground(new GetCallback<ParseUser>() {
+            @Override
+            public void done(ParseUser user, ParseException e) {
+                if(e == null){
+                    ParseFile parseFile = (ParseFile) user.get(ParseConstant.USER_THUMBNAIL_COLUMN);
+                    if(parseFile != null) {
+                        String imageUrl = parseFile.getUrl();
+                        Uri imageUri = Uri.parse(imageUrl);
+                        Glide.with(mContext).load(imageUri.toString()).into(holder.imageView);
+                    }
+                }else {
+                    Log.d(TAG, e.getMessage());
+                }
+            }
+        });
+
         holder.nameTextView.setText(WordUtils.capitalize(displayName, null));
         if(contact.getShare() == null || contact.getShare().length() == 0) {
             holder.splitValueEditText.setText(mContext.getString(R.string.zero_default_values));

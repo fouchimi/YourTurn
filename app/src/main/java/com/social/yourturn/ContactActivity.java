@@ -32,6 +32,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.parse.ParseUser;
 import com.social.yourturn.adapters.ContactsAdapter;
 import com.social.yourturn.adapters.SelectedContactAdapter;
@@ -39,7 +41,9 @@ import com.social.yourturn.models.Contact;
 import com.social.yourturn.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import jp.wasabeef.recyclerview.adapters.AlphaInAnimationAdapter;
 import jp.wasabeef.recyclerview.animators.FadeInAnimator;
@@ -210,13 +214,18 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
             //Remove duplicates contacts
             MatrixCursor newCursor = new MatrixCursor(ContactsQuery.PROJECTION);
             if (cursor.moveToFirst()) {
-                String lastName = "";
+                HashMap<String, String> map = new HashMap<>();
+                String lastname = "";
                 do {
-                    if (cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)).compareToIgnoreCase(lastName) != 0) {
+                    if (!cursor.getString(ContactsQuery.DISPLAY_NAME).equalsIgnoreCase(lastname)) {
+                        newCursor.addRow(new Object[]{
+                                cursor.getString(ContactsQuery.ID),
+                                cursor.getString(ContactsQuery.LOOKUP_KEY),
+                                cursor.getString(ContactsQuery.DISPLAY_NAME),
+                                cursor.getString(ContactsQuery.PHONE_NUMBER),
+                                cursor.getString(ContactsQuery.SORT_KEY)});
 
-                        newCursor.addRow(new Object[]{cursor.getString(ContactsQuery.ID), cursor.getString(ContactsQuery.LOOKUP_KEY), cursor.getString(ContactsQuery.DISPLAY_NAME),
-                        cursor.getString(ContactsQuery.PHONE_NUMBER), cursor.getString(ContactsQuery.SORT_KEY)});
-                        lastName =cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                        lastname = cursor.getString(ContactsQuery.DISPLAY_NAME);
                     }
                 } while (cursor.moveToNext());
             }
@@ -358,7 +367,7 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
 
         @SuppressLint("InlinedApi")
         final static String SELECTION = (Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME) +
-                "<>''" + " AND " +  ContactsContract.CommonDataKinds.Phone.HAS_PHONE_NUMBER + "=1" + " AND " + ContactsContract.CommonDataKinds.Phone.IN_VISIBLE_GROUP + "=1";
+                "<>''" + " AND " + ContactsContract.Contacts.IN_VISIBLE_GROUP + " = '" + ("1") + "'" + " AND " + ContactsContract.CommonDataKinds.Phone.HAS_PHONE_NUMBER;
 
         @SuppressLint("InlinedApi")
         final static String SORT_ORDER = Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE LOCALIZED ASC";

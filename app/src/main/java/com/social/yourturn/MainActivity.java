@@ -2,7 +2,6 @@ package com.social.yourturn;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,7 +11,6 @@ import android.database.DatabaseUtils;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
@@ -24,16 +22,16 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
-import android.text.format.Time;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.parse.LogInCallback;
 import com.parse.ParseException;
-import com.parse.ParseObject;
 import com.parse.ParseUser;
 import com.parse.SignUpCallback;
 import com.social.yourturn.data.YourTurnContract;
@@ -41,7 +39,7 @@ import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.fragments.LatestUpdateFragment;
 import com.social.yourturn.utils.ParseConstant;
 
-import java.io.File;
+import java.util.Locale;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -93,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
             //Display dialog box here
         }
 
-        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
         phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
         phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
 
@@ -155,18 +153,24 @@ public class MainActivity extends AppCompatActivity {
 
                     phoneId = mDeviceMetaData.split(" ")[0];
                     phoneNumber = mDeviceMetaData.split(" ")[1];
-
+                    PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+                    try {
+                        phoneNumber = phoneUtil.format(phoneUtil.parse(phoneNumber, Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+                    } catch (NumberParseException e) {
+                        Log.d(TAG, e.getMessage());
+                        e.printStackTrace();
+                    }
                     Log.d(TAG, "Phone Id: " + phoneId);
                     Log.d(TAG, "Phone number: " + phoneNumber);
 
                     mCurrentUser = new ParseUser();
                     mCurrentUser.setUsername(phoneNumber);
                     mCurrentUser.setPassword(phoneId);
-                    mCurrentUser.put(ParseConstant.USER_ID_COLUMN, phoneId);
+                    mCurrentUser.put(ParseConstant.DEVICE_ID_COLUMN, phoneId);
                     mCurrentUser.put(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
 
                     //Save login credentials in Shared Preferences document
-                    SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+                    SharedPreferences sharedPref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
 
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putString(ParseConstant.USERNAME_COLUMN, phoneNumber);
@@ -209,12 +213,11 @@ public class MainActivity extends AppCompatActivity {
             phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
             Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
                     YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
-            if(c.getCount() <= 0) {
+            if(c != null && c.getCount() <= 0) {
                 Log.d(TAG, "No records found !");
                 intent.putExtra(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
-            }else {
-
             }
+            if(c != null) c.close();
             startActivity(intent);
             return true;
         }

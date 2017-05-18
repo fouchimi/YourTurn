@@ -4,7 +4,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.support.v4.widget.CursorAdapter;
+import android.telephony.PhoneNumberUtils;
 import android.text.style.TextAppearanceSpan;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,14 +16,18 @@ import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.social.yourturn.ContactActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.utils.Utils;
 
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -90,7 +96,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         final ViewHolder holder = (ViewHolder) view.getTag();
         final String contactId = cursor.getString(ContactActivity.ContactsQuery.ID);
         final String displayName = cursor.getString(ContactActivity.ContactsQuery.DISPLAY_NAME).toUpperCase();
-        final String phoneNumber = cursor.getString(ContactActivity.ContactsQuery.PHONE_NUMBER);
+        String phoneNumber = cursor.getString(ContactActivity.ContactsQuery.PHONE_NUMBER);
         Contact contact = new Contact(contactId, displayName, phoneNumber);
         contact.setPosition((mPosition++) % getCount());
         contactList.add(contact);

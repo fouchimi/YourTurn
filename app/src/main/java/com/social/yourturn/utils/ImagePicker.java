@@ -16,8 +16,6 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.ImageView;
 
-import com.social.yourturn.R;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -31,6 +29,9 @@ public class ImagePicker {
 
     private static final String TAG  = ImagePicker.class.getSimpleName();
     private static final String TEMP_IMAGE_NAME ="tempImage";
+    private static final int DEFAULT_MIN_WIDTH_QUALITY = 400;
+    public static int minWidthQuality = DEFAULT_MIN_WIDTH_QUALITY;
+
 
     public static Intent getPickImageIntent(Context context, String title){
         Intent chooserIntent = null;
@@ -68,19 +69,13 @@ public class ImagePicker {
 
     private static Bitmap getImageResized(Context context, Uri selectedImage, ImageView imageView) {
         Bitmap bm = null;
-        int targetImageViewWidth = imageView.getWidth();
-        int targetImageViewHeight = imageView.getHeight();
-
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        int cameraImageWidth = bmOptions.outWidth;
-        int cameraImageHeight = bmOptions.outHeight;
-
-        int scaleFactor = Math.min(cameraImageWidth/targetImageViewWidth, cameraImageHeight/targetImageViewHeight);
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inJustDecodeBounds = false;
-
-        bm = decodeBitmap(context, selectedImage, scaleFactor);
+        int[] sampleSizes = new int[]{5, 3, 2, 1};
+        int i = 0;
+        do {
+            bm = decodeBitmap(context, selectedImage, sampleSizes[i]);
+            Log.d(TAG, "resizer: new bitmap width = " + bm.getWidth());
+            i++;
+        } while (bm.getWidth() < minWidthQuality && i < sampleSizes.length);
         return bm;
     }
 
@@ -147,8 +142,7 @@ public class ImagePicker {
         if (rotation != 0) {
             Matrix matrix = new Matrix();
             matrix.postRotate(rotation);
-            Bitmap bmOut = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
-            return bmOut;
+            return Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
         }
         return bm;
     }

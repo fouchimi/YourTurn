@@ -62,9 +62,11 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
     @Override
     public void onBindViewHolder(CustomViewHolder holder, int position) {
         Contact contact = mContactList.get(position);
-        final String displayName = contact.getName();
-        holder.thumbnailView.setImageResource(R.drawable.default_profile);
-        holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
+        if(contact != null) {
+            final String displayName = contact.getName();
+            holder.thumbnailView.setImageResource(R.drawable.default_profile);
+            holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
+        }
     }
 
     @Override

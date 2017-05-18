@@ -49,7 +49,9 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
         Log.d(TAG, String.valueOf(position));
 
         holder.thumbnailView.setImageResource(R.drawable.default_profile);
-        holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
+        if(displayName != null) {
+            holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
+        }
     }
 
     @Override

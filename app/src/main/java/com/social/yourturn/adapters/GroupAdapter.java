@@ -2,14 +2,15 @@ package com.social.yourturn.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.net.Uri;
-import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -20,13 +21,11 @@ import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.social.yourturn.GroupListActivity;
 import com.social.yourturn.R;
+import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.models.Group;
 import com.social.yourturn.utils.ParseConstant;
-import com.social.yourturn.utils.Utils;
-import com.squareup.picasso.Picasso;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -63,26 +62,29 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         Group group = mGroupList.get(position);
         Log.d(TAG, group.getName());
         holder.groupName.setText(group.getName());
-        holder.groupNumber.setText(String.valueOf(group.getContactList().size()+1));
-        if(group.getThumbnail()== null || group.getThumbnail().isEmpty()){
-            holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
-        }else if(group.getThumbnail().length() > 0 && group.getGroupCreator() != null && group.getGroupCreator().length() > 0) {
-            File file = new File(Environment.getExternalStorageDirectory()+ "/"+ ParseConstant.YOUR_TURN_FOLDER + "/" + group.getName() + "/" + group.getThumbnail());
-            Log.d(TAG, file.getName());
-            Glide.with(mContext).load(file).into(holder.groupThumbnail);
-        }else {
-            holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
-            ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
-            query.getInBackground(group.getGroupId(), new GetCallback<ParseObject>() {
-                @Override
-                public void done(ParseObject object, ParseException e) {
-                    ParseFile parseFile = (ParseFile) object.get(ParseConstant.THUMBNAIL_COLUMN);
+
+        Cursor cursor = mContext.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(getCurrentPhoneNumber()), null, null);
+
+        if(cursor != null && cursor.getCount() > 0) {
+            holder.groupNumber.setText(String.valueOf(group.getContactList().size()));
+        }else holder.groupNumber.setText(String.valueOf(group.getContactList().size()+1));
+
+        cursor.close();
+
+        ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
+        query.getInBackground(group.getGroupId(), new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject object, ParseException e) {
+                ParseFile parseFile = (ParseFile) object.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
+                if(parseFile != null) {
                     String imageUrl = parseFile.getUrl();
                     Uri imageUri = Uri.parse(imageUrl);
                     Glide.with(mContext).load(imageUri.toString()).into(holder.groupThumbnail);
+                }else {
+                    holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
                 }
-            });
-        }
+            }
+        });
 
     }
 
@@ -116,8 +118,15 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
             int itemPosition = mRecyclerView.getChildLayoutPosition(v);
             Group group = getGroup(itemPosition);
             intent.putExtra(GroupFragment.GROUP_KEY, group);
+
+            intent.putExtra(ParseConstant.USERNAME_COLUMN, getCurrentPhoneNumber());
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             mContext.startActivity(intent);
         }
+    }
+
+    private String getCurrentPhoneNumber(){
+        SharedPreferences sharedPref = mContext.getSharedPreferences(mContext.getString(R.string.user_credentials), Context.MODE_PRIVATE);
+        return  sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
     }
 }
