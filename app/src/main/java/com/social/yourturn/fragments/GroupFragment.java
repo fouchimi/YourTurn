@@ -9,6 +9,7 @@ import android.database.DatabaseUtils;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -58,11 +59,13 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     private TextView emptyTextView;
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLinearLayout;
-    private ArrayList<Contact> mContactList;
-    private ArrayList<Group> mGroupList;
+    private ArrayList<Contact> mContactList = new ArrayList<>();
+    private ArrayList<Group> mGroupList = new ArrayList<>();
     private GroupAdapter mGroupAdapter;
     public static final String GROUP_KEY = "Group";
     private static final int LOADER_ID = 0;
+    private Handler handler = new Handler();
+    private boolean isDirty = false;
 
     public GroupFragment() {
         // Required empty public constructor
@@ -89,7 +92,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        getActivity().getSupportLoaderManager().initLoader(0, null, this);
+        getActivity().getSupportLoaderManager().initLoader(LOADER_ID, null, this);
     }
 
     @Override
@@ -106,83 +109,91 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
             if(data == null){
                 Log.d(TAG, "Empty cursor");
             }else {
-                mGroupList = new ArrayList<>();
-                mContactList = new ArrayList<>();
-                String groupId = null, groupName = null, groupThumbnail = null, groupCreator = null, userId = null;
-                String lastGroupId ="";
-                long dateInMillis = 0L;
-                Group group = null;
-
-                for(data.moveToFirst(); !data.isAfterLast(); data.moveToNext()){
-                    groupId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_ID));
-                    groupName = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME));
-                    groupThumbnail = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL));
-                    groupCreator = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR));
-                    dateInMillis = data.getLong(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE));
-                    userId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_USER_KEY));
-
-                    Cursor userCursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                            YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(userId), null, null);
-                    if(userCursor != null && userCursor.getCount() > 0){
-                        userCursor.moveToFirst();
-                        String contactId = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_ID));
-                        String username = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
-                        String phoneNumber = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
-                        Contact contact = new Contact(contactId, username, phoneNumber);
-                        if(lastGroupId.isEmpty() || groupId.equals(lastGroupId)) {
-                            lastGroupId = groupId;
-                            mContactList.add(contact);
-                        }else {
-                            lastGroupId = groupId;
-                            mContactList = new ArrayList<>();
-                            mContactList.add(contact);
-                        }
-                        userCursor.close();
-                    }
-
-                    if(mGroupList.isEmpty()){
-                        group = new Group();
-                        group.setGroupId(groupId);
-                        group.setName(groupName);
-                        group.setThumbnail(groupThumbnail);
-                        group.setGroupCreator(groupCreator);
-                        group.setDateInMillis(dateInMillis);
-                        group.setGroupUserRef(userId);
-                        group.setContactList(mContactList);
-                        mGroupList.add(group);
-                    }else if (mGroupList.size() > 0 && mGroupList.get(mGroupList.size() -1).getGroupId().equals(groupId)) continue;
-                    else {
-                        group = new Group();
-                        group.setGroupId(groupId);
-                        group.setName(groupName);
-                        group.setThumbnail(groupThumbnail);
-                        group.setGroupCreator(groupCreator);
-                        group.setDateInMillis(dateInMillis);
-                        group.setGroupUserRef(userId);
-                        group.setContactList(mContactList);
-                        mGroupList.add(group);
-                    }
-
-                }
-
-                if(mGroupList.size() > 0) {
-                    mRecyclerView.setVisibility(View.VISIBLE);
-                    emptyTextView.setVisibility(View.GONE);
-                    mGroupAdapter = new GroupAdapter(getActivity(), mGroupList, mRecyclerView);
-                    mRecyclerView.setAdapter(mGroupAdapter);
-                }
+                loadData(data);
             }
+        }
+    }
+
+    private void loadData(Cursor data) {
+        mContactList = new ArrayList<>();
+        mGroupList = new ArrayList<>();
+        String groupId = null, groupName = null, groupThumbnail = null, groupCreator = null, userId = null;
+        String lastGroupId ="";
+        long dateInMillis = 0L;
+        Group group = null;
+
+        for(data.moveToFirst(); !data.isAfterLast(); data.moveToNext()){
+            groupId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_ID));
+            groupName = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME));
+            groupThumbnail = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL));
+            groupCreator = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR));
+            dateInMillis = data.getLong(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE));
+            userId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_USER_KEY));
+
+            Cursor userCursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
+                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(userId), null, null);
+            if(userCursor != null && userCursor.getCount() > 0){
+                userCursor.moveToFirst();
+                String contactId = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_ID));
+                String username = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+                String phoneNumber = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
+                Contact contact = new Contact(contactId, username, phoneNumber);
+                if(lastGroupId.isEmpty() || groupId.equals(lastGroupId)) {
+                    lastGroupId = groupId;
+                    mContactList.add(contact);
+                }else {
+                    lastGroupId = groupId;
+                    mContactList = new ArrayList<>();
+                    mContactList.add(contact);
+                }
+                userCursor.close();
+            }
+
+            if(mGroupList.isEmpty()){
+                group = new Group();
+                group.setGroupId(groupId);
+                group.setName(groupName);
+                group.setThumbnail(groupThumbnail);
+                group.setGroupCreator(groupCreator);
+                group.setDateInMillis(dateInMillis);
+                group.setGroupUserRef(userId);
+                group.setContactList(mContactList);
+                mGroupList.add(group);
+            }else if (mGroupList.size() > 0 && mGroupList.get(mGroupList.size() -1).getGroupId().equals(groupId)) continue;
+            else {
+                group = new Group();
+                group.setGroupId(groupId);
+                group.setName(groupName);
+                group.setThumbnail(groupThumbnail);
+                group.setGroupCreator(groupCreator);
+                group.setDateInMillis(dateInMillis);
+                group.setGroupUserRef(userId);
+                group.setContactList(mContactList);
+                mGroupList.add(group);
+            }
+
+        }
+
+        if(mGroupList.size() > 0) {
+            mRecyclerView.setVisibility(View.VISIBLE);
+            emptyTextView.setVisibility(View.GONE);
+            mGroupAdapter = new GroupAdapter(getActivity(), mGroupList, mRecyclerView);
+            mRecyclerView.setAdapter(mGroupAdapter);
         }
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, GroupFragment.this);
+        fetchLatestGroup();
+    }
+
+    private void fetchLatestGroup(){
         ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_MEMBER_TABLE);
         query.whereEqualTo(ParseConstant.USER_ID_COLUMN, getCurrentPhoneNumber());
 
@@ -194,7 +205,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                         ParseQuery<ParseObject> groupQuery = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
                         groupQuery.getInBackground(row.getString(ParseConstant.GROUP_MEMBER_TABLE_ID), new GetCallback<ParseObject>() {
                             @Override
-                            public void done(ParseObject groupRow, ParseException e) {
+                            public void done(final ParseObject groupRow, ParseException e) {
                                 if(e == null) {
                                     final String groupId = groupRow.getObjectId();
                                     final String groupName = groupRow.getString(ParseConstant.GROUP_NAME);
@@ -203,7 +214,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                                     final String members = groupRow.getString(ParseConstant.MEMBERS_COLUMN);
 
                                     String[] membersArray = members.split(",");
-                                    final List<Contact> membersList = new ArrayList<>();
+                                    final ArrayList<Contact> membersList = new ArrayList<>();
                                     for(String member : membersArray) {
                                         String[] contactArray = member.split(":");
                                         Contact contact = new Contact(contactArray[0], contactArray[1], contactArray[2]);
@@ -281,7 +292,8 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
 
                                                     if(groupCursor != null) groupCursor.close();
 
-                                                    getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, GroupFragment.this);
+                                                }else {
+                                                    Log.d(TAG, e.getMessage());
                                                 }
                                             }
                                         });
@@ -289,6 +301,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                                     }else {
                                         Log.d(TAG, "Record was already inserted");
                                     }
+
                                 }else {
                                     Log.d(TAG, e.getMessage());
                                 }
