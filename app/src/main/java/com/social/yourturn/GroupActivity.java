@@ -163,16 +163,72 @@ public class GroupActivity extends AppCompatActivity {
                         Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
                         return;
                     } else {
-                        if(saveCount == 0){
+                        if(saveCount == 0 && mBitmap != null){
                             if(!isGroupCreated(groupName)) createGroup();
                             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                             String imageFileName = "IMAGE_" + timeStamp + "_";
 
                             groupThumbnailPath = imageFileName + timeStamp + ".jpg";
                             thumbnailFile = new File(mGroupDirectory, groupThumbnailPath);
-                            saveCount++;
                             mTask = new Task();
                             mTask.execute(thumbnailFile);
+                            saveCount++;
+                        }else {
+                            Log.d(TAG, "No icon chosen !!");
+                            final ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
+                            groupTable.put(ParseConstant.GROUP_NAME, groupName);
+                            groupTable.put(ParseConstant.USER_ID_COLUMN, getCurrentPhoneNumber());
+                            groupTable.put(ParseConstant.MEMBERS_COLUMN, friendList);
+
+                            if(cVVectorUsers.size() > 0) {
+                                ContentValues[] cvArray = new ContentValues[cVVectorUsers.size()];
+                                cVVectorUsers.toArray(cvArray);
+                                Log.d(TAG, "Users bulk insert successful");
+                                GroupActivity.this.getContentResolver().bulkInsert(YourTurnContract.UserEntry.CONTENT_URI, cvArray);
+                            }
+
+                            groupTable.saveInBackground(new SaveCallback() {
+                                @Override
+                                public void done(ParseException e) {
+                                    if(e == null){
+                                        Log.d(TAG, "Group table created!");
+                                        List<ParseObject> list = new ArrayList<>();
+                                        Contact currentContact = new Contact();
+                                        currentContact.setPhoneNumber(getCurrentPhoneNumber());
+                                        mContactList.add(currentContact);
+
+                                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, "");
+                                        for(Contact contact : mContactList){
+                                            final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
+                                            member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
+                                            String contactPhoneNumber = null;
+                                            PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+                                            try {
+                                                contactPhoneNumber = phoneUtil.format(phoneUtil.parse(contact.getPhoneNumber(), Locale.getDefault().getCountry()),
+                                                        PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+                                                member_group_table.put(ParseConstant.USER_ID_COLUMN, contactPhoneNumber);
+                                                list.add(member_group_table);
+                                            } catch (NumberParseException ex) {
+                                                Log.d(TAG, ex.getMessage());
+                                                ex.printStackTrace();
+                                            }
+                                        }
+
+                                        ParseObject.saveAllInBackground(list, new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if(e == null) {
+                                                    Intent intent = new Intent(GroupActivity.this, MainActivity.class);
+                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                                    GroupActivity.this.startActivity(intent);
+                                                    fb.hide();
+                                                    mGroupTextView.setText("");
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            });
                         }
                     }
                     if(c != null ) c.close();
@@ -275,7 +331,11 @@ public class GroupActivity extends AppCompatActivity {
         switch(requestCode) {
             case PICK_IMAGE_ID:
                 mBitmap = ImagePicker.getImageFromResult(this, resultCode, data, mGroupImageView);
-                mGroupImageView.setImageBitmap(mBitmap);
+                if(mBitmap == null) {
+                    mGroupImageView.setImageResource(R.drawable.ic_group_black_36dp);
+                }else {
+                    mGroupImageView.setImageBitmap(mBitmap);
+                }
                 break;
             default:
                 super.onActivityResult(requestCode, resultCode, data);

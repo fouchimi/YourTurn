@@ -210,7 +210,7 @@ public class ProfileActivity extends AppCompatActivity {
                     userValues.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, groupThumbnailPath);
                     userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
                     getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, userValues,
-                            YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + phoneNumber, null);
+                            YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(phoneNumber), null);
                 }
 
                 Toast.makeText(ProfileActivity.this, R.string.thumbnail_updated_msg, Toast.LENGTH_SHORT).show();
