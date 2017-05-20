@@ -9,12 +9,12 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
-    <permission android:name="${packageName}.permission.C2D_MESSAGE"
-        android:protectionLevel="signature" />
+    <permission android:name="com.social.yourturn.permission.C2D_MESSAGE" android:protectionLevel="signature" />
+    <uses-permission android:name="com.social.yourturn.permission.C2D_MESSAGE" />
 
-    <uses-permission android:name="${packageName}.permission.C2D_MESSAGE" />
 
     <application
         android:name=".ParseApplication"
@@ -59,17 +59,15 @@
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme" />
-
         <activity
             android:name=".ProfileActivity"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
-
         <activity
-            android:screenOrientation="portrait"
-            android:parentActivityName=".ProfileActivity"
             android:name=".EditProfileNameActivity"
-            android:windowSoftInputMode="adjustResize"/>
+            android:parentActivityName=".ProfileActivity"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
 
         <provider
             android:name=".data.YourTurnProvider"
@@ -77,7 +75,8 @@
             android:exported="false"
             android:syncable="true" />
 
-        <receiver android:name=".services.ParsePushBroadcastReceiver"
+        <receiver
+            android:name=".services.ParsePushBroadcastReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.parse.push.intent.RECEIVE" />
@@ -86,27 +85,33 @@
             </intent-filter>
         </receiver>
 
-        <service
-            android:name=".services.MyFirebaseInstanceIDService">
-            <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
-            </intent-filter>
-        </service>
-
-        <service
-            android:name=".services.MyFirebaseMessagingService">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
-            </intent-filter>
-        </service>
-
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_launcher" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/colorAccent" />
+        
+        <service android:name="com.parse.PushService" />
 
+        <meta-data android:name="com.parse.push.gcm_sender_id"
+            android:value="@string/project_id"/>
+
+        <meta-data android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version"/>
+
+        <receiver android:name="com.parse.GcmBroadcastReceiver"
+            android:permission="com.google.android.c2dm.permission.SEND">
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+
+                <category android:name="com.social.yourturn" />
+            </intent-filter>
+        </receiver>
+
+        <activity android:name=".ConfirmAmountActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

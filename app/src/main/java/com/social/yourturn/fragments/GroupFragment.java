@@ -64,8 +64,6 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     private GroupAdapter mGroupAdapter;
     public static final String GROUP_KEY = "Group";
     private static final int LOADER_ID = 0;
-    private Handler handler = new Handler();
-    private boolean isDirty = false;
 
     public GroupFragment() {
         // Required empty public constructor

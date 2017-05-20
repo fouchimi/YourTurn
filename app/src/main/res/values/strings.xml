@@ -54,4 +54,7 @@
     <string name="current_user">You</string>
     <string name="user_credentials">credentials</string>
 
+    <string name="project_id">1098418675632</string>
+    <string name="yourturn_server_gcm_id">AIzaSyDjYbJSqNmIMAWV2t-YWyW1Cgg97-x2jMo</string>
+
 </resources>

@@ -1,11 +1,14 @@
 package com.social.yourturn;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -24,15 +27,19 @@ import com.parse.FunctionCallback;
 import com.parse.LogInCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
+import com.parse.ParseInstallation;
 import com.parse.ParseUser;
 import com.social.yourturn.adapters.MemberGroupAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Group;
+import com.social.yourturn.services.ParsePushBroadcastReceiver;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -49,6 +56,13 @@ public class GroupListActivity extends AppCompatActivity {
     private boolean isVisible = false;
     private String phoneId, phoneNumber;
     private ParseUser mCurrentUser;
+
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "On received invoked");
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,6 +136,18 @@ public class GroupListActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(ParsePushBroadcastReceiver.INTENT_ACTION));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id) {
@@ -134,19 +160,22 @@ public class GroupListActivity extends AppCompatActivity {
                 // Kick off push notification here
                 String recipients ="";
                 for(Contact contact : mContactList){
-                    recipients += contact.getPhoneNumber()+",";
+                    if(!contact.getPhoneNumber().equals(getCurrentPhoneNumber())){
+                        recipients += contact.getPhoneNumber()+",";
+                    }
+
                 }
                 recipients = recipients.substring(0, recipients.length()-1);
                 HashMap<String, Object> payload = new HashMap<>();
-                payload.put("title", ParseUser.getCurrentUser().getUsername());
-                payload.put("alert", "First push");
-                payload.put("recipients", recipients);
-                ParseCloud.callFunctionInBackground("pushChannel", payload, new FunctionCallback<String>() {
+                payload.put("message", getCurrentPhoneNumber());
+                payload.put("receiver", recipients);
+                ParseCloud.callFunctionInBackground("pushChannel", payload, new FunctionCallback<Object>() {
                     @Override
-                    public void done(String success, ParseException e) {
-                        if(e == null){
-                            Log.d(TAG, "Push notification sent successfully");
-                            Toast.makeText(GroupListActivity.this, "Push sent successfully !!!", Toast.LENGTH_LONG).show();
+                    public void done(Object object, ParseException e) {
+                        if(e == null) {
+                            Log.d(TAG, "Successfully sent");
+                        }else {
+                            Log.d(TAG, e.getMessage());
                         }
                     }
                 });
@@ -197,6 +226,12 @@ public class GroupListActivity extends AppCompatActivity {
         });
         AlertDialog b = dialogBuilder.create();
         b.show();
+    }
+
+
+    private String getCurrentPhoneNumber(){
+        SharedPreferences sharePref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
+        return sharePref.getString(ParseConstant.USERNAME_COLUMN, "");
     }
 
 }
