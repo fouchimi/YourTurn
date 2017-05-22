@@ -9,7 +9,6 @@ import android.database.DatabaseUtils;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -24,17 +23,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.parse.FindCallback;
 import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
-import com.social.yourturn.GroupActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.adapters.GroupAdapter;
 import com.social.yourturn.data.YourTurnContract;
@@ -46,8 +41,6 @@ import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Vector;
 
 
 /**
@@ -84,6 +77,9 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
         mRecyclerView = (RecyclerView) view.findViewById(R.id.group_rv);
         mLinearLayout = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(mLinearLayout);
+        mGroupList = new ArrayList<>();
+        mGroupAdapter = new GroupAdapter(getActivity(), mGroupList, mRecyclerView);
+        mRecyclerView.setAdapter(mGroupAdapter);
         return view;
     }
 
@@ -114,7 +110,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
 
     private void loadData(Cursor data) {
         mContactList = new ArrayList<>();
-        mGroupList = new ArrayList<>();
+        if(mGroupList != null) mGroupList.clear();
         String groupId = null, groupName = null, groupThumbnail = null, groupCreator = null, userId = null;
         String lastGroupId ="";
         long dateInMillis = 0L;
@@ -175,8 +171,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
         if(mGroupList.size() > 0) {
             mRecyclerView.setVisibility(View.VISIBLE);
             emptyTextView.setVisibility(View.GONE);
-            mGroupAdapter = new GroupAdapter(getActivity(), mGroupList, mRecyclerView);
-            mRecyclerView.setAdapter(mGroupAdapter);
+            mGroupAdapter.notifyDataSetChanged();
         }
     }
 
@@ -187,7 +182,6 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public void onResume() {
         super.onResume();
-        getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, GroupFragment.this);
         fetchLatestGroup();
     }
 
@@ -289,6 +283,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                                                     }
 
                                                     if(groupCursor != null) groupCursor.close();
+                                                    getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, GroupFragment.this);
 
                                                 }else {
                                                     Log.d(TAG, e.getMessage());

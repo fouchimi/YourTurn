@@ -27,19 +27,16 @@ import com.parse.FunctionCallback;
 import com.parse.LogInCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
-import com.parse.ParseInstallation;
 import com.parse.ParseUser;
 import com.social.yourturn.adapters.MemberGroupAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Group;
-import com.social.yourturn.services.ParsePushBroadcastReceiver;
+import com.social.yourturn.broadcast.MyCustomReceiver;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -57,12 +54,7 @@ public class GroupListActivity extends AppCompatActivity {
     private String phoneId, phoneNumber;
     private ParseUser mCurrentUser;
 
-    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "On received invoked");
-        }
-    };
+    private BroadcastReceiver mBroadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +89,14 @@ public class GroupListActivity extends AppCompatActivity {
             mLinearLayout = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
             mRecyclerView.setLayoutManager(mLinearLayout);
             mRecyclerView.setAdapter(mAdapter);
+
+            mBroadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    Log.d(TAG, "On received invoked");
+                    Toast.makeText(getApplicationContext(), "On Received invoked !", Toast.LENGTH_SHORT).show();
+                }
+            };
         }
     }
 
@@ -138,7 +138,7 @@ public class GroupListActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(ParsePushBroadcastReceiver.INTENT_ACTION));
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(MyCustomReceiver.intentAction));
     }
 
     @Override
@@ -159,16 +159,20 @@ public class GroupListActivity extends AppCompatActivity {
             case R.id.validateButton :
                 // Kick off push notification here
                 String recipients ="";
+                int i=0;
+                String contactArray[] = new String[mContactList.size()];
                 for(Contact contact : mContactList){
                     if(!contact.getPhoneNumber().equals(getCurrentPhoneNumber())){
                         recipients += contact.getPhoneNumber()+",";
+                        contactArray[i++] = contact.getName();
                     }
 
                 }
                 recipients = recipients.substring(0, recipients.length()-1);
                 HashMap<String, Object> payload = new HashMap<>();
-                payload.put("message", getCurrentPhoneNumber());
-                payload.put("receiver", recipients);
+                payload.put("alert", getCurrentPhoneNumber());
+                payload.put("title", recipients);
+                payload.put("recipients", contactArray);
                 ParseCloud.callFunctionInBackground("pushChannel", payload, new FunctionCallback<Object>() {
                     @Override
                     public void done(Object object, ParseException e) {
@@ -179,6 +183,7 @@ public class GroupListActivity extends AppCompatActivity {
                         }
                     }
                 });
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
