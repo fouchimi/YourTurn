@@ -101,6 +101,7 @@
             android:value="@string/gcm_sender_id"/>
 
         <activity android:name=".ConfirmAmountActivity"
+            android:parentActivityName=".MainActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
     </application>

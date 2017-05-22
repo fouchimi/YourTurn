@@ -55,6 +55,7 @@ public class GroupListActivity extends AppCompatActivity {
     private ParseUser mCurrentUser;
 
     private BroadcastReceiver mBroadcastReceiver;
+    private String mSharedAmount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,20 +160,25 @@ public class GroupListActivity extends AppCompatActivity {
             case R.id.validateButton :
                 // Kick off push notification here
                 String recipients ="";
-                int i=0;
-                String contactArray[] = new String[mContactList.size()];
+                int count=0;
+                String senderName = getCurrentPhoneNumber();
                 for(Contact contact : mContactList){
                     if(!contact.getPhoneNumber().equals(getCurrentPhoneNumber())){
                         recipients += contact.getPhoneNumber()+",";
-                        contactArray[i++] = contact.getName();
+                        count++;
+                    }else if(!contact.getName().equals("You") && !contact.getPhoneNumber().equals(getCurrentPhoneNumber())) {
+                        senderName = contact.getName();
                     }
 
                 }
                 recipients = recipients.substring(0, recipients.length()-1);
                 HashMap<String, Object> payload = new HashMap<>();
-                payload.put("alert", getCurrentPhoneNumber());
-                payload.put("title", recipients);
-                payload.put("recipients", contactArray);
+
+                payload.put("title", senderName + " sent you a message");
+                payload.put("senderId", getCurrentPhoneNumber());
+                payload.put("alert", "You've been requested to confirm this amount : $" + mSharedAmount);
+                payload.put("recipients", recipients);
+                payload.put("friendsNumber", count);
                 ParseCloud.callFunctionInBackground("pushChannel", payload, new FunctionCallback<Object>() {
                     @Override
                     public void done(Object object, ParseException e) {
@@ -213,7 +219,8 @@ public class GroupListActivity extends AppCompatActivity {
                             for(Contact contact : mContactList){
                                 DecimalFormat df = new DecimalFormat("#.00");
 
-                                contact.setShare(df.format((floatValue / mContactList.size())));
+                                mSharedAmount = df.format((floatValue / mContactList.size()));
+                                contact.setShare(mSharedAmount);
                             }
                             mAdapter.notifyDataSetChanged();
                             isVisible = true;
