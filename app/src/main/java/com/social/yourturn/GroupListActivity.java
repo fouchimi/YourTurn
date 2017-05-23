@@ -33,7 +33,7 @@ import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Group;
-import com.social.yourturn.broadcast.MyCustomReceiver;
+import com.social.yourturn.broadcast.PushSenderBroadcastReceiver;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.StringUtils;
@@ -139,7 +139,7 @@ public class GroupListActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(MyCustomReceiver.intentAction));
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(PushSenderBroadcastReceiver.intentAction));
     }
 
     @Override
@@ -178,8 +178,8 @@ public class GroupListActivity extends AppCompatActivity {
                 payload.put("senderId", getCurrentPhoneNumber());
                 payload.put("alert", "You've been requested to confirm this amount : $" + mSharedAmount);
                 payload.put("recipients", recipients);
-                payload.put("friendsNumber", count);
-                ParseCloud.callFunctionInBackground("pushChannel", payload, new FunctionCallback<Object>() {
+                payload.put("friendCount", count);
+                ParseCloud.callFunctionInBackground("senderChannel", payload, new FunctionCallback<Object>() {
                     @Override
                     public void done(Object object, ParseException e) {
                         if(e == null) {

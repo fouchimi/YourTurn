@@ -1,15 +1,12 @@
 package com.social.yourturn.broadcast;
 
-import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.social.yourturn.ConfirmAmountActivity;
@@ -23,24 +20,25 @@ import java.util.Iterator;
  * Created by ousma on 5/14/2017.
  */
 
-public class MyCustomReceiver extends BroadcastReceiver {
+public class PushSenderBroadcastReceiver extends BroadcastReceiver {
 
-    private static final String TAG = MyCustomReceiver.class.getSimpleName();
+    private static final String TAG = PushSenderBroadcastReceiver.class.getSimpleName();
     public static final String intentAction = "com.parse.push.intent.RECEIVE";
     public static final String TITLE = "title";
     public static final String MESSAGE = "message";
+    public static final String SENDER_ID = "senderId";
 
     @Override
     public void onReceive(Context context, Intent intent) {
         if(intent == null) {
-            Log.d(TAG, "Receiver intent null");
+            Log.d(TAG, "Sender Broadcast Receiver intent null");
         }else {
             processPush(context, intent);
         }
     }
 
     private void processPush(Context context, Intent intent) {
-        String title = "", message = "";
+        String title = "", message = "", senderId= "";
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -58,10 +56,13 @@ public class MyCustomReceiver extends BroadcastReceiver {
                     }else if(key.equals("alert")){
                         message = json.getString(key);
                         Log.d(TAG, "Message: " + message);
+                    }else if(key.equals("senderId")) {
+                        senderId = json.getString(key);
+                        Log.d(TAG, "Sender Id: " + senderId);
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                createNotification(context, title, message);
+                createNotification(context, title, message, senderId);
             }catch (JSONException ex){
                 ex.printStackTrace();
                 Log.d(TAG, ex.getMessage());
@@ -71,11 +72,12 @@ public class MyCustomReceiver extends BroadcastReceiver {
 
     public static final int NOTIFICATION_ID = 45;
 
-    private void createNotification(Context context, String title, String message) {
+    private void createNotification(Context context, String title, String message, String senderId) {
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.putExtra(TITLE, title);
         intent.putExtra(MESSAGE, message);
+        intent.putExtra(SENDER_ID, senderId);
         intent.setClass(context, ConfirmAmountActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 

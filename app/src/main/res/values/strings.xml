@@ -56,5 +56,8 @@
 
     <string name="gcm_sender_id">id:1098418675632</string>
     <string name="yourturn_server_gcm_id">AIzaSyDjYbJSqNmIMAWV2t-YWyW1Cgg97-x2jMo</string>
+    <string name="confirm_price">Confirm price</string>
+    <string name="refused_payment_message">You denied to pay</string>
+    <string name="accepted_payment_message">You accept to pay</string>
 
 </resources>
