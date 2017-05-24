@@ -19,6 +19,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
@@ -87,29 +88,35 @@ public class MainActivity extends AppCompatActivity {
 
         if(isConnected()){
             // Load groups here.
+            SharedPreferences sharedPref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
+            phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
+            phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
+
+            Log.d(TAG, "Phone ID from Shared Preferences: " + phoneId);
+            Log.d(TAG, "Phone Number from Shared Preferences: " + phoneNumber);
+
+            if(!phoneId.equals("") && !phoneNumber.equals("")){
+                ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
+                    @Override
+                    public void done(ParseUser user, ParseException e) {
+                        if(e == null){
+                            mCurrentUser = user;
+                            Toast.makeText(getApplicationContext(), "Logging successful", Toast.LENGTH_LONG).show();
+                        }else {
+                            Log.d(TAG, e.getMessage());
+                            //Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+            }
         }else {
             //Display dialog box here
-        }
+            AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                    .setTitle(R.string.connection_title_msg)
+                    .setMessage(R.string.connection_msg_content);
 
-        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
-        phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
-        phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
-
-        Log.d(TAG, "Phone ID from Shared Preferences: " + phoneId);
-        Log.d(TAG, "Phone Number from Shared Preferences: " + phoneNumber);
-
-        if(!phoneId.equals("") && !phoneNumber.equals("")){
-            ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
-                @Override
-                public void done(ParseUser user, ParseException e) {
-                    if(e == null){
-                        mCurrentUser = user;
-                    }else {
-                        Log.d(TAG, e.getMessage());
-                        //Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                }
-            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
 
     }
@@ -222,6 +229,13 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        ParseUser.logOut();
+        Log.d(TAG, "Logging out");
     }
 
     private String getDeviceMetaData(){

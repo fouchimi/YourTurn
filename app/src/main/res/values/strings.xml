@@ -59,5 +59,7 @@
     <string name="confirm_price">Confirm price</string>
     <string name="refused_payment_message">You denied to pay</string>
     <string name="accepted_payment_message">You accept to pay</string>
+    <string name="connection_title_msg">Connection problem</string>
+    <string name="connection_msg_content">Turn on your internet connection</string>
 
 </resources>
