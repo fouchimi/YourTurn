@@ -3,6 +3,7 @@ package com.social.yourturn;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -53,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private String phoneId="", phoneNumber= "";
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
+    private FloatingActionButton fab;
 
 
     @Override
@@ -62,23 +64,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mSectionsPagerAdapter = new SectionsPagerAdapter((getSupportFragmentManager()));
-
-        mViewPager = (ViewPager) findViewById(R.id.container);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
-        tabLayout.setupWithViewPager(mViewPager);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, ContactActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
-        });
-
+        fab = (FloatingActionButton) findViewById(R.id.fab);
         requestAllPermissions(this, permissions);
     }
 
@@ -87,6 +73,24 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if(isConnected()){
+
+            mSectionsPagerAdapter = new SectionsPagerAdapter((getSupportFragmentManager()));
+
+            mViewPager = (ViewPager) findViewById(R.id.container);
+            mViewPager.setAdapter(mSectionsPagerAdapter);
+
+            TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+            tabLayout.setupWithViewPager(mViewPager);
+
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(MainActivity.this, ContactActivity.class);
+                    MainActivity.this.startActivity(intent);
+                }
+            });
+
+
             // Load groups here.
             SharedPreferences sharedPref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
             phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
@@ -101,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                     public void done(ParseUser user, ParseException e) {
                         if(e == null){
                             mCurrentUser = user;
-                            Toast.makeText(getApplicationContext(), "Logging successful", Toast.LENGTH_LONG).show();
+                           // Toast.makeText(getApplicationContext(), "Logging successful", Toast.LENGTH_LONG).show();
                         }else {
                             Log.d(TAG, e.getMessage());
                             //Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -113,7 +117,13 @@ public class MainActivity extends AppCompatActivity {
             //Display dialog box here
             AlertDialog.Builder builder = new AlertDialog.Builder(this)
                     .setTitle(R.string.connection_title_msg)
-                    .setMessage(R.string.connection_msg_content);
+                    .setMessage(R.string.connection_msg_content)
+                    .setPositiveButton(R.string.ok_text, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                             finish();
+                        }
+                    });
 
             AlertDialog dialog = builder.create();
             dialog.show();
