@@ -52,19 +52,18 @@ import java.util.Iterator;
 public class GroupListActivity extends AppCompatActivity  {
 
     private static final String TAG = GroupListActivity.class.getSimpleName();
-    private static RecyclerView mRecyclerView;
-    private static MemberGroupAdapter mAdapter;
+    private RecyclerView mRecyclerView;
+    private MemberGroupAdapter mAdapter;
     private static ArrayList<Contact> mContactList = new ArrayList<>();
     private Toolbar mActionBarToolbar;
     private LinearLayoutManager mLinearLayout;
-    private static boolean isVisible = false;
+    private boolean isVisible = false, isValidateVisible = false;
     private String phoneId, phoneNumber;
     private ParseUser mCurrentUser;
-    private static MenuItem validateBillItem;
     private BroadcastReceiver mBroadcastReceiver;
     private String mSharedAmount;
-    private static int totalCount = 0;
-    private final GroupListActivity activity = GroupListActivity.this;
+    private int totalCount = 0;
+    PushReplyBroadcastReceiver pReplyBroadcastReceiver = new PushReplyBroadcastReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,8 +150,8 @@ public class GroupListActivity extends AppCompatActivity  {
         getMenuInflater().inflate(R.menu.group_menu, menu);
         MenuItem item = menu.findItem(R.id.validateButton);
         item.setVisible(isVisible);
-        validateBillItem = menu.findItem(R.id.validateBillAction);
-        validateBillItem.setVisible(false);
+        MenuItem validateBillItem = menu.findItem(R.id.validateBillAction);
+        validateBillItem.setVisible(isValidateVisible);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -160,12 +159,15 @@ public class GroupListActivity extends AppCompatActivity  {
     protected void onResume() {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(PushSenderBroadcastReceiver.intentAction));
+        IntentFilter filter = new IntentFilter("com.parse.push.intent.RECEIVE");
+        registerReceiver(pReplyBroadcastReceiver, filter);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+        unregisterReceiver(pReplyBroadcastReceiver);
     }
 
     @Override
@@ -267,17 +269,14 @@ public class GroupListActivity extends AppCompatActivity  {
         return sharePref.getString(ParseConstant.USERNAME_COLUMN, "");
     }
 
-    public static void findContactInList(Context context, String userPhoneId){
+    public void findContactInList(Context context, String userPhoneId){
         int position = 0;
         for(Contact contact : mContactList) {
             if(contact.getPhoneNumber().equals(userPhoneId)){
-                //Toast.makeText(context, "Found user: " + userPhoneId, Toast.LENGTH_SHORT).show();
                 View view = mRecyclerView.getChildAt(position);
                 MemberGroupAdapter.MemberViewHolder mViewHolder = (MemberGroupAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
                 if(mViewHolder != null) {
-                   // Toast.makeText(context, "" + mViewHolder.getNameTextView().getText().toString(), Toast.LENGTH_SHORT).show();
                     mViewHolder.getCheckedIcon().setVisibility(View.VISIBLE);
-                    totalCount++;
                 }
             }
             position++;
@@ -285,7 +284,7 @@ public class GroupListActivity extends AppCompatActivity  {
     }
 
 
-    public static class PushReplyBroadcastReceiver extends BroadcastReceiver  {
+    private class PushReplyBroadcastReceiver extends BroadcastReceiver  {
         private static final String intentAction = "com.parse.push.intent.RECEIVE";
 
         @Override
@@ -334,9 +333,21 @@ public class GroupListActivity extends AppCompatActivity  {
                 String receiverName = receiverCursor.getString(receiverCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
                 Toast.makeText(context, receiverName + " accepted to pay", Toast.LENGTH_LONG).show();
                 findContactInList(context, rec_id);
-                if(totalCount == mContactList.size()){
+                Log.d(TAG, "TotalCount: " + totalCount);
+                Toast.makeText(context, "Total Count: " + totalCount, Toast.LENGTH_LONG).show();
+
+                for(int i = 0; i < mContactList.size(); i++) {
+                    View view = mRecyclerView.getChildAt(i);
+                    MemberGroupAdapter.MemberViewHolder mViewHolder = (MemberGroupAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
+                    if( mViewHolder.getCheckedIcon().getVisibility() == View.VISIBLE) {
+                        totalCount++;
+                    }
+                }
+
+                if(totalCount == mContactList.size()) {
                     isVisible = false;
-                    validateBillItem.setVisible(true);
+                    isValidateVisible = true;
+                    invalidateOptionsMenu();
                     Toast.makeText(context, "Match completed", Toast.LENGTH_LONG).show();
                 }
             }
