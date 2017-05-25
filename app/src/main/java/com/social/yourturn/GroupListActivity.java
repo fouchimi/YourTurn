@@ -8,6 +8,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -37,25 +39,32 @@ import com.social.yourturn.broadcast.PushSenderBroadcastReceiver;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 
-public class GroupListActivity extends AppCompatActivity {
+public class GroupListActivity extends AppCompatActivity  {
 
     private static final String TAG = GroupListActivity.class.getSimpleName();
-    private RecyclerView mRecyclerView;
-    private MemberGroupAdapter mAdapter;
-    private ArrayList<Contact> mContactList = new ArrayList<>();
+    private static RecyclerView mRecyclerView;
+    private static MemberGroupAdapter mAdapter;
+    private static ArrayList<Contact> mContactList = new ArrayList<>();
     private Toolbar mActionBarToolbar;
     private LinearLayoutManager mLinearLayout;
-    private boolean isVisible = false;
+    private static boolean isVisible = false;
     private String phoneId, phoneNumber;
     private ParseUser mCurrentUser;
-
+    private static MenuItem validateBillItem;
     private BroadcastReceiver mBroadcastReceiver;
     private String mSharedAmount;
+    private static int totalCount = 0;
+    private final GroupListActivity activity = GroupListActivity.this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +95,14 @@ public class GroupListActivity extends AppCompatActivity {
                 contact.setPhoneNumber(phoneNumber);
                 mContactList.add(contact);
             }
+
+            Collections.sort(mContactList, new Comparator<Contact>() {
+                @Override
+                public int compare(Contact lhs, Contact rhs) {
+                    return lhs.getName().compareTo(rhs.getName());
+                }
+            });
+
             mAdapter = new MemberGroupAdapter(this, mContactList);
             mLinearLayout = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
             mRecyclerView.setLayoutManager(mLinearLayout);
@@ -100,6 +117,7 @@ public class GroupListActivity extends AppCompatActivity {
             };
         }
     }
+
 
     private void login(){
         if(mCurrentUser == null) {
@@ -133,6 +151,8 @@ public class GroupListActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.group_menu, menu);
         MenuItem item = menu.findItem(R.id.validateButton);
         item.setVisible(isVisible);
+        validateBillItem = menu.findItem(R.id.validateBillAction);
+        validateBillItem.setVisible(false);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -184,6 +204,7 @@ public class GroupListActivity extends AppCompatActivity {
                     public void done(Object object, ParseException e) {
                         if(e == null) {
                             Log.d(TAG, "Successfully sent");
+                            findContactInList(getApplicationContext(), getCurrentPhoneNumber());
                         }else {
                             Log.d(TAG, e.getMessage());
                         }
@@ -246,4 +267,80 @@ public class GroupListActivity extends AppCompatActivity {
         return sharePref.getString(ParseConstant.USERNAME_COLUMN, "");
     }
 
+    public static void findContactInList(Context context, String userPhoneId){
+        int position = 0;
+        for(Contact contact : mContactList) {
+            if(contact.getPhoneNumber().equals(userPhoneId)){
+                //Toast.makeText(context, "Found user: " + userPhoneId, Toast.LENGTH_SHORT).show();
+                View view = mRecyclerView.getChildAt(position);
+                MemberGroupAdapter.MemberViewHolder mViewHolder = (MemberGroupAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
+                if(mViewHolder != null) {
+                   // Toast.makeText(context, "" + mViewHolder.getNameTextView().getText().toString(), Toast.LENGTH_SHORT).show();
+                    mViewHolder.getCheckedIcon().setVisibility(View.VISIBLE);
+                    totalCount++;
+                }
+            }
+            position++;
+        }
+    }
+
+
+    public static class PushReplyBroadcastReceiver extends BroadcastReceiver  {
+        private static final String intentAction = "com.parse.push.intent.RECEIVE";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent == null) {
+                Log.d(TAG, "Reply Broadcast Receiver intent null");
+            }else {
+                processReceiverPush(context, intent);
+            }
+        }
+
+        private void processReceiverPush(Context context, Intent intent) {
+            String receiverId = "";
+            String action = intent.getAction();
+            Log.d(TAG, "got action " + action);
+            if(action.equals(intentAction)){
+                String channel = intent.getExtras().getString("com.parse.Channel");
+                Log.d(TAG, "got action " + action + " on channel " + channel + " with:");
+                try{
+                    JSONObject json = new JSONObject(intent.getExtras().getString("com.parse.Data"));
+                    // Iterate the parse keys if needed
+                    Iterator<String> itr = json.keys();
+                    while(itr.hasNext()){
+                        String key = (String) itr.next();
+                        if(key.equals("rec_id")) {
+                            receiverId = json.getString(key);
+                            Log.d(TAG, "receiver Phone Number: " + receiverId);
+                            displayAcceptanceMessage(context, receiverId);
+                            break;
+                        }
+                        Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
+                    }
+                }catch (JSONException ex){
+                    ex.printStackTrace();
+                    Log.d(TAG, ex.getMessage());
+                }
+            }
+        }
+
+        private void displayAcceptanceMessage(Context context, String rec_id){
+
+            Cursor receiverCursor = context.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, new String[]{YourTurnContract.UserEntry.COLUMN_USER_NAME},
+                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(rec_id), null, null);
+            if(receiverCursor != null && receiverCursor.getCount() > 0) {
+                receiverCursor.moveToFirst();
+                String receiverName = receiverCursor.getString(receiverCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+                Toast.makeText(context, receiverName + " accepted to pay", Toast.LENGTH_LONG).show();
+                findContactInList(context, rec_id);
+                if(totalCount == mContactList.size()){
+                    isVisible = false;
+                    validateBillItem.setVisible(true);
+                    Toast.makeText(context, "Match completed", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+
+    }
 }

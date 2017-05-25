@@ -60,19 +60,29 @@
                 android:id="@+id/splitValue"
                 android:layout_width="@dimen/txt_45dp"
                 android:layout_height="@dimen/txt_45dp"
-                android:layout_weight="1"
-                android:textSize="@dimen/txt_20sp"
-                android:inputType="numberDecimal"
-                android:textStyle="bold"
-                android:textColor="@android:color/black"
-                android:fontFamily="sans-serif-light"
-                android:background="@android:color/transparent"
                 android:layout_gravity="center_vertical"
-                android:ellipsize="end"
-                android:maxLines="1"
                 android:layout_marginRight="@dimen/mar_8dp"
+                android:layout_weight="0.23"
+                android:background="@android:color/transparent"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-light"
+                android:inputType="numberDecimal"
+                android:maxLines="1"
+                android:gravity="center"
                 android:scrollHorizontally="true"
-                android:text="@string/zero_default_values"/>
+                android:text="@string/zero_default_values"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/txt_20sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/check_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/txt_45dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginRight="@dimen/mar_8dp"
+                android:visibility="invisible"
+                android:src="@drawable/ic_done_green_48dp"/>
 
         </LinearLayout>
 

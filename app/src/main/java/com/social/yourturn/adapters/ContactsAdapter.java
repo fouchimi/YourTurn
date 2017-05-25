@@ -110,9 +110,11 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         if (isSelected) {
             view.setBackgroundColor(context.getResources().getColor(R.color.colorAccent));
             usernameTextView.setTextColor(Color.WHITE);
+            holder.selected.setVisibility(View.VISIBLE);
         } else if (!isSelected){
             view.setBackgroundColor(Color.TRANSPARENT );
             usernameTextView.setTextColor(Color.BLACK);
+            holder.selected.setVisibility(View.INVISIBLE);
         }
 
     }
@@ -146,7 +148,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         return super.swapCursor(newCursor);
     }
 
-    private class ViewHolder {
+    public class ViewHolder {
         TextView username;
         ImageView  selected;
         CircleImageView thumbnail;

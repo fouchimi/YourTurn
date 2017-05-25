@@ -18,6 +18,13 @@
         android:title="@string/split_bill"
         app:showAsAction="never" />
 
+    <item android:id="@+id/validateBillAction"
+        android:orderInCategory="100"
+        android:title="Validate bill"
+        android:visible="false"
+        android:icon="@drawable/ic_done_green_48dp"
+        app:showAsAction="ifRoom"/>
+
 
     <item
         android:id="@+id/action_settings"

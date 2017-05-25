@@ -6,6 +6,8 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -62,7 +64,9 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                createNotification(context, title, message, senderId);
+                if(title.length() > 0 && message.length() > 0 && senderId.length() > 0){
+                    createNotification(context, title, message, senderId);
+                }
             }catch (JSONException ex){
                 ex.printStackTrace();
                 Log.d(TAG, ex.getMessage());
@@ -82,12 +86,14 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 
         PendingIntent senderIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
         NotificationCompat.Builder notification = new NotificationCompat.Builder(context)
                 .setSmallIcon(android.R.drawable.ic_menu_report_image)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setAutoCancel(true)
+                .setSound(defaultSoundUri)
                 .setContentIntent(senderIntent);
 
         notification.setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE);

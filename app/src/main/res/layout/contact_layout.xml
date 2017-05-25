@@ -32,7 +32,8 @@
                 android:layout_gravity="end"
                 android:layout_marginTop="@dimen/mar_24dp"
                 android:layout_marginLeft="@dimen/mar_12dp"
-                android:src="@drawable/ic_check_circle_white_24dp" />
+                android:visibility="invisible"
+                android:src="@drawable/ic_check_circle_green_24dp" />
 
         </FrameLayout>
 

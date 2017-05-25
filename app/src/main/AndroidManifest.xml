@@ -98,7 +98,8 @@
         </receiver>
 
         <receiver
-            android:name=".broadcast.PushReplyBroadcastReceiver"
+            android:name=".GroupListActivity$PushReplyBroadcastReceiver"
+            android:enabled="true"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.parse.push.intent.RECEIVE" />

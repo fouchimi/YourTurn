@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -102,16 +103,42 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
     }
 
 
-    public class MemberViewHolder extends RecyclerView.ViewHolder {
+    public static class MemberViewHolder extends RecyclerView.ViewHolder {
         TextView nameTextView;
         CircleImageView imageView;
         EditText splitValueEditText;
+        ImageView checkedIcon;
 
         public MemberViewHolder(View itemView){
             super(itemView);
             nameTextView = (TextView) itemView.findViewById(R.id.member_name);
             imageView = (CircleImageView) itemView.findViewById(R.id.member_thumbnail);
             splitValueEditText = (EditText) itemView.findViewById(R.id.splitValue);
+            checkedIcon = (ImageView) itemView.findViewById(R.id.check_icon);
+        }
+
+        public void setImageView(CircleImageView imageView) {
+            this.imageView = imageView;
+        }
+
+        public CircleImageView getImageView() {
+            return imageView;
+        }
+
+        public void setNameTextView(TextView nameTextView) {
+            this.nameTextView = nameTextView;
+        }
+
+        public TextView getNameTextView() {
+            return nameTextView;
+        }
+
+        public void setCheckedIcon(ImageView checkedIcon) {
+            this.checkedIcon = checkedIcon;
+        }
+
+        public ImageView getCheckedIcon() {
+            return checkedIcon;
         }
     }
 
