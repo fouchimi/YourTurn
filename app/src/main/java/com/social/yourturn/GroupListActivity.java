@@ -6,10 +6,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -36,6 +37,8 @@ import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Group;
 import com.social.yourturn.broadcast.PushSenderBroadcastReceiver;
+import com.social.yourturn.services.ConfirmPaymentIntentService;
+import com.social.yourturn.services.ConfirmPaymentReceiver;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.StringUtils;
@@ -48,22 +51,25 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 public class GroupListActivity extends AppCompatActivity  {
 
     private static final String TAG = GroupListActivity.class.getSimpleName();
     private RecyclerView mRecyclerView;
     private MemberGroupAdapter mAdapter;
-    private static ArrayList<Contact> mContactList = new ArrayList<>();
+    private ArrayList<Contact> mContactList = new ArrayList<>();
     private Toolbar mActionBarToolbar;
     private LinearLayoutManager mLinearLayout;
     private boolean isVisible = false, isValidateVisible = false;
     private String phoneId, phoneNumber;
     private ParseUser mCurrentUser;
     private BroadcastReceiver mBroadcastReceiver;
-    private String mSharedAmount;
+    private String mSharedAmount, mTotalAmount;
     private int totalCount = 0;
-    PushReplyBroadcastReceiver pReplyBroadcastReceiver = new PushReplyBroadcastReceiver();
+    private PushReplyBroadcastReceiver pReplyBroadcastReceiver = new PushReplyBroadcastReceiver();
+    private ConfirmPaymentReceiver mPaymentReceiver;
+    private String mGroupId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,12 +83,14 @@ public class GroupListActivity extends AppCompatActivity  {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.members_rv);
+        mPaymentReceiver = new ConfirmPaymentReceiver(new Handler());
 
         login();
 
         Intent intent = getIntent();
         if(intent != null) {
             Group group = intent.getParcelableExtra(GroupFragment.GROUP_KEY);
+            mGroupId = group.getGroupId();
             String phoneNumber = intent.getExtras().getString(ParseConstant.USERNAME_COLUMN);
             getSupportActionBar().setTitle(group.getName());
             mContactList = group.getContactList();
@@ -115,6 +123,21 @@ public class GroupListActivity extends AppCompatActivity  {
                 }
             };
         }
+
+        setupPaymentReceiver();
+    }
+
+
+    private void setupPaymentReceiver(){
+        mPaymentReceiver.setReceiver(new ConfirmPaymentReceiver.Receiver() {
+            @Override
+            public void onReceivedResult(int resultCode, Bundle resultData) {
+                if(resultCode == RESULT_OK){
+                    String resultValue = resultData.getString(getString(R.string.result_value));
+                    Toast.makeText(GroupListActivity.this, resultValue, Toast.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 
 
@@ -181,38 +204,63 @@ public class GroupListActivity extends AppCompatActivity  {
                 return true;
             case R.id.validateButton :
                 // Kick off push notification here
-                String recipients ="";
-                int count=0;
-                String senderName = getCurrentPhoneNumber();
-                for(Contact contact : mContactList){
-                    if(!contact.getPhoneNumber().equals(getCurrentPhoneNumber())){
-                        recipients += contact.getPhoneNumber()+",";
-                        count++;
-                    }else if(!contact.getName().equals("You") && !contact.getPhoneNumber().equals(getCurrentPhoneNumber())) {
-                        senderName = contact.getName();
-                    }
-
-                }
-                recipients = recipients.substring(0, recipients.length()-1);
                 HashMap<String, Object> payload = new HashMap<>();
-
-                payload.put("title", senderName + " sent you a message");
-                payload.put("senderId", getCurrentPhoneNumber());
-                payload.put("alert", "You've been requested to confirm this amount : $" + mSharedAmount);
-                payload.put("recipients", recipients);
-                payload.put("friendCount", count);
-                ParseCloud.callFunctionInBackground("senderChannel", payload, new FunctionCallback<Object>() {
-                    @Override
-                    public void done(Object object, ParseException e) {
-                        if(e == null) {
-                            Log.d(TAG, "Successfully sent");
-                            findContactInList(getApplicationContext(), getCurrentPhoneNumber());
-                        }else {
-                            Log.d(TAG, e.getMessage());
+                double totalValue = 0.00;
+                String recipientList = "", shareValueList = "";
+                int count = 0;
+                DecimalFormat df = new DecimalFormat("#.00");
+                mAdapter.notifyDataSetChanged();
+                for(int pos = 0; pos < mAdapter.getContactList().size(); pos++){
+                    String value = mAdapter.getContactList().get(pos).getShare();
+                    String friend = mContactList.get(pos).getPhoneNumber();
+                    //matches positive decimal points.
+                    if(value.matches("\\d*\\.?\\d+")){
+                        double dValue = Double.parseDouble(value);
+                        totalValue += dValue;
+                        if(!friend.equals(getCurrentPhoneNumber())){
+                            recipientList += friend +",";
+                            shareValueList += value + ",";
+                            count++;
                         }
-                    }
-                });
 
+                    }else {
+                        Toast.makeText(this, "Expecting whole number only", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                totalValue = Math.ceil(totalValue);
+                Log.d(TAG, df.format(totalValue));
+               // Toast.makeText(this, df.format(totalValue), Toast.LENGTH_LONG).show();
+                recipientList = recipientList.substring(0, recipientList.length()-1);
+                shareValueList = shareValueList.substring(0, shareValueList.length()-1);
+                if(mTotalAmount.equals(df.format(totalValue))){
+                    payload.put("senderId", getCurrentPhoneNumber());
+                    payload.put("sharedValueList", shareValueList);
+                    payload.put("recipientList", recipientList);
+                    payload.put("friendCount", count);
+
+                    ParseCloud.callFunctionInBackground("senderChannel", payload, new FunctionCallback<Object>() {
+                        @Override
+                        public void done(Object object, ParseException e) {
+                            if(e == null) {
+                                Log.d(TAG, "Successfully sent");
+                                findContactInList(getCurrentPhoneNumber());
+                            }else {
+                                Log.d(TAG, e.getMessage());
+                            }
+                        }
+                    });
+                }else {
+                    Toast.makeText(this, "Make sure edited value adds up to previous total", Toast.LENGTH_LONG).show();
+                }
+                return true;
+            case R.id.validateBillAction:
+                Intent intent = new Intent(this, ConfirmPaymentIntentService.class);
+                intent.putParcelableArrayListExtra(getString(R.string.friendList), mContactList);
+                intent.putExtra(getString(R.string.sharedAmount), mSharedAmount);
+                intent.putExtra(getString(R.string.groupId), mGroupId);
+                intent.putExtra(getString(R.string.paymentReceiver), mPaymentReceiver);
+                startService(intent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -227,6 +275,7 @@ public class GroupListActivity extends AppCompatActivity  {
         dialogBuilder.setView(dialogView);
 
         final EditText edt = (EditText) dialogView.findViewById(R.id.totalAmount);
+        edt.setInputType(InputType.TYPE_CLASS_NUMBER);
 
         dialogBuilder.setTitle(R.string.dialog_custom_title);
         dialogBuilder.setPositiveButton(R.string.done, new DialogInterface.OnClickListener() {
@@ -234,13 +283,14 @@ public class GroupListActivity extends AppCompatActivity  {
                 String value = edt.getText().toString();
                 if(value.length() > 0) {
                     if(StringUtils.isNumeric(value)){
+                        DecimalFormat df = new DecimalFormat("#.00");
                         float floatValue = Float.parseFloat(value);
+                        mTotalAmount = df.format(floatValue);
                         if(floatValue <= 0) {
                             Toast.makeText(getApplicationContext(), R.string.positive_error_validation, Toast.LENGTH_LONG).show();
                         }else {
                             Log.d(TAG, "" + floatValue);
                             for(Contact contact : mContactList){
-                                DecimalFormat df = new DecimalFormat("#.00");
 
                                 mSharedAmount = df.format((floatValue / mContactList.size()));
                                 contact.setShare(mSharedAmount);
@@ -269,14 +319,17 @@ public class GroupListActivity extends AppCompatActivity  {
         return sharePref.getString(ParseConstant.USERNAME_COLUMN, "");
     }
 
-    public void findContactInList(Context context, String userPhoneId){
+    public void findContactInList(String userPhoneId){
         int position = 0;
-        for(Contact contact : mContactList) {
+        for(Contact contact : mAdapter.getContactList()) {
             if(contact.getPhoneNumber().equals(userPhoneId)){
                 View view = mRecyclerView.getChildAt(position);
                 MemberGroupAdapter.MemberViewHolder mViewHolder = (MemberGroupAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
-                if(mViewHolder != null) {
+                if(mViewHolder != null && mViewHolder.getCheckedIcon().getVisibility() == View.VISIBLE) {
+                    return;
+                }else if(mViewHolder != null && mViewHolder.getCheckedIcon().getVisibility() == View.INVISIBLE){
                     mViewHolder.getCheckedIcon().setVisibility(View.VISIBLE);
+                    return;
                 }
             }
             position++;
@@ -332,9 +385,7 @@ public class GroupListActivity extends AppCompatActivity  {
                 receiverCursor.moveToFirst();
                 String receiverName = receiverCursor.getString(receiverCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
                 Toast.makeText(context, receiverName + " accepted to pay", Toast.LENGTH_LONG).show();
-                findContactInList(context, rec_id);
-                Log.d(TAG, "TotalCount: " + totalCount);
-                Toast.makeText(context, "Total Count: " + totalCount, Toast.LENGTH_LONG).show();
+                findContactInList(rec_id);
 
                 for(int i = 0; i < mContactList.size(); i++) {
                     View view = mRecyclerView.getChildAt(i);

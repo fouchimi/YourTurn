@@ -61,5 +61,13 @@
     <string name="accepted_payment_message">You accept to pay</string>
     <string name="connection_title_msg">Connection problem</string>
     <string name="connection_msg_content">Turn on your internet connection</string>
+    <string name="validate_bill_text">Validate bill</string>
+    <string name="friendList">friendList</string>
+    <string name="sharedAmount">sharedAmount</string>
+    <string name="groupId">groupId</string>
+    <string name="paymentReceiver">paymentReceiver</string>
+    <string name="result_value">resultValue</string>
+    <string name="payment_successful_msg">Payment was saved successfully</string>
+    <string name="totalAmount">totalAmount</string>
 
 </resources>

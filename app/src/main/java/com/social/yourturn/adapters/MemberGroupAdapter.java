@@ -7,10 +7,15 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -57,14 +62,42 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
     public MemberViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         final View view = LayoutInflater.from(mContext).inflate(R.layout.group_members, null);
         final MemberViewHolder viewHolder = new MemberViewHolder(view);
+        viewHolder.splitValueEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                TextView txt = viewHolder.nameTextView;
+                for(int i=0; i < mContactList.size(); i++){
+                    String name = mContactList.get(i).getName().toLowerCase();
+                    name = WordUtils.capitalize(name, null);
+                    if(name.equals(txt.getText().toString())){
+                        mContactList.get(i).setShare(s.toString());
+                    }
+                }
+            }
+        });
         return viewHolder;
     }
 
     @Override
     public void onBindViewHolder(final MemberViewHolder holder, final int position) {
-        Contact contact = mContactList.get(position);
+        final Contact contact = mContactList.get(position);
         String displayName = contact.getName();
-        if(displayName != null) displayName = displayName.toLowerCase();
+        holder.nameTextView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
+        if(contact.getShare() != null && contact.getShare().length() > 0)
+            holder.splitValueEditText.setText(contact.getShare());
+        else {
+            holder.splitValueEditText.setText(R.string.zero_default_values);
+        }
         holder.imageView.setImageResource(R.drawable.default_profile);
         ParseQuery<ParseUser> query = ParseUser.getQuery();
         query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
@@ -83,13 +116,6 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
                 }
             }
         });
-
-        holder.nameTextView.setText(WordUtils.capitalize(displayName, null));
-        if(contact.getShare() == null || contact.getShare().length() == 0) {
-            holder.splitValueEditText.setText(mContext.getString(R.string.zero_default_values));
-        }else {
-            holder.splitValueEditText.setText(contact.getShare());
-        }
     }
 
     @Override
@@ -100,6 +126,10 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
     @Override
     public int getItemCount() {
         return mContactList.size();
+    }
+
+    public ArrayList<Contact> getContactList() {
+        return mContactList;
     }
 
 
@@ -117,24 +147,8 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
             checkedIcon = (ImageView) itemView.findViewById(R.id.check_icon);
         }
 
-        public void setImageView(CircleImageView imageView) {
-            this.imageView = imageView;
-        }
-
-        public CircleImageView getImageView() {
-            return imageView;
-        }
-
-        public void setNameTextView(TextView nameTextView) {
-            this.nameTextView = nameTextView;
-        }
-
-        public TextView getNameTextView() {
-            return nameTextView;
-        }
-
-        public void setCheckedIcon(ImageView checkedIcon) {
-            this.checkedIcon = checkedIcon;
+        public EditText getSplitValueEditText() {
+            return splitValueEditText;
         }
 
         public ImageView getCheckedIcon() {

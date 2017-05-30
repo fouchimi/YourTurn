@@ -28,6 +28,12 @@ public class ParseConstant {
     public static final String GROUP_MEMBER_TABLE = "Member_Group";
     public static final String GROUP_MEMBER_TABLE_ID = "group_id";
 
+    public static final String LEDGER_GROUP_TABLE = "Ledger";
+    public static final String LEDGER_GROUP_ID = "group_id";
+    public static final String LEDGER_SHARED_AMOUNT = "shared_amount";
+    public static final String LEDGER_USER_ID = "user_id";
+    public static final String LEDGER_TOTAL_AMOUNT = "amount";
+
     public static final String COLUMN_NAME = "name";
     public static final String PARSE_USER_TABLE = "User";
 

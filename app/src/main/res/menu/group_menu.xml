@@ -20,9 +20,9 @@
 
     <item android:id="@+id/validateBillAction"
         android:orderInCategory="100"
-        android:title="Validate bill"
+        android:title="@string/validate_bill_text"
         android:visible="false"
-        android:icon="@drawable/ic_done_green_48dp"
+        android:icon="@drawable/ic_check_circle_green"
         app:showAsAction="ifRoom"/>
 
 

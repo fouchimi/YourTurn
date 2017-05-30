@@ -6,6 +6,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +20,7 @@ import com.parse.FunctionCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
 import com.social.yourturn.broadcast.PushSenderBroadcastReceiver;
+import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.utils.ParseConstant;
 
 import java.util.HashMap;
@@ -67,12 +70,19 @@ public class ConfirmAmountActivity extends AppCompatActivity {
         super.onNewIntent(intent);
 
         final Bundle bundle = intent.getExtras();
+        String senderPhoneNumber = bundle.getString(PushSenderBroadcastReceiver.TITLE);
         Log.d(TAG, bundle.getString(PushSenderBroadcastReceiver.TITLE));
         Log.d(TAG, bundle.getString(PushSenderBroadcastReceiver.MESSAGE));
 
+        Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, new String[]{YourTurnContract.UserEntry.COLUMN_USER_NAME},
+                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(senderPhoneNumber), null, null);
+        cursor.moveToFirst();
+        String senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+        cursor.close();
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(bundle.getString(PushSenderBroadcastReceiver.MESSAGE))
-                .setTitle(bundle.getString(PushSenderBroadcastReceiver.TITLE))
+        builder.setTitle(senderName + " wants you to confirm the amount below")
+                .setMessage("You have been requested to confirm an amount of $ " + bundle.getString(PushSenderBroadcastReceiver.MESSAGE))
                 .setPositiveButton(R.string.ok_text, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
 

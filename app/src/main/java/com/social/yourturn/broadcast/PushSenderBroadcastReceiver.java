@@ -58,14 +58,11 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
                     }else if(key.equals("alert")){
                         message = json.getString(key);
                         Log.d(TAG, "Message: " + message);
-                    }else if(key.equals("senderId")) {
-                        senderId = json.getString(key);
-                        Log.d(TAG, "Sender Id: " + senderId);
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(title.length() > 0 && message.length() > 0 && senderId.length() > 0){
-                    createNotification(context, title, message, senderId);
+                if(title.length() > 0 && message.length() > 0){
+                    createNotification(context, title, message);
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();
@@ -76,12 +73,12 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
 
     public static final int NOTIFICATION_ID = 45;
 
-    private void createNotification(Context context, String title, String message, String senderId) {
+    private void createNotification(Context context, String title, String message) {
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.putExtra(TITLE, title);
         intent.putExtra(MESSAGE, message);
-        intent.putExtra(SENDER_ID, senderId);
+        intent.putExtra(SENDER_ID, title);
         intent.setClass(context, ConfirmAmountActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 
@@ -90,8 +87,8 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
 
         NotificationCompat.Builder notification = new NotificationCompat.Builder(context)
                 .setSmallIcon(android.R.drawable.ic_menu_report_image)
-                .setContentTitle(title)
-                .setContentText(message)
+                .setContentTitle(title + " sent you a message")
+                .setContentText("You have been requested to confirm an amount of $" + message)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(senderIntent);
