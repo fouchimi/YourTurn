@@ -70,4 +70,25 @@ public class YourTurnContract {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }
+
+    public static final class LedgerEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_LEDGER).build();
+
+        public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_LEDGER;
+        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_LEDGER;
+
+        public static final String TABLE_NAME = "ledger";
+
+        public static final String COLUMN_GROUP_KEY = "group_id";
+        public static final String COLUMN_USER_KEY = "usr_contact_id";
+        public static final String COLUMN_USER_SHARE = "usr_share";
+        public static final String COLUMN_TOTAL_AMOUNT = "total_amount";
+        public static final String COLUMN_GROUP_CREATED_DATE = "created_date";
+        public static final String COLUMN_GROUP_UPDATED_DATE = "updated_date";
+
+        public static Uri buildLedgerUri(long id){
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+    }
 }

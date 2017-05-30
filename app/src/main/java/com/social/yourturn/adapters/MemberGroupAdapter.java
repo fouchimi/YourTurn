@@ -99,6 +99,7 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
             holder.splitValueEditText.setText(R.string.zero_default_values);
         }
         holder.imageView.setImageResource(R.drawable.default_profile);
+        holder.checkedIcon.setVisibility(View.INVISIBLE);
         ParseQuery<ParseUser> query = ParseUser.getQuery();
         query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
         query.getFirstInBackground(new GetCallback<ParseUser>() {
@@ -145,10 +146,6 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
             imageView = (CircleImageView) itemView.findViewById(R.id.member_thumbnail);
             splitValueEditText = (EditText) itemView.findViewById(R.id.splitValue);
             checkedIcon = (ImageView) itemView.findViewById(R.id.check_icon);
-        }
-
-        public EditText getSplitValueEditText() {
-            return splitValueEditText;
         }
 
         public ImageView getCheckedIcon() {

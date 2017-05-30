@@ -34,7 +34,9 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.parse.LogInCallback;
 import com.parse.ParseException;
+import com.parse.ParseInstallation;
 import com.parse.ParseUser;
+import com.parse.SaveCallback;
 import com.parse.SignUpCallback;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.GroupFragment;
@@ -199,6 +201,19 @@ public class MainActivity extends AppCompatActivity {
                         public void done(ParseException e) {
                             if(e == null){
                                 Log.d(TAG, "PARSE USER TABLE CREATED !");
+                                ParseInstallation installation = ParseInstallation.getCurrentInstallation();
+                                installation.put("device_id", mCurrentUser.getUsername());
+                                installation.saveInBackground(new SaveCallback() {
+                                    @Override
+                                    public void done(ParseException e) {
+                                        if(e == null){
+                                            Log.d(TAG, "device id saved");
+                                        }else {
+                                            Log.d(TAG, e.getMessage());
+                                            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+                                        }
+                                    }
+                                });
                             }else {
                                 Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
                                 Log.d(TAG, e.getMessage());

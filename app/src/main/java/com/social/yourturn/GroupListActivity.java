@@ -229,11 +229,12 @@ public class GroupListActivity extends AppCompatActivity  {
                 }
 
                 totalValue = Math.ceil(totalValue);
-                Log.d(TAG, df.format(totalValue));
+                double mTotalParsedAmount = Double.parseDouble(mTotalAmount);
+                double diff = Math.abs(mTotalParsedAmount - totalValue);
                // Toast.makeText(this, df.format(totalValue), Toast.LENGTH_LONG).show();
                 recipientList = recipientList.substring(0, recipientList.length()-1);
                 shareValueList = shareValueList.substring(0, shareValueList.length()-1);
-                if(mTotalAmount.equals(df.format(totalValue))){
+                if(diff <= 1){
                     payload.put("senderId", getCurrentPhoneNumber());
                     payload.put("sharedValueList", shareValueList);
                     payload.put("recipientList", recipientList);
@@ -256,10 +257,10 @@ public class GroupListActivity extends AppCompatActivity  {
                 return true;
             case R.id.validateBillAction:
                 Intent intent = new Intent(this, ConfirmPaymentIntentService.class);
-                intent.putParcelableArrayListExtra(getString(R.string.friendList), mContactList);
-                intent.putExtra(getString(R.string.sharedAmount), mSharedAmount);
+                intent.putParcelableArrayListExtra(getString(R.string.friendList), mAdapter.getContactList());
                 intent.putExtra(getString(R.string.groupId), mGroupId);
                 intent.putExtra(getString(R.string.paymentReceiver), mPaymentReceiver);
+                intent.putExtra(getString(R.string.totalAmount), mTotalAmount);
                 startService(intent);
                 return true;
             default:
@@ -325,11 +326,8 @@ public class GroupListActivity extends AppCompatActivity  {
             if(contact.getPhoneNumber().equals(userPhoneId)){
                 View view = mRecyclerView.getChildAt(position);
                 MemberGroupAdapter.MemberViewHolder mViewHolder = (MemberGroupAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
-                if(mViewHolder != null && mViewHolder.getCheckedIcon().getVisibility() == View.VISIBLE) {
-                    return;
-                }else if(mViewHolder != null && mViewHolder.getCheckedIcon().getVisibility() == View.INVISIBLE){
+                if(mViewHolder != null){
                     mViewHolder.getCheckedIcon().setVisibility(View.VISIBLE);
-                    return;
                 }
             }
             position++;
@@ -399,7 +397,7 @@ public class GroupListActivity extends AppCompatActivity  {
                     isVisible = false;
                     isValidateVisible = true;
                     invalidateOptionsMenu();
-                    Toast.makeText(context, "Match completed", Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, "All requests answered", Toast.LENGTH_LONG).show();
                 }
             }
         }

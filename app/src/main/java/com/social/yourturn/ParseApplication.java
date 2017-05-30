@@ -3,10 +3,14 @@ package com.social.yourturn;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.parse.Parse;
+import com.parse.ParseException;
 import com.parse.ParseInstallation;
 import com.parse.ParsePush;
+import com.parse.SaveCallback;
 import com.social.yourturn.utils.ParseConstant;
 
 import okhttp3.OkHttpClient;
@@ -17,6 +21,8 @@ import okhttp3.logging.HttpLoggingInterceptor;
  */
 
 public class ParseApplication extends Application {
+
+    private static final String TAG = ParseApplication.class.getSimpleName();
 
     @Override
     public void onCreate() {
@@ -39,13 +45,8 @@ public class ParseApplication extends Application {
 
         // Need to register GCM token
         ParseInstallation installation = ParseInstallation.getCurrentInstallation();
-        installation.put("device_id", getCurrentPhoneNumber());
         installation.saveInBackground();
         ParsePush.subscribeInBackground("pushChannel");
     }
 
-    private String getCurrentPhoneNumber(){
-        SharedPreferences sharePref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
-        return sharePref.getString(ParseConstant.USERNAME_COLUMN, "");
-    }
 }

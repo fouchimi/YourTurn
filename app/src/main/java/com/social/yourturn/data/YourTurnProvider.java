@@ -17,6 +17,7 @@ public class YourTurnProvider extends ContentProvider {
 
     static final int USER = 100;
     static final int GROUP = 200;
+    static final int LEDGER = 300;
 
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private YourTurnDbHelper mOpenHelper;
@@ -56,6 +57,18 @@ public class YourTurnProvider extends ContentProvider {
                         null);
                 break;
             }
+            case LEDGER:{
+                retCursor = mOpenHelper.getReadableDatabase().query(true,
+                        YourTurnContract.LedgerEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder,
+                        null);
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -74,6 +87,8 @@ public class YourTurnProvider extends ContentProvider {
                 return YourTurnContract.UserEntry.CONTENT_TYPE;
             case GROUP:
                 return YourTurnContract.GroupEntry.CONTENT_TYPE;
+            case LEDGER:
+                return YourTurnContract.LedgerEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -108,6 +123,16 @@ public class YourTurnProvider extends ContentProvider {
                 }
                 break;
             }
+            case LEDGER: {
+                normalizeDate(values);
+                long _id = db.insert(YourTurnContract.LedgerEntry.TABLE_NAME, null, values);
+                if(_id > 0){
+                    returnUri = YourTurnContract.LedgerEntry.buildLedgerUri(_id);
+                }else {
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -136,6 +161,9 @@ public class YourTurnProvider extends ContentProvider {
             case GROUP :
                 rowsDeleted = db.delete(YourTurnContract.GroupEntry.TABLE_NAME, selection, selectionArgs);
                 break;
+            case LEDGER :
+                rowsDeleted = db.delete(YourTurnContract.LedgerEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown Uri: " + uri);
         }
@@ -161,6 +189,10 @@ public class YourTurnProvider extends ContentProvider {
                 normalizeDate(values);
                 rowsUpdated = db.update(YourTurnContract.GroupEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
+            case LEDGER:
+                normalizeDate(values);
+                rowsUpdated = db.update(YourTurnContract.LedgerEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown Uri: " + uri);
         }
@@ -177,6 +209,7 @@ public class YourTurnProvider extends ContentProvider {
 
         matcher.addURI(authority, YourTurnContract.PATH_USER, USER);
         matcher.addURI(authority, YourTurnContract.PATH_GROUP, GROUP);
+        matcher.addURI(authority, YourTurnContract.PATH_LEDGER, LEDGER);
 
         return matcher;
     }
@@ -225,6 +258,23 @@ public class YourTurnProvider extends ContentProvider {
                 }
                 getContext().getContentResolver().notifyChange(uri, null);
                 return returnCount;
+            case LEDGER:
+                db.beginTransaction();
+                returnCount = 0;
+                try{
+                    for(ContentValues value : values){
+                        normalizeDate(value);
+                        long _id = db.insert(YourTurnContract.LedgerEntry.TABLE_NAME, null, value);
+                        if(_id != -1){
+                            returnCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }finally {
+                    db.endTransaction();
+                }
             default:
                 return super.bulkInsert(uri, values);
         }

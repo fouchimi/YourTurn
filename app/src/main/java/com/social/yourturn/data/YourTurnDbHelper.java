@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.social.yourturn.data.YourTurnContract.UserEntry;
 import com.social.yourturn.data.YourTurnContract.GroupEntry;
+import com.social.yourturn.data.YourTurnContract.LedgerEntry;
 
 /**
  * Created by ousma on 5/3/2017.
@@ -46,18 +47,33 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 GroupEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
                 GroupEntry.COLUMN_GROUP_CREATOR + " TEXT, " +
                 "FOREIGN KEY (" + GroupEntry.COLUMN_USER_KEY + ") REFERENCES " +
-                UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE CASCADE ON UPDATE NO ACTION"
+                UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE SET NULL ON UPDATE CASCADE"
                 + ");";
+
+        final String SQL_CREATE_LEDGER_TABLE = "CREATE TABLE " + YourTurnContract.LedgerEntry.TABLE_NAME + " (" +
+                LedgerEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                LedgerEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
+                LedgerEntry.COLUMN_GROUP_KEY + " TEXT NOT NULL, " +
+                LedgerEntry.COLUMN_USER_SHARE + " TEXT, " +
+                LedgerEntry.COLUMN_TOTAL_AMOUNT + " TEXT NOT NULL," +
+                LedgerEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
+                LedgerEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
+                "FOREIGN KEY (" + LedgerEntry.COLUMN_USER_KEY + ") REFERENCES " +
+                UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE SET NULL ON UPDATE CASCADE " +
+                "FOREIGN KEY (" + LedgerEntry.COLUMN_GROUP_KEY + ") REFERENCES " +
+                GroupEntry.TABLE_NAME + " (" + GroupEntry.COLUMN_GROUP_ID + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
 
 
         db.execSQL(SQL_CREATE_USER_TABLE);
         db.execSQL(SQL_CREATE_GROUP_TABLE);
+        db.execSQL(SQL_CREATE_LEDGER_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + UserEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + GroupEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + LedgerEntry.TABLE_NAME);
         onCreate(db);
     }
 }

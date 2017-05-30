@@ -6,12 +6,15 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.social.yourturn.ConfirmAmountActivity;
+import com.social.yourturn.data.YourTurnContract;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,7 +43,7 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void processPush(Context context, Intent intent) {
-        String title = "", message = "", senderId= "";
+        String title = "", message = "";
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -73,21 +76,27 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
 
     public static final int NOTIFICATION_ID = 45;
 
-    private void createNotification(Context context, String title, String message) {
+    private void createNotification(Context context, String senderPhoneNumber, String message) {
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.putExtra(TITLE, title);
+        intent.putExtra(TITLE, senderPhoneNumber);
         intent.putExtra(MESSAGE, message);
-        intent.putExtra(SENDER_ID, title);
+        intent.putExtra(SENDER_ID, senderPhoneNumber);
         intent.setClass(context, ConfirmAmountActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 
         PendingIntent senderIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
+        Cursor cursor = context.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, new String[]{YourTurnContract.UserEntry.COLUMN_USER_NAME},
+                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(senderPhoneNumber), null, null);
+        cursor.moveToFirst();
+        String senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+        cursor.close();
+
         NotificationCompat.Builder notification = new NotificationCompat.Builder(context)
                 .setSmallIcon(android.R.drawable.ic_menu_report_image)
-                .setContentTitle(title + " sent you a message")
+                .setContentTitle(senderName + " sent you a message")
                 .setContentText("You have been requested to confirm an amount of $" + message)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
