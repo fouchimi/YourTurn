@@ -1,7 +1,9 @@
 package com.social.yourturn;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,9 +11,12 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
+import android.database.MatrixCursor;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
@@ -19,6 +24,9 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -41,23 +49,29 @@ import com.parse.SignUpCallback;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.fragments.LatestUpdateFragment;
+import com.social.yourturn.models.Contact;
 import com.social.yourturn.utils.ParseConstant;
+import com.social.yourturn.utils.Utils;
 
+import org.joda.time.DateTime;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Vector;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private ParseUser mCurrentUser;
-    private static final int PERMISSION_ALL = 0;
-    private String mDeviceMetaData = "";
-    private String[] permissions = {Manifest.permission.READ_CONTACTS, Manifest.permission.READ_PHONE_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-    private String phoneId="", phoneNumber= "";
+    private static final int READ_CONTACT_PERMISSION = 0;
+    private static final int READ_PHONE_STATE_PERMISSION = 1;
+    private static final int WRITE_EXTERNAL_STORAGE_PERMISSION = 2;
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
     private FloatingActionButton fab;
-
+    private static final int LOADER_ID = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +81,25 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         fab = (FloatingActionButton) findViewById(R.id.fab);
-        requestAllPermissions(this, permissions);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!hasPermission(getApplicationContext(), Manifest.permission.READ_CONTACTS)) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_CONTACTS}, READ_CONTACT_PERMISSION);
+                }
+                if(!hasPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_STORAGE_PERMISSION);
+                }
+                if(!hasPermission(getApplicationContext(), Manifest.permission.READ_PHONE_STATE)) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_PHONE_STATE}, READ_PHONE_STATE_PERMISSION);
+                }
+                if(hasAllPermissions(getApplicationContext())){
+                    Intent intent = new Intent(getApplicationContext(), ContactActivity.class);
+                    startActivity(intent);
+                }
+            }
+        });
+        requestAllPermissions(this);
     }
 
     @Override
@@ -84,36 +116,26 @@ public class MainActivity extends AppCompatActivity {
             TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
             tabLayout.setupWithViewPager(mViewPager);
 
-            fab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(MainActivity.this, ContactActivity.class);
-                    MainActivity.this.startActivity(intent);
-                }
-            });
+            if(hasPermission(this, Manifest.permission.READ_PHONE_STATE)){
+                // Load groups here.
+                SharedPreferences sharedPref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
+                String phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
+                String phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
 
-
-            // Load groups here.
-            SharedPreferences sharedPref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
-            phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
-            phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
-
-            Log.d(TAG, "Phone ID from Shared Preferences: " + phoneId);
-            Log.d(TAG, "Phone Number from Shared Preferences: " + phoneNumber);
-
-            if(!phoneId.equals("") && !phoneNumber.equals("")){
-                ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
-                    @Override
-                    public void done(ParseUser user, ParseException e) {
-                        if(e == null){
-                            mCurrentUser = user;
-                           // Toast.makeText(getApplicationContext(), "Logging successful", Toast.LENGTH_LONG).show();
-                        }else {
-                            Log.d(TAG, e.getMessage());
-                            //Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                if(!phoneId.equals("") && !phoneNumber.equals("")){
+                    ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
+                        @Override
+                        public void done(ParseUser user, ParseException e) {
+                            if(e == null){
+                                mCurrentUser = user;
+                            }else {
+                                Log.d(TAG, e.getMessage());
+                            }
                         }
-                    }
-                });
+                    });
+                }
+            }else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE}, READ_PHONE_STATE_PERMISSION);
             }
         }else {
             //Display dialog box here
@@ -123,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton(R.string.ok_text, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                             finish();
+                            finish();
                         }
                     });
 
@@ -139,46 +161,41 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    private void requestAllPermissions(Activity context, String[] permissions){
-        if(!hasPermissions(this, permissions)){
-            ActivityCompat.requestPermissions(context, permissions, PERMISSION_ALL);
-        }
+    private void requestAllPermissions(Activity context){
+        ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.READ_CONTACTS}, READ_CONTACT_PERMISSION);
+        ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.READ_PHONE_STATE}, READ_PHONE_STATE_PERMISSION);
+        ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_STORAGE_PERMISSION);
     }
 
-    private boolean hasPermissions(Context context, String... permissions){
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null){
-            for(String permission : permissions){
-                if(ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED){
-                    return false;
-                }
-            }
+    private boolean hasPermission(Context context, String permission){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permission != null){
+            if(ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) return false;
         }
         return true;
     }
 
+    private boolean hasAllPermissions(Context context){
+        if(ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) return true;
+        return false;
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch(requestCode){
-            case PERMISSION_ALL:
+            case READ_PHONE_STATE_PERMISSION:
                 Log.d(TAG, String.valueOf(grantResults.length));
-                if(grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                        && grantResults[1] == PackageManager.PERMISSION_GRANTED
-                        && grantResults[2] == PackageManager.PERMISSION_GRANTED){
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                     Log.d(TAG, "permission granted");
-                    mDeviceMetaData = getDeviceMetaData();
+                    Toast.makeText(this, "Read phone state permission accepted !", Toast.LENGTH_LONG).show();
+                    String phoneId="", phoneNumber="";
 
-                    phoneId = mDeviceMetaData.split(" ")[0];
-                    phoneNumber = mDeviceMetaData.split(" ")[1];
-                    PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-                    try {
-                        phoneNumber = phoneUtil.format(phoneUtil.parse(phoneNumber, Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
-                    } catch (NumberParseException e) {
-                        Log.d(TAG, e.getMessage());
-                        e.printStackTrace();
-                    }
+                    phoneId = getDeviceMetaData().split(" ")[0];
+                    phoneNumber = getDeviceMetaData().split(" ")[1];
+                    phoneNumber = sanitizePhoneNumber(phoneNumber);
+
                     Log.d(TAG, "Phone Id: " + phoneId);
                     Log.d(TAG, "Phone number: " + phoneNumber);
 
@@ -189,12 +206,7 @@ public class MainActivity extends AppCompatActivity {
                     mCurrentUser.put(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
 
                     //Save login credentials in Shared Preferences document
-                    SharedPreferences sharedPref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
-
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putString(ParseConstant.USERNAME_COLUMN, phoneNumber);
-                    editor.putString(ParseConstant.PASSWORD_COLUMN, phoneId);
-                    editor.apply();
+                    savedCredentials(phoneId, phoneNumber);
 
                     mCurrentUser.signUpInBackground(new SignUpCallback() {
                         @Override
@@ -215,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 });
                             }else {
-                                Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                                //Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
                                 Log.d(TAG, e.getMessage());
                                 Log.d(TAG, "An error occur !");
                             }
@@ -223,12 +235,38 @@ public class MainActivity extends AppCompatActivity {
                     });
 
 
-                }else {
-                    Toast.makeText(this, "Permission denied !", Toast.LENGTH_LONG).show();
+                }else if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED){
+                    Toast.makeText(this, "Permission denied !", Toast.LENGTH_SHORT).show();
                 }
+                break;
+            case READ_CONTACT_PERMISSION:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    Toast.makeText(this, "Read contact permission accepted !", Toast.LENGTH_LONG).show();
+                    getSupportLoaderManager().initLoader(LOADER_ID, null, MainActivity.this);
+                }else if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED){
+                    Toast.makeText(this, "Read contact denied", Toast.LENGTH_LONG).show();
+                }
+                break;
+            case WRITE_EXTERNAL_STORAGE_PERMISSION:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    Toast.makeText(this, "Write permission accepted !", Toast.LENGTH_LONG).show();
+                }else if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED){
+                    Toast.makeText(this, "Write permission denied !", Toast.LENGTH_LONG).show();
+                }
+            break;
+
+            default:
+                return;
         }
     }
 
+    private void savedCredentials(String phoneId, String phoneNumber){
+        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(ParseConstant.USERNAME_COLUMN, phoneNumber);
+        editor.putString(ParseConstant.PASSWORD_COLUMN, phoneId);
+        editor.apply();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -242,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.action_edit_profile) {
             Intent intent = new Intent(this, ProfileActivity.class);
             SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-            phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
+            String phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
             Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
                     YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
             if(c != null && c.getCount() <= 0) {
@@ -268,6 +306,83 @@ public class MainActivity extends AppCompatActivity {
         return telephonyManager.getDeviceId() + " " + telephonyManager.getLine1Number();
     }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        switch (id) {
+            case LOADER_ID:
+                return new CursorLoader(this,
+                        ContactsQuery.CONTENT_URI,
+                        ContactsQuery.PROJECTION,
+                        ContactsQuery.SELECTION,
+                        null,
+                        ContactActivity.MemberQuery.SORT_ORDER);
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        List<Contact> mContactList = new ArrayList<>();
+        if(loader.getId() == LOADER_ID){
+            Vector<ContentValues> contactVector = new Vector<>();
+            MatrixCursor newCursor = new MatrixCursor(ContactsQuery.PROJECTION);
+            String contactId = "", displayName = "", phoneNumber = "";
+            if (cursor.moveToFirst()) {
+                do {
+                    if (!cursor.getString(ContactsQuery.DISPLAY_NAME).toUpperCase().equals(displayName)) {
+                        newCursor.addRow(new Object[]{
+                                cursor.getString(ContactsQuery.ID),
+                                cursor.getString(ContactsQuery.DISPLAY_NAME),
+                                cursor.getString(ContactsQuery.PHONE_NUMBER)});
+
+                        contactId = cursor.getString(ContactsQuery.ID);
+                        displayName = cursor.getString(ContactsQuery.DISPLAY_NAME).toUpperCase();
+                        phoneNumber = sanitizePhoneNumber(cursor.getString(ContactsQuery.PHONE_NUMBER));
+
+                        if(displayName.matches("\\d+") || displayName.startsWith("+")) continue;
+
+                        DateTime dayTime = new DateTime();
+
+                        ContentValues contactValue = new ContentValues();
+                        contactValue.put(YourTurnContract.MemberEntry._ID, contactId);
+                        contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, displayName);
+                        contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER, phoneNumber);
+                        contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE, dayTime.getMillis());
+                        contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_UPDATED_DATE, dayTime.getMillis());
+                        contactVector.add(contactValue);
+                        mContactList.add(new Contact(contactId, displayName, phoneNumber));
+                    }
+                } while (cursor.moveToNext());
+            }
+
+            // Dump data into member table here
+            if (contactVector.size() > 0 ) {
+                ContentValues[] cvArray = new ContentValues[contactVector.size()];
+                contactVector.toArray(cvArray);
+                Cursor memberCursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, null, null, null);
+                if(memberCursor.getCount() == 0)
+                    getContentResolver().bulkInsert(YourTurnContract.MemberEntry.CONTENT_URI, cvArray);
+                if(memberCursor != null) memberCursor.close();
+                Log.d(TAG, "Member Bulk insert successful");
+            }
+        }
+
+    }
+
+    private String sanitizePhoneNumber(String phoneNumber){
+        PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+        try {
+            phoneNumber = phoneUtil.format(phoneUtil.parse(phoneNumber, Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+        } catch (NumberParseException e) {
+            e.printStackTrace();
+        }
+        return phoneNumber;
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+    }
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
@@ -301,6 +416,27 @@ public class MainActivity extends AppCompatActivity {
             }
             return super.getPageTitle(position);
         }
+    }
+
+    public interface ContactsQuery {
+
+        final static Uri CONTENT_URI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+
+        @SuppressLint("InlinedApi")
+        final static String SELECTION = (Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME) +
+                "<>''" + " AND " + ContactsContract.Contacts.IN_VISIBLE_GROUP + " = '" + ("1") + "'" + " AND " + ContactsContract.CommonDataKinds.Phone.HAS_PHONE_NUMBER;
+
+        @SuppressLint("InlinedApi")
+        final static String[] PROJECTION = {
+                ContactsContract.CommonDataKinds.Phone._ID,
+                Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
+        };
+
+
+        final static int ID = 0;
+        final static int DISPLAY_NAME = 1;
+        final static int PHONE_NUMBER = 2;
     }
 
 

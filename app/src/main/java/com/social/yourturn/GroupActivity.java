@@ -104,8 +104,6 @@ public class GroupActivity extends AppCompatActivity {
 
         mCurrentUser = ParseUser.getCurrentUser();
 
-        login();
-
         Intent intent = getIntent();
         if(intent != null) {
             mContactList = intent.getParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT);
@@ -113,22 +111,19 @@ public class GroupActivity extends AppCompatActivity {
             String contactPhoneNumber = null;
             for(Contact contact : mContactList) {
                 ContentValues userValues = new ContentValues();
-                PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-                try {
-                    contactPhoneNumber = phoneUtil.format(phoneUtil.parse(contact.getPhoneNumber(), Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
-                    Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(contactPhoneNumber), null, null);
-                    if(c != null && c.getCount() == 0) {
-                        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, contactPhoneNumber);
-                        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, contact.getId());
-                        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, contact.getName());
-                        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
-                        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
-                        cVVectorUsers.add(userValues);
-                    }
-                    if(c != null) c.close();
-                } catch (NumberParseException e) {
-                    e.printStackTrace();
+                Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
+                        YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
+
+                if(c != null && c.getCount() == 0) {
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, contact.getPhoneNumber());
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, contact.getId());
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, contact.getName());
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
+                    cVVectorUsers.add(userValues);
                 }
+
+                if(c != null) c.close();
 
                 StringBuilder builder = new StringBuilder();
                 builder.append(contact.getId());
@@ -154,9 +149,7 @@ public class GroupActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
-                Pattern p = Pattern.compile("^[a-zA-Z0-9_\\s]+$");
-                Matcher m = p.matcher(groupName);
-                if(m.find() && groupName.length() > 0){
+                if(groupName.length() > 0){
                     Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
                             YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
                     if(c != null && c.getCount() > 0){
@@ -177,7 +170,7 @@ public class GroupActivity extends AppCompatActivity {
                             Log.d(TAG, "No icon chosen !!");
                             final ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
                             groupTable.put(ParseConstant.GROUP_NAME, groupName);
-                            groupTable.put(ParseConstant.USER_ID_COLUMN, getCurrentPhoneNumber());
+                            groupTable.put(ParseConstant.USER_ID_COLUMN, mCurrentUser.getUsername());
                             groupTable.put(ParseConstant.MEMBERS_COLUMN, friendList);
 
                             if(cVVectorUsers.size() > 0) {
@@ -194,24 +187,15 @@ public class GroupActivity extends AppCompatActivity {
                                         Log.d(TAG, "Group table created!");
                                         List<ParseObject> list = new ArrayList<>();
                                         Contact currentContact = new Contact();
-                                        currentContact.setPhoneNumber(getCurrentPhoneNumber());
+                                        currentContact.setPhoneNumber(mCurrentUser.getUsername());
                                         mContactList.add(currentContact);
 
                                         dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, "");
                                         for(Contact contact : mContactList){
                                             final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
                                             member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
-                                            String contactPhoneNumber = null;
-                                            PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-                                            try {
-                                                contactPhoneNumber = phoneUtil.format(phoneUtil.parse(contact.getPhoneNumber(), Locale.getDefault().getCountry()),
-                                                        PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
-                                                member_group_table.put(ParseConstant.USER_ID_COLUMN, contactPhoneNumber);
-                                                list.add(member_group_table);
-                                            } catch (NumberParseException ex) {
-                                                Log.d(TAG, ex.getMessage());
-                                                ex.printStackTrace();
-                                            }
+                                            member_group_table.put(ParseConstant.USER_ID_COLUMN, contact.getPhoneNumber());
+                                            list.add(member_group_table);
                                         }
 
                                         ParseObject.saveAllInBackground(list, new SaveCallback() {
@@ -232,39 +216,9 @@ public class GroupActivity extends AppCompatActivity {
                         }
                     }
                     if(c != null ) c.close();
-                }else {
-                    Toast.makeText(GroupActivity.this, R.string.required_group_name, Toast.LENGTH_LONG).show();
                 }
             }
         });
-    }
-
-    private void login(){
-        if(mCurrentUser == null) {
-            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-            phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
-            phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
-
-            Log.d(TAG, "Phone ID from Shared Preferences: " + phoneId);
-            Log.d(TAG, "Phone Number from Shared Preferences: " + phoneNumber);
-
-            if(!phoneId.equals("") && !phoneNumber.equals("")){
-                ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
-                    @Override
-                    public void done(ParseUser user, ParseException e) {
-                        if(e == null){
-                            mCurrentUser = user;
-                            Log.d(TAG, "Current User: " + mCurrentUser.getUsername());
-                        }else {
-                            Log.d(TAG, e.getMessage());
-                            //Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    }
-                });
-            }
-        }else {
-            Log.d(TAG, "Username: " + mCurrentUser.getUsername());
-        }
     }
 
     private void dumpGroupValuesInContentProvider(final String groupId, final String groupName, final String groupThumbnail){
@@ -277,16 +231,8 @@ public class GroupActivity extends AppCompatActivity {
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
 
-                PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-                try {
-                    String contactPhoneNumber = phoneUtil.format(phoneUtil.parse(contact.getPhoneNumber(), Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
-                    String currentPhoneNumber = phoneUtil.format(phoneUtil.parse(getCurrentPhoneNumber(), Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
-                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contactPhoneNumber);
-                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, currentPhoneNumber);
-                }catch (NumberParseException e){
-                    Log.d(TAG, e.getMessage());
-                }
-
+                groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getPhoneNumber());
+                groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, mCurrentUser.getUsername());
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnail);
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
@@ -324,8 +270,7 @@ public class GroupActivity extends AppCompatActivity {
             mGroupDirectory.mkdirs();
         }
     }
-
-
+    
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch(requestCode) {
@@ -436,22 +381,14 @@ public class GroupActivity extends AppCompatActivity {
 
                         List<ParseObject> list = new ArrayList<>();
                         Contact currentContact = new Contact();
-                        currentContact.setPhoneNumber(getCurrentPhoneNumber());
+                        currentContact.setPhoneNumber(mCurrentUser.getUsername());
 
                         mContactList.add(currentContact);
                         for(Contact contact : mContactList){
                             final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
                             member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
-                            String contactPhoneNumber = null;
-                            PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-                            try {
-                                contactPhoneNumber = phoneUtil.format(phoneUtil.parse(contact.getPhoneNumber(), Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
-                                member_group_table.put(ParseConstant.USER_ID_COLUMN, contactPhoneNumber);
-                                list.add(member_group_table);
-                            } catch (NumberParseException ex) {
-                                Log.d(TAG, ex.getMessage());
-                                ex.printStackTrace();
-                            }
+                            member_group_table.put(ParseConstant.USER_ID_COLUMN, contact.getPhoneNumber());
+                            list.add(member_group_table);
                         }
 
                         ParseObject.saveAllInBackground(list, new SaveCallback() {
@@ -478,11 +415,6 @@ public class GroupActivity extends AppCompatActivity {
             super.onCancelled();
             Log.d(TAG, "Background job cancelled");
         }
-    }
-
-    public String getCurrentPhoneNumber(){
-        SharedPreferences sharedRef = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
-        return sharedRef.getString(ParseConstant.USERNAME_COLUMN, "");
     }
 
 }

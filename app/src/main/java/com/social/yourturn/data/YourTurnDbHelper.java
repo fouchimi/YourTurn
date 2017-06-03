@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.social.yourturn.data.YourTurnContract.UserEntry;
 import com.social.yourturn.data.YourTurnContract.GroupEntry;
 import com.social.yourturn.data.YourTurnContract.LedgerEntry;
+import com.social.yourturn.data.YourTurnContract.MemberEntry;
 
 /**
  * Created by ousma on 5/3/2017.
@@ -25,6 +26,18 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
     @Override
     public void onCreate(SQLiteDatabase db) {
 
+        final String SQL_CREATE_MEMBER_TABLE = "CREATE TABLE " + MemberEntry.TABLE_NAME + " (" +
+                MemberEntry._ID + " INTEGER PRIMARY KEY, " +
+                MemberEntry.COLUMN_MEMBER_NAME + " TEXT NOT NULL, " +
+                MemberEntry.COLUMN_MEMBER_LOOKUP_KEY + " TEXT, " +
+                MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + " TEXT NOT NULL, " +
+                MemberEntry.COLUMN_MEMBER_REGISTERED + " TEXT, " +
+                MemberEntry.COLUMN_MEMBER_SORT_KEY_PRIMARY + " TEXT, " +
+                MemberEntry.COLUMN_MEMBER_THUMBNAIL + " TEXT, " +
+                MemberEntry.COLUMN_MEMBER_CREATED_DATE + " INTEGER NOT NULL, " +
+                MemberEntry.COLUMN_MEMBER_UPDATED_DATE + " INTEGER NOT NULL " +
+                ");";
+
         final String SQL_CREATE_USER_TABLE = "CREATE TABLE " + UserEntry.TABLE_NAME + " (" +
                 UserEntry._ID + " INTEGER PRIMARY KEY, " +
                 UserEntry.COLUMN_USER_NAME + " TEXT, " +
@@ -37,7 +50,7 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 UserEntry.COLUMN_USER_UPDATED_DATE + " INTEGER NOT NULL" +
                 ");";
 
-         final String SQL_CREATE_GROUP_TABLE = "CREATE TABLE " + GroupEntry.TABLE_NAME + " (" +
+        final String SQL_CREATE_GROUP_TABLE = "CREATE TABLE " + GroupEntry.TABLE_NAME + " (" +
                 GroupEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 GroupEntry.COLUMN_GROUP_ID + " TEXT NOT NULL, " +
                 GroupEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
@@ -64,6 +77,7 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 GroupEntry.TABLE_NAME + " (" + GroupEntry.COLUMN_GROUP_ID + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
 
 
+        db.execSQL(SQL_CREATE_MEMBER_TABLE);
         db.execSQL(SQL_CREATE_USER_TABLE);
         db.execSQL(SQL_CREATE_GROUP_TABLE);
         db.execSQL(SQL_CREATE_LEDGER_TABLE);
@@ -71,6 +85,7 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + MemberEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + UserEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + GroupEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + LedgerEntry.TABLE_NAME);

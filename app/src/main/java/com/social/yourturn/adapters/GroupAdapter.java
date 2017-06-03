@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseFile;
@@ -74,12 +75,12 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
         query.getInBackground(group.getGroupId(), new GetCallback<ParseObject>() {
             @Override
-            public void done(ParseObject object, ParseException e) {
-                ParseFile parseFile = (ParseFile) object.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
+            public void done(ParseObject row, ParseException e) {
+                ParseFile parseFile = (ParseFile) row.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
                 if(parseFile != null) {
                     String imageUrl = parseFile.getUrl();
                     Uri imageUri = Uri.parse(imageUrl);
-                    Glide.with(mContext).load(imageUri.toString()).into(holder.groupThumbnail);
+                    Glide.with(mContext).load(imageUri.toString()).diskCacheStrategy(DiskCacheStrategy.ALL).into(holder.groupThumbnail);
                 }else {
                     holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
                 }

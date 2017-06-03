@@ -15,9 +15,10 @@ import android.support.annotation.Nullable;
 
 public class YourTurnProvider extends ContentProvider {
 
-    static final int USER = 100;
-    static final int GROUP = 200;
-    static final int LEDGER = 300;
+    static final int MEMBER = 100;
+    static final int USER = 200;
+    static final int GROUP = 300;
+    static final int LEDGER = 400;
 
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private YourTurnDbHelper mOpenHelper;
@@ -33,6 +34,18 @@ public class YourTurnProvider extends ContentProvider {
     public Cursor query(@NonNull Uri uri, @Nullable String[] projection, @Nullable String selection, @Nullable String[] selectionArgs, @Nullable String sortOrder) {
         Cursor retCursor;
         switch (sUriMatcher.match(uri)){
+            case MEMBER: {
+                retCursor = mOpenHelper.getReadableDatabase().query(
+                        YourTurnContract.MemberEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
             case USER: {
                 retCursor = mOpenHelper.getReadableDatabase().query(
                         YourTurnContract.UserEntry.TABLE_NAME,
@@ -83,6 +96,8 @@ public class YourTurnProvider extends ContentProvider {
         final int match = sUriMatcher.match(uri);
 
         switch (match){
+            case MEMBER:
+                return YourTurnContract.MemberEntry.CONTENT_TYPE;
             case USER:
                 return YourTurnContract.UserEntry.CONTENT_TYPE;
             case GROUP:
@@ -103,6 +118,16 @@ public class YourTurnProvider extends ContentProvider {
         Uri returnUri = null;
 
         switch (match){
+            case MEMBER:{
+                normalizeDate(values);
+                long _id = db.insert(YourTurnContract.MemberEntry.TABLE_NAME, null, values);
+                if(_id > 0 ){
+                    returnUri = YourTurnContract.MemberEntry.buildMemberUri(_id);
+                }else {
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
+                break;
+            }
             case USER:{
                 normalizeDate(values);
                 long _id = db.insert(YourTurnContract.UserEntry.TABLE_NAME, null, values);
@@ -155,6 +180,9 @@ public class YourTurnProvider extends ContentProvider {
 
         if(null == selection) selection = "1";
         switch (match){
+            case MEMBER :
+                rowsDeleted = db.delete(YourTurnContract.MemberEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             case USER :
                 rowsDeleted = db.delete(YourTurnContract.UserEntry.TABLE_NAME, selection, selectionArgs);
                 break;
@@ -181,6 +209,10 @@ public class YourTurnProvider extends ContentProvider {
         int rowsUpdated;
 
         switch (match){
+            case MEMBER :
+                normalizeDate(values);
+                rowsUpdated = db.update(YourTurnContract.MemberEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
             case USER :
                 normalizeDate(values);
                 rowsUpdated = db.update(YourTurnContract.UserEntry.TABLE_NAME, values, selection, selectionArgs);
@@ -207,6 +239,7 @@ public class YourTurnProvider extends ContentProvider {
         final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         final String authority = YourTurnContract.CONTENT_AUTHORITY;
 
+        matcher.addURI(authority, YourTurnContract.PATH_MEMBER, MEMBER);
         matcher.addURI(authority, YourTurnContract.PATH_USER, USER);
         matcher.addURI(authority, YourTurnContract.PATH_GROUP, GROUP);
         matcher.addURI(authority, YourTurnContract.PATH_LEDGER, LEDGER);
@@ -218,10 +251,29 @@ public class YourTurnProvider extends ContentProvider {
     public int bulkInsert(@NonNull Uri uri, @NonNull ContentValues[] values) {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
+        int returnCount = 0;
         switch (match){
+            case MEMBER:
+                db.beginTransaction();
+                try{
+                    for(ContentValues value : values){
+                        normalizeDate(value);
+                        long _id = db.insert(YourTurnContract.MemberEntry.TABLE_NAME, null, value);
+                        if(_id != -1) {
+                            returnCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }finally {
+                    db.endTransaction();
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
             case USER:
                 db.beginTransaction();
-                int returnCount = 0;
+                returnCount = 0;
                 try{
                     for(ContentValues value : values){
                         normalizeDate(value);
@@ -241,7 +293,6 @@ public class YourTurnProvider extends ContentProvider {
             case GROUP:
                 db.beginTransaction();
                 returnCount = 0;
-
                 try{
                     for(ContentValues value : values){
                         normalizeDate(value);

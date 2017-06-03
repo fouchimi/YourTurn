@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.support.v4.widget.CursorAdapter;
-import android.telephony.PhoneNumberUtils;
 import android.text.style.TextAppearanceSpan;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -16,18 +15,13 @@ import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.social.yourturn.ContactActivity;
 import com.social.yourturn.R;
+import com.social.yourturn.ContactActivity.MemberQuery;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.Utils;
 
 import org.apache.commons.lang3.text.WordUtils;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -43,22 +37,16 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
     private Context mContext;
     private final static String TAG = ContactsAdapter.class.getSimpleName();
     private SparseBooleanArray selectionArray = new SparseBooleanArray();
-    private List<Contact> contactList = new ArrayList<>();
-    private int mPosition;
+    private List<Contact> mContactList;
 
-    public ContactsAdapter(Context context){
+    public ContactsAdapter(Context context, List<Contact> list){
         super(context, null, 0);
         mContext = context;
         mInflater = LayoutInflater.from(context);
         final String alphabet = context.getString(R.string.alphabet);
-        mAlphabetIndexer = new AlphabetIndexer(null, ContactActivity.ContactsQuery.SORT_KEY, alphabet);
+        mAlphabetIndexer = new AlphabetIndexer(null, MemberQuery.DISPLAY_NAME, alphabet);
         highlightTextSpan = new TextAppearanceSpan(context, R.style.searchTextHighlight);
-        mPosition = 0;
-    }
-
-
-    public List<Contact> getContactList() {
-        return contactList;
+        mContactList = list;
     }
 
     @Override
@@ -94,26 +82,21 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
     @Override
     public void bindView(View view, final Context context, final Cursor cursor) {
         final ViewHolder holder = (ViewHolder) view.getTag();
-        final String contactId = cursor.getString(ContactActivity.ContactsQuery.ID);
-        final String displayName = cursor.getString(ContactActivity.ContactsQuery.DISPLAY_NAME).toUpperCase();
-        String phoneNumber = cursor.getString(ContactActivity.ContactsQuery.PHONE_NUMBER);
-        Contact contact = new Contact(contactId, displayName, phoneNumber);
-        contact.setPosition((mPosition++) % getCount());
-        contactList.add(contact);
+        final String displayName = cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase();
 
         holder.thumbnail.setImageResource(R.drawable.default_profile);
         holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
         int position = cursor.getPosition();
         boolean isSelected = selectionArray.get(position);
-        TextView usernameTextView = (TextView) view.findViewById(R.id.username);
+
         if (isSelected) {
             view.setBackgroundColor(context.getResources().getColor(R.color.colorAccent));
-            usernameTextView.setTextColor(Color.WHITE);
+            holder.username.setTextColor(Color.WHITE);
             holder.selected.setVisibility(View.VISIBLE);
         } else if (!isSelected){
             view.setBackgroundColor(Color.TRANSPARENT );
-            usernameTextView.setTextColor(Color.BLACK);
+            holder.username.setTextColor(Color.BLACK);
             holder.selected.setVisibility(View.INVISIBLE);
         }
 
@@ -155,3 +138,4 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
     }
 
 }
+

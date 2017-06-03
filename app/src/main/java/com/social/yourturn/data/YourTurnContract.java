@@ -16,6 +16,7 @@ public class YourTurnContract {
 
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 
+    public static final String PATH_MEMBER = "member";
     public static final String PATH_USER = "user";
     public static final String PATH_GROUP = "group";
     public static final String PATH_LEDGER = "ledger";
@@ -26,6 +27,27 @@ public class YourTurnContract {
         time.set(startDate);
         int julianDay = Time.getJulianDay(startDate, time.gmtoff);
         return time.setJulianDay(julianDay);
+    }
+
+    public static final class MemberEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_MEMBER).build();
+        public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MEMBER;
+        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MEMBER;
+
+        public static final String TABLE_NAME = "members";
+        public static final String COLUMN_MEMBER_NAME = "display_name";
+        public static final String COLUMN_MEMBER_PHONE_NUMBER = "data1";
+        public static final String COLUMN_MEMBER_REGISTERED = "is_registered";
+        public static final String COLUMN_MEMBER_THUMBNAIL = "thumbnail";
+        public static final String COLUMN_MEMBER_SORT_KEY_PRIMARY = "sort_key";
+        public static final String COLUMN_MEMBER_LOOKUP_KEY = "lookup";
+        public static final String COLUMN_MEMBER_CREATED_DATE = "created_date";
+        public static final String COLUMN_MEMBER_UPDATED_DATE = "updated_date";
+
+        public static Uri buildMemberUri(long id){
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
     }
 
     public static final class UserEntry implements BaseColumns {

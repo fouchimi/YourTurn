@@ -4,14 +4,11 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.MatrixCursor;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -29,27 +26,24 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.parse.ParseUser;
 import com.social.yourturn.adapters.ContactsAdapter;
 import com.social.yourturn.adapters.SelectedContactAdapter;
+import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 import jp.wasabeef.recyclerview.adapters.AlphaInAnimationAdapter;
 import jp.wasabeef.recyclerview.animators.FadeInAnimator;
 
 
-public class ContactActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor>, SelectedContactAdapter.IContactUpdateListener {
+public class ContactActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>,
+        SelectedContactAdapter.IContactUpdateListener {
 
     private static final String TAG = ContactActivity.class.getSimpleName();
     private ContactsAdapter mAdapter;
@@ -64,15 +58,15 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
     public static final String SELECTED_CONTACT = "Selected";
     public static final String TOTAL_COUNT = "TotalCount";
     private int mTotalContact = 0;
-    private List<Contact> mList = null;
-    private List<Contact> mContactList = new ArrayList<>();
+    private List<Contact> mContactList;
+    private List<Contact> mList = new ArrayList<>();
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact);
-        getSupportLoaderManager().initLoader(ContactsQuery.QUERY_ID, null, this);
+        getSupportLoaderManager().initLoader(MemberQuery.QUERY_ID, null, this);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -123,15 +117,8 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
         alphaAdapter.setDuration(1000);
         mRecyclerView.setItemAnimator(new FadeInAnimator());
         mRecyclerView.setAdapter(alphaAdapter);
-        mAdapter = new ContactsAdapter(this);
         mListView = (ListView) findViewById(R.id.contactList);
-        mListView.setOnItemClickListener(this);
-        mListView.setAdapter(mAdapter);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
+        mListView.setOnItemClickListener(new MyListViewItemListener());
     }
 
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
@@ -159,19 +146,14 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
                 }
 
                 mSearchTerm = newFilter;
-                onSelectionCleared();
+                mAdapter.clearSelection();
 
-                getSupportLoaderManager().restartLoader(ContactsQuery.QUERY_ID, null, ContactActivity.this);
+                getSupportLoaderManager().restartLoader(MemberQuery.QUERY_ID, null, ContactActivity.this);
                 return true;
             }
         });
 
-
         return true;
-    }
-
-    private void onSelectionCleared() {
-        mAdapter.clearSelection();
     }
 
     @Override
@@ -186,22 +168,25 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
-        if (id == ContactsQuery.QUERY_ID) {
-            Uri contentUri;
+        if (id == MemberQuery.QUERY_ID) {
+            Uri contentUri = YourTurnContract.MemberEntry.CONTENT_URI;
 
             if (mSearchTerm == null) {
-                contentUri = ContactsQuery.CONTENT_URI;
+                return new CursorLoader(this,
+                        contentUri,
+                        MemberQuery.PROJECTION,
+                        null,
+                        null,
+                        MemberQuery.SORT_ORDER);
             } else {
-                contentUri =
-                        Uri.withAppendedPath(ContactsQuery.FILTER_URI, Uri.encode(mSearchTerm));
+                return new CursorLoader(this,
+                        contentUri,
+                        MemberQuery.PROJECTION,
+                        YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME + " LIKE ? ",
+                        new String[]{"%" + mSearchTerm + "%"},
+                        MemberQuery.SORT_ORDER);
             }
 
-            return new CursorLoader(this,
-                    contentUri,
-                    ContactsQuery.PROJECTION,
-                    ContactsQuery.SELECTION,
-                    null,
-                    ContactsQuery.SORT_ORDER);
         }
 
         Log.e(TAG, "onCreateLoader - incorrect ID provided (" + id + ")");
@@ -210,77 +195,37 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        if(loader.getId() == ContactsQuery.QUERY_ID){
-            //Remove duplicates contacts
-            MatrixCursor newCursor = new MatrixCursor(ContactsQuery.PROJECTION);
-            if (cursor.moveToFirst()) {
-                HashMap<String, String> map = new HashMap<>();
-                String lastname = "";
-                do {
-                    if (!cursor.getString(ContactsQuery.DISPLAY_NAME).equalsIgnoreCase(lastname)) {
-                        newCursor.addRow(new Object[]{
-                                cursor.getString(ContactsQuery.ID),
-                                cursor.getString(ContactsQuery.LOOKUP_KEY),
-                                cursor.getString(ContactsQuery.DISPLAY_NAME),
-                                cursor.getString(ContactsQuery.PHONE_NUMBER),
-                                cursor.getString(ContactsQuery.SORT_KEY)});
+        if(loader.getId() == MemberQuery.QUERY_ID){
+            mContactList = new ArrayList<>();
+            while(cursor.moveToNext()){
 
-                        lastname = cursor.getString(ContactsQuery.DISPLAY_NAME);
-                    }
-                } while (cursor.moveToNext());
-            }
-            mAdapter.swapCursor(newCursor);
-            mTotalContact = newCursor.getCount();
-            updateListView(newCursor);
-        }
-    }
+                String contactId = cursor.getString(MemberQuery.ID);
+                String displayName = cursor.getString(MemberQuery.DISPLAY_NAME);
+                String phoneNumber = cursor.getString(MemberQuery.PHONE_NUMBER);
 
-    private void updateListView(Cursor cursor){
-        while (cursor.moveToNext()){
-            final String contactId = cursor.getString(ContactsQuery.ID);
-            final String displayName = cursor.getString(ContactsQuery.DISPLAY_NAME).toUpperCase();
-            final String phoneNumber = cursor.getString(ContactsQuery.PHONE_NUMBER);
-            for(Contact contact : mContactList){
-                if(contact.getId().equals(contactId) &&
-                        contact.getName().equals(displayName) &&
-                        contact.getPhoneNumber().equals(phoneNumber)){
-                    int position = cursor.getPosition();
-                    mAdapter.setSelected(position, true);
-                    break;
-                }
+                Contact contact = new Contact(contactId, displayName, phoneNumber);
+                mContactList.add(contact);
             }
-        }
-        mAdapter.notifyDataSetChanged();
-    }
 
-    private void removeOnListView(Cursor cursor, Contact contact){
-        for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()){
-            final String contactId = cursor.getString(ContactsQuery.ID);
-            if(contact.getId().equals(contactId)){
-                int position = cursor.getPosition();
-                mAdapter.setSelected(position, false);
-                mAdapter.remove(position);
-                break;
-            }
         }
-        mAdapter.notifyDataSetChanged();
+
+        mAdapter = new ContactsAdapter(this, mContactList);
+        mListView.setAdapter(mAdapter);
+        mAdapter.swapCursor(cursor);
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        if(loader.getId() == ContactsQuery.QUERY_ID){
-            mAdapter.swapCursor(null);
-        }
+
     }
 
     private Contact getSelectedContact(int position, Cursor cursor){
-        mList = mAdapter.getContactList();
         cursor.moveToPosition(position);
-        final String contactId = cursor.getString(ContactsQuery.ID);
-        final String displayName = cursor.getString(ContactsQuery.DISPLAY_NAME).toUpperCase();
-        final String phoneNumber = cursor.getString(ContactsQuery.PHONE_NUMBER);
+        final String contactId = cursor.getString(MemberQuery.ID);
+        final String displayName = cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase();
+        final String phoneNumber = cursor.getString(MemberQuery.PHONE_NUMBER);
         Contact targetedContact = new Contact(contactId, displayName, phoneNumber);
-        for(Contact contact : mList){
+        for(Contact contact : mContactList){
             if(targetedContact.getId().equals(contact.getId()) &&
                     targetedContact.getName().equals(contact.getName()) &&
                     targetedContact.getPhoneNumber().equals(contact.getPhoneNumber())){
@@ -291,35 +236,8 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
         return null;
     }
 
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        final Cursor cursor = mAdapter.getCursor();
-        Contact contact = getSelectedContact(position, cursor);
-        if(mAdapter.isSelected(position)){
-            mAdapter.setSelected(position, false);
-            mAdapter.remove(position);
-            removeFromListView(contact);
-            removeFromRecyclerView(contact);
-        }else {
-            mAdapter.setSelected(position, true);
-            if(!mSelectedContactList.contains(contact)){
-                mSelectedContactList.add(contact);
-            }
-            if(!mContactList.contains(contact)){
-                mContactList.add(contact);
-            }
-            mRecyclerView.smoothScrollToPosition(mSelectedContactAdapter.getItemCount());
-        }
-
-        showOrHideRecyclerView();
-        mAdapter.notifyDataSetChanged();
-        mSelectedContactAdapter.notifyDataSetChanged();
-    }
-
     private void showOrHideRecyclerView(){
-        if(mContactList.size() > 0) {
+        if(mList.size() > 0) {
             mRecyclerView.setVisibility(View.VISIBLE);
             fb.show();
         }else {
@@ -329,9 +247,9 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
     }
 
     private void removeFromListView(Contact contact){
-        for(Contact targetedContact : mContactList){
+        for(Contact targetedContact : mList){
             if(targetedContact.getId().equals(contact.getId())) {
-                mContactList.remove(targetedContact);
+                mList.remove(targetedContact);
                 break;
             }
         }
@@ -349,6 +267,18 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
         mSelectedContactAdapter.notifyDataSetChanged();
     }
 
+    private void removeOnListView(Cursor cursor, Contact contact){
+        for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()){
+            final String contactId = cursor.getString(MemberQuery.ID);
+            if(contact.getId().equals(contactId)){
+                int position = cursor.getPosition();
+                mAdapter.setSelected(position, false);
+                mAdapter.remove(position);
+                break;
+            }
+        }
+        mAdapter.notifyDataSetChanged();
+    }
 
     @Override
     public void onUpdateContactList(Contact contact) {
@@ -358,33 +288,49 @@ public class ContactActivity extends AppCompatActivity implements AdapterView.On
         showOrHideRecyclerView();
     }
 
-    public interface ContactsQuery {
+    private class MyListViewItemListener implements ListView.OnItemClickListener {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            final Cursor cursor = mAdapter.getCursor();
+            Contact contact = getSelectedContact(position, cursor);
+            if(mAdapter.isSelected(position)){
+                mAdapter.setSelected(position, false);
+                mAdapter.remove(position);
+                removeFromListView(contact);
+                removeFromRecyclerView(contact);
+            }else {
+                mAdapter.setSelected(position, true);
+                if(!mSelectedContactList.contains(contact)){
+                    mSelectedContactList.add(contact);
+                }
+                if(!mList.contains(contact)){
+                    mList.add(contact);
+                }
+                mRecyclerView.smoothScrollToPosition(mSelectedContactAdapter.getItemCount());
+            }
+
+            showOrHideRecyclerView();
+            mAdapter.notifyDataSetChanged();
+            mSelectedContactAdapter.notifyDataSetChanged();
+        }
+    }
+
+    public interface MemberQuery {
         final static int QUERY_ID = 1;
 
-        final static Uri CONTENT_URI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
-
-        final static Uri FILTER_URI = ContactsContract.CommonDataKinds.Phone.CONTENT_FILTER_URI;
-
         @SuppressLint("InlinedApi")
-        final static String SELECTION = (Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME) +
-                "<>''" + " AND " + ContactsContract.Contacts.IN_VISIBLE_GROUP + " = '" + ("1") + "'" + " AND " + ContactsContract.CommonDataKinds.Phone.HAS_PHONE_NUMBER;
-
-        @SuppressLint("InlinedApi")
-        final static String SORT_ORDER = Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE LOCALIZED ASC";
+        final static String SORT_ORDER = YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME;
 
         @SuppressLint("InlinedApi")
         final static String[] PROJECTION = {
-                ContactsContract.CommonDataKinds.Phone._ID,
-                ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY,
-                Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                ContactsContract.CommonDataKinds.Phone.NUMBER,
-                SORT_ORDER
+                YourTurnContract.MemberEntry._ID,
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME,
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER,
         };
         final static int ID = 0;
-        final static int LOOKUP_KEY = 1;
-        final static int DISPLAY_NAME = 2;
-        final static int PHONE_NUMBER = 3;
-        final static int SORT_KEY = 4;
+        final static int DISPLAY_NAME = 1;
+        final static int PHONE_NUMBER = 2;
     }
 
 }
