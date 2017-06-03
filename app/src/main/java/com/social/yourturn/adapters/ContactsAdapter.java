@@ -81,20 +81,21 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
 
     @Override
     public void bindView(View view, final Context context, final Cursor cursor) {
+        int position = cursor.getPosition();
+
+        Contact contact = mContactList.get(position);
+
         final ViewHolder holder = (ViewHolder) view.getTag();
         final String displayName = cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase();
 
         holder.thumbnail.setImageResource(R.drawable.default_profile);
         holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
-        int position = cursor.getPosition();
-        boolean isSelected = selectionArray.get(position);
-
-        if (isSelected) {
+        if (contact.isSelected()) {
             view.setBackgroundColor(context.getResources().getColor(R.color.colorAccent));
             holder.username.setTextColor(Color.WHITE);
             holder.selected.setVisibility(View.VISIBLE);
-        } else if (!isSelected){
+        } else {
             view.setBackgroundColor(Color.TRANSPARENT );
             holder.username.setTextColor(Color.BLACK);
             holder.selected.setVisibility(View.INVISIBLE);

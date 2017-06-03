@@ -58,7 +58,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
     public static final String SELECTED_CONTACT = "Selected";
     public static final String TOTAL_COUNT = "TotalCount";
     private int mTotalContact = 0;
-    private List<Contact> mContactList;
+    private List<Contact> mContactList =  new ArrayList<>();
     private List<Contact> mList = new ArrayList<>();
 
 
@@ -119,6 +119,8 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         mRecyclerView.setAdapter(alphaAdapter);
         mListView = (ListView) findViewById(R.id.contactList);
         mListView.setOnItemClickListener(new MyListViewItemListener());
+        mAdapter = new ContactsAdapter(this, mContactList);
+        mListView.setAdapter(mAdapter);
     }
 
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
@@ -196,7 +198,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         if(loader.getId() == MemberQuery.QUERY_ID){
-            mContactList = new ArrayList<>();
+            mContactList.clear();
             while(cursor.moveToNext()){
 
                 String contactId = cursor.getString(MemberQuery.ID);
@@ -208,10 +210,8 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
             }
 
         }
-
-        mAdapter = new ContactsAdapter(this, mContactList);
-        mListView.setAdapter(mAdapter);
         mAdapter.swapCursor(cursor);
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -229,7 +229,8 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
             if(targetedContact.getId().equals(contact.getId()) &&
                     targetedContact.getName().equals(contact.getName()) &&
                     targetedContact.getPhoneNumber().equals(contact.getPhoneNumber())){
-                targetedContact.setPosition(contact.getPosition());
+                if(contact.isSelected()) contact.setSelected(false);
+                else contact.setSelected(true);
                 return targetedContact;
             }
         }

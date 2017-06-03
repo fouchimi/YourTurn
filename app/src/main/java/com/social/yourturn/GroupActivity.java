@@ -79,9 +79,9 @@ public class GroupActivity extends AppCompatActivity {
     private byte[] groupImageByteData;
     private ParseFile pFile = null;
     private Task mTask = null;
-    private String groupName, phoneId, phoneNumber;
-    private int saveCount = 0;
+    private String groupName;
     private Intent chooseImageIntent;
+    private final Object mTaskLock = new Object();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +95,7 @@ public class GroupActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         fb = (FloatingActionButton) findViewById(R.id.fab);
+        fb.setOnClickListener(new SaveDataOnClickListener());
         mGroupTextView = (TextView) findViewById(R.id.groupNameText);
         mParticipantView = (TextView) findViewById(R.id.participantsTextView);
         mGroupImageView = (CircleImageView) findViewById(R.id.groupImageView);
@@ -108,7 +109,6 @@ public class GroupActivity extends AppCompatActivity {
         if(intent != null) {
             mContactList = intent.getParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT);
             DateTime dayTime = new DateTime();
-            String contactPhoneNumber = null;
             for(Contact contact : mContactList) {
                 ContentValues userValues = new ContentValues();
                 Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
@@ -130,7 +130,7 @@ public class GroupActivity extends AppCompatActivity {
                 builder.append(":");
                 builder.append(contact.getName());
                 builder.append(":");
-                builder.append(contactPhoneNumber);
+                builder.append(contact.getPhoneNumber());
                 builder.append(",");
                 friendList +=  builder.toString();
             }
@@ -144,81 +144,34 @@ public class GroupActivity extends AppCompatActivity {
             mRecyclerView.setAdapter(mAdapter);
         }
 
+    }
 
-        fb.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
-                if(groupName.length() > 0){
-                    Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
-                            YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
-                    if(c != null && c.getCount() > 0){
-                        Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
-                        return;
-                    } else {
-                        if(saveCount == 0 && mBitmap != null){
-                            if(!isGroupCreated(groupName)) createGroup();
-                            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-                            String imageFileName = "IMAGE_" + timeStamp + "_";
+    private class SaveDataOnClickListener implements View.OnClickListener {
 
-                            groupThumbnailPath = imageFileName + timeStamp + ".jpg";
-                            thumbnailFile = new File(mGroupDirectory, groupThumbnailPath);
-                            mTask = new Task();
-                            mTask.execute(thumbnailFile);
-                            saveCount++;
-                        }else {
-                            Log.d(TAG, "No icon chosen !!");
-                            final ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
-                            groupTable.put(ParseConstant.GROUP_NAME, groupName);
-                            groupTable.put(ParseConstant.USER_ID_COLUMN, mCurrentUser.getUsername());
-                            groupTable.put(ParseConstant.MEMBERS_COLUMN, friendList);
+        @Override
+        public void onClick(View v) {
+            groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
+            if(groupName.length() > 0){
+                Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
+                        YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
 
-                            if(cVVectorUsers.size() > 0) {
-                                ContentValues[] cvArray = new ContentValues[cVVectorUsers.size()];
-                                cVVectorUsers.toArray(cvArray);
-                                Log.d(TAG, "Users bulk insert successful");
-                                GroupActivity.this.getContentResolver().bulkInsert(YourTurnContract.UserEntry.CONTENT_URI, cvArray);
-                            }
-
-                            groupTable.saveInBackground(new SaveCallback() {
-                                @Override
-                                public void done(ParseException e) {
-                                    if(e == null){
-                                        Log.d(TAG, "Group table created!");
-                                        List<ParseObject> list = new ArrayList<>();
-                                        Contact currentContact = new Contact();
-                                        currentContact.setPhoneNumber(mCurrentUser.getUsername());
-                                        mContactList.add(currentContact);
-
-                                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, "");
-                                        for(Contact contact : mContactList){
-                                            final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
-                                            member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
-                                            member_group_table.put(ParseConstant.USER_ID_COLUMN, contact.getPhoneNumber());
-                                            list.add(member_group_table);
-                                        }
-
-                                        ParseObject.saveAllInBackground(list, new SaveCallback() {
-                                            @Override
-                                            public void done(ParseException e) {
-                                                if(e == null) {
-                                                    Intent intent = new Intent(GroupActivity.this, MainActivity.class);
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                                    GroupActivity.this.startActivity(intent);
-                                                    fb.hide();
-                                                    mGroupTextView.setText("");
-                                                }
-                                            }
-                                        });
-                                    }
-                                }
-                            });
-                        }
+                if(c != null && c.getCount() > 0){
+                    Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
+                    return;
+                } else {
+                    if(!isGroupCreated(groupName)) createGroup();
+                    synchronized (mTaskLock){
+                        mTask = new Task(GroupActivity.this);
+                        mTask.execute();
+                        mGroupTextView.setText("");
+                        mTaskLock.notifyAll();
                     }
-                    if(c != null ) c.close();
                 }
+                if(c != null ) c.close();
+            }else {
+                Toast.makeText(GroupActivity.this, "Group name can't be empty", Toast.LENGTH_LONG).show();
             }
-        });
+        }
     }
 
     private void dumpGroupValuesInContentProvider(final String groupId, final String groupName, final String groupThumbnail){
@@ -270,7 +223,7 @@ public class GroupActivity extends AppCompatActivity {
             mGroupDirectory.mkdirs();
         }
     }
-    
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch(requestCode) {
@@ -312,7 +265,13 @@ public class GroupActivity extends AppCompatActivity {
         }
     }
 
-    private class Task extends AsyncTask<File, Void, ParseFile>{
+    private class Task extends AsyncTask<Void, Void, Void>{
+
+        private Context mContext;
+
+        public Task(Context context){
+            mContext = context;
+        }
 
         @Override
         protected void onPreExecute() {
@@ -321,25 +280,28 @@ public class GroupActivity extends AppCompatActivity {
         }
 
         @Override
-        protected ParseFile doInBackground(File... params) {
-            if(isCancelled()){
-                return null;
-            }else {
-                File thumbnailFile = params[0];
-                if(thumbnailFile != null) {
-                    saveThumbnailFile(thumbnailFile, mBitmap);
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    mBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
-                    groupImageByteData = stream.toByteArray();
-                    pFile = new ParseFile(ParseConstant.GROUP_THUMBNAIL_EXTENSION, groupImageByteData);
-                }
-            }
-            return pFile;
-        }
+        protected Void doInBackground(Void... params) {
+            if(mBitmap != null) {
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                String imageFileName = "IMAGE_" + timeStamp + "_";
 
-        @Override
-        protected void onPostExecute(ParseFile pFile) {
-            super.onPostExecute(pFile);
+                groupThumbnailPath = imageFileName + timeStamp + ".jpg";
+                thumbnailFile = new File(mGroupDirectory, groupThumbnailPath);
+                saveThumbnailFile(thumbnailFile, mBitmap);
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                mBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                groupImageByteData = stream.toByteArray();
+                pFile = new ParseFile(ParseConstant.GROUP_THUMBNAIL_EXTENSION, groupImageByteData);
+            }
+
+            // Save user in user table
+            if(cVVectorUsers.size() > 0) {
+                ContentValues[] cvArray = new ContentValues[cVVectorUsers.size()];
+                cVVectorUsers.toArray(cvArray);
+                Log.d(TAG, "Users bulk insert successful");
+                mContext.getContentResolver().bulkInsert(YourTurnContract.UserEntry.CONTENT_URI, cvArray);
+            }
+
             final ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
             groupTable.put(ParseConstant.GROUP_NAME, groupName);
             if(pFile != null) {
@@ -348,12 +310,6 @@ public class GroupActivity extends AppCompatActivity {
             groupTable.put(ParseConstant.USER_ID_COLUMN, mCurrentUser.getUsername());
             groupTable.put(ParseConstant.MEMBERS_COLUMN, friendList);
 
-            if(cVVectorUsers.size() > 0) {
-                ContentValues[] cvArray = new ContentValues[cVVectorUsers.size()];
-                cVVectorUsers.toArray(cvArray);
-                Log.d(TAG, "Users bulk insert successful");
-                GroupActivity.this.getContentResolver().bulkInsert(YourTurnContract.UserEntry.CONTENT_URI, cvArray);
-            }
 
             groupTable.saveInBackground(new SaveCallback() {
                 @Override
@@ -368,13 +324,11 @@ public class GroupActivity extends AppCompatActivity {
                                 if(e == null){
                                     ParseFile parseFile = (ParseFile) row.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
                                     if(parseFile != null) {
-                                        String imageUrl = parseFile.getUrl();
-                                        Uri imageUri = Uri.parse(imageUrl);
-                                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, imageUri.toString());
+                                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, parseFile.getUrl());
                                     }else {
                                         dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, "");
                                     }
-                                    Toast.makeText(GroupActivity.this, R.string.new_group_creation, Toast.LENGTH_LONG).show();
+                                    Toast.makeText(mContext, R.string.new_group_creation, Toast.LENGTH_LONG).show();
                                 }
                             }
                         });
@@ -395,11 +349,7 @@ public class GroupActivity extends AppCompatActivity {
                             @Override
                             public void done(ParseException e) {
                                 if(e == null) {
-                                    Intent intent = new Intent(GroupActivity.this, MainActivity.class);
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                    GroupActivity.this.startActivity(intent);
-                                    fb.hide();
-                                    mGroupTextView.setText("");
+                                    Log.d(TAG, "Successfully saved in group member table");
                                 }
                             }
                         });
@@ -408,6 +358,17 @@ public class GroupActivity extends AppCompatActivity {
                     }
                 }
             });
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            Intent intent = new Intent(GroupActivity.this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            GroupActivity.this.startActivity(intent);
+            fb.hide();
+            mGroupTextView.setText("");
         }
 
         @Override

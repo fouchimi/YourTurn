@@ -14,7 +14,7 @@ public class Contact implements Parcelable, Serializable {
     private String name;
     private String thumbnailUrl;
     private String phoneNumber;
-    private int position;
+    private boolean selected;
     private String share;
     private boolean isOwner;
     private boolean isMember;
@@ -53,14 +53,6 @@ public class Contact implements Parcelable, Serializable {
         return phoneNumber;
     }
 
-    public void setPosition(int position){
-        this.position = position;
-    }
-
-    public int getPosition(){
-        return  position;
-    }
-
     public String getShare() {
         return share;
     }
@@ -93,6 +85,14 @@ public class Contact implements Parcelable, Serializable {
         return thumbnailUrl;
     }
 
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -106,6 +106,7 @@ public class Contact implements Parcelable, Serializable {
         share = in.readString();
         isOwner = in.readByte() != 0;
         isMember = in.readByte() != 0;
+        selected = in.readByte() != 0;
     }
 
     @Override
@@ -117,6 +118,7 @@ public class Contact implements Parcelable, Serializable {
         dest.writeString(share);
         dest.writeByte((byte) (isOwner ? 1 : 0));
         dest.writeByte((byte) (isMember ? 1 : 0));
+        dest.writeByte((byte) (selected ? 1 : 0));
 
     }
 

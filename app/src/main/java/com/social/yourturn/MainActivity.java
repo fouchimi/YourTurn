@@ -241,7 +241,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 break;
             case READ_CONTACT_PERMISSION:
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    Toast.makeText(this, "Read contact permission accepted !", Toast.LENGTH_LONG).show();
+                   // Toast.makeText(this, "Read contact permission accepted !", Toast.LENGTH_LONG).show();
                     getSupportLoaderManager().initLoader(LOADER_ID, null, MainActivity.this);
                 }else if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED){
                     Toast.makeText(this, "Read contact denied", Toast.LENGTH_LONG).show();
