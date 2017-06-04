@@ -5,7 +5,6 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.support.v4.widget.CursorAdapter;
 import android.text.style.TextAppearanceSpan;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,12 +16,7 @@ import android.widget.TextView;
 
 import com.social.yourturn.R;
 import com.social.yourturn.ContactActivity.MemberQuery;
-import com.social.yourturn.models.Contact;
-
 import org.apache.commons.lang3.text.WordUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
