@@ -368,7 +368,6 @@ public class GroupActivity extends AppCompatActivity {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             GroupActivity.this.startActivity(intent);
             fb.hide();
-            mGroupTextView.setText("");
         }
 
         @Override

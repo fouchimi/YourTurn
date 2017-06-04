@@ -72,6 +72,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private ViewPager mViewPager;
     private FloatingActionButton fab;
     private static final int LOADER_ID = 1;
+    private ArrayList<Contact> mContactList;
+    public static final String ALL_CONTACTS = "Contacts";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,8 +97,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 }
                 if(hasAllPermissions(getApplicationContext())){
                     Intent intent = new Intent(getApplicationContext(), ContactActivity.class);
+                    intent.putExtra(ALL_CONTACTS, mContactList);
                     startActivity(intent);
                 }
+
             }
         });
         requestAllPermissions(this);
@@ -315,7 +319,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                         ContactsQuery.PROJECTION,
                         ContactsQuery.SELECTION,
                         null,
-                        ContactActivity.MemberQuery.SORT_ORDER);
+                        ContactsQuery.SORT_ORDER);
             default:
                 return null;
         }
@@ -323,7 +327,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        List<Contact> mContactList = new ArrayList<>();
+        mContactList = new ArrayList<>();
         if(loader.getId() == LOADER_ID){
             Vector<ContentValues> contactVector = new Vector<>();
             MatrixCursor newCursor = new MatrixCursor(ContactsQuery.PROJECTION);
@@ -433,6 +437,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 ContactsContract.CommonDataKinds.Phone.NUMBER
         };
 
+        @SuppressLint("InlinedApi")
+        final static String SORT_ORDER = Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.SORT_KEY_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE LOCALIZED ASC";
 
         final static int ID = 0;
         final static int DISPLAY_NAME = 1;

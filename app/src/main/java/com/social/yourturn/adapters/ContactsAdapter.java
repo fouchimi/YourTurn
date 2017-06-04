@@ -21,6 +21,7 @@ import com.social.yourturn.models.Contact;
 
 import org.apache.commons.lang3.text.WordUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -37,16 +38,15 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
     private Context mContext;
     private final static String TAG = ContactsAdapter.class.getSimpleName();
     private SparseBooleanArray selectionArray = new SparseBooleanArray();
-    private List<Contact> mContactList;
 
-    public ContactsAdapter(Context context, List<Contact> list){
+
+    public ContactsAdapter(Context context){
         super(context, null, 0);
         mContext = context;
         mInflater = LayoutInflater.from(context);
         final String alphabet = context.getString(R.string.alphabet);
         mAlphabetIndexer = new AlphabetIndexer(null, MemberQuery.DISPLAY_NAME, alphabet);
         highlightTextSpan = new TextAppearanceSpan(context, R.style.searchTextHighlight);
-        mContactList = list;
     }
 
     @Override
@@ -82,16 +82,14 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
     @Override
     public void bindView(View view, final Context context, final Cursor cursor) {
         int position = cursor.getPosition();
-
-        Contact contact = mContactList.get(position);
-
+        boolean isSelected = selectionArray.get(position);
         final ViewHolder holder = (ViewHolder) view.getTag();
         final String displayName = cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase();
 
         holder.thumbnail.setImageResource(R.drawable.default_profile);
         holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
-        if (contact.isSelected()) {
+        if (isSelected) {
             view.setBackgroundColor(context.getResources().getColor(R.color.colorAccent));
             holder.username.setTextColor(Color.WHITE);
             holder.selected.setVisibility(View.VISIBLE);

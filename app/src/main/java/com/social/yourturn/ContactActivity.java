@@ -50,16 +50,14 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
     private SelectedContactAdapter mSelectedContactAdapter;
     private ListView mListView;
     private String mSearchTerm = null;
-    private ArrayList<Contact> mSelectedContactList = new ArrayList<>();
+    private ArrayList<Contact> mSelectedContactList = new ArrayList<>(), oldList = null;
     private RecyclerView mRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;
     private FloatingActionButton fb;
     private static final int ITEM_WIDTH = 280;
     public static final String SELECTED_CONTACT = "Selected";
     public static final String TOTAL_COUNT = "TotalCount";
-    private int mTotalContact = 0;
-    private List<Contact> mContactList =  new ArrayList<>();
-    private List<Contact> mList = new ArrayList<>();
+    private List<Contact> mContactList =  new ArrayList<>(), mList = new ArrayList<>();
 
 
     @Override
@@ -73,13 +71,18 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         fb = (FloatingActionButton) findViewById(R.id.contact_fb);
         if(mSelectedContactList.size() <= 0) fb.hide();
 
+        if(getIntent() != null) {
+            Bundle bundle = getIntent().getExtras();
+            oldList = bundle.getParcelableArrayList(MainActivity.ALL_CONTACTS);
+        }
+
         fb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(mSelectedContactList.size() > 0){
                     Intent intent = new Intent(ContactActivity.this, GroupActivity.class);
                     intent.putParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT, mSelectedContactList);
-                    intent.putExtra(ContactActivity.TOTAL_COUNT, mTotalContact);
+                    intent.putExtra(ContactActivity.TOTAL_COUNT, oldList.size());
                     ContactActivity.this.startActivity(intent);
                 }
             }
@@ -119,7 +122,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         mRecyclerView.setAdapter(alphaAdapter);
         mListView = (ListView) findViewById(R.id.contactList);
         mListView.setOnItemClickListener(new MyListViewItemListener());
-        mAdapter = new ContactsAdapter(this, mContactList);
+        mAdapter = new ContactsAdapter(this);
         mListView.setAdapter(mAdapter);
     }
 
@@ -212,6 +215,23 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         }
         mAdapter.swapCursor(cursor);
         mAdapter.notifyDataSetChanged();
+        //Update listview after clearing search box.
+        updateListView(cursor);
+    }
+
+    private void updateListView(Cursor cursor){
+        while (cursor.moveToNext()){
+            for(Contact contact : mSelectedContactList){
+                if(contact.getId().equals(cursor.getString(MemberQuery.ID)) &&
+                        contact.getName().equals(cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase()) &&
+                        contact.getPhoneNumber().equals(cursor.getString(MemberQuery.PHONE_NUMBER))){
+                    int position = cursor.getPosition();
+                    mAdapter.setSelected(position, true);
+                    break;
+                }
+            }
+        }
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -221,17 +241,13 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
 
     private Contact getSelectedContact(int position, Cursor cursor){
         cursor.moveToPosition(position);
-        final String contactId = cursor.getString(MemberQuery.ID);
-        final String displayName = cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase();
-        final String phoneNumber = cursor.getString(MemberQuery.PHONE_NUMBER);
-        Contact targetedContact = new Contact(contactId, displayName, phoneNumber);
         for(Contact contact : mContactList){
-            if(targetedContact.getId().equals(contact.getId()) &&
-                    targetedContact.getName().equals(contact.getName()) &&
-                    targetedContact.getPhoneNumber().equals(contact.getPhoneNumber())){
+            if(contact.getId().equals(cursor.getString(MemberQuery.ID)) &&
+                    contact.getName().equals(cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase()) &&
+                    contact.getPhoneNumber().equals(cursor.getString(MemberQuery.PHONE_NUMBER))){
                 if(contact.isSelected()) contact.setSelected(false);
                 else contact.setSelected(true);
-                return targetedContact;
+                return contact;
             }
         }
         return null;
