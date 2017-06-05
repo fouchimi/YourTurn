@@ -62,7 +62,6 @@ public class GroupListActivity extends AppCompatActivity  {
     private Toolbar mActionBarToolbar;
     private LinearLayoutManager mLinearLayout;
     private boolean isVisible = false, isValidateVisible = false;
-    private String phoneId, phoneNumber;
     private ParseUser mCurrentUser;
     private BroadcastReceiver mBroadcastReceiver;
     private String mSharedAmount, mTotalAmount;
@@ -76,6 +75,8 @@ public class GroupListActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_list);
 
+        mCurrentUser = ParseUser.getCurrentUser();
+
         mActionBarToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mActionBarToolbar);
 
@@ -84,8 +85,6 @@ public class GroupListActivity extends AppCompatActivity  {
 
         mRecyclerView = (RecyclerView) findViewById(R.id.members_rv);
         mPaymentReceiver = new ConfirmPaymentReceiver(new Handler());
-
-        login();
 
         Intent intent = getIntent();
         if(intent != null) {
@@ -140,34 +139,6 @@ public class GroupListActivity extends AppCompatActivity  {
         });
     }
 
-
-    private void login(){
-        if(mCurrentUser == null) {
-            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-            phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
-            phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
-
-            Log.d(TAG, "Phone ID from Shared Preferences: " + phoneId);
-            Log.d(TAG, "Phone Number from Shared Preferences: " + phoneNumber);
-
-            if(!phoneId.equals("") && !phoneNumber.equals("")){
-                ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
-                    @Override
-                    public void done(ParseUser user, ParseException e) {
-                        if(e == null){
-                            mCurrentUser = user;
-                            Log.d(TAG, "Current User: " + mCurrentUser.getUsername());
-                        }else {
-                            Log.d(TAG, e.getMessage());
-                        }
-                    }
-                });
-            }
-        }else {
-            Log.d(TAG, "Username: " + mCurrentUser.getUsername());
-        }
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.group_menu, menu);
@@ -217,7 +188,7 @@ public class GroupListActivity extends AppCompatActivity  {
                     if(value.matches("\\d*\\.?\\d+")){
                         double dValue = Double.parseDouble(value);
                         totalValue += dValue;
-                        if(!friend.equals(getCurrentPhoneNumber())){
+                        if(!friend.equals(mCurrentUser.getUsername())){
                             recipientList += friend +",";
                             shareValueList += value + ",";
                             count++;
@@ -235,7 +206,7 @@ public class GroupListActivity extends AppCompatActivity  {
                 recipientList = recipientList.substring(0, recipientList.length()-1);
                 shareValueList = shareValueList.substring(0, shareValueList.length()-1);
                 if(diff <= 1){
-                    payload.put("senderId", getCurrentPhoneNumber());
+                    payload.put("senderId", mCurrentUser.getUsername());
                     payload.put("sharedValueList", shareValueList);
                     payload.put("recipientList", recipientList);
                     payload.put("friendCount", count);
@@ -245,7 +216,7 @@ public class GroupListActivity extends AppCompatActivity  {
                         public void done(Object object, ParseException e) {
                             if(e == null) {
                                 Log.d(TAG, "Successfully sent");
-                                findContactInList(getCurrentPhoneNumber());
+                                findContactInList(mCurrentUser.getUsername());
                             }else {
                                 Log.d(TAG, e.getMessage());
                             }
@@ -312,12 +283,6 @@ public class GroupListActivity extends AppCompatActivity  {
         });
         AlertDialog b = dialogBuilder.create();
         b.show();
-    }
-
-
-    private String getCurrentPhoneNumber(){
-        SharedPreferences sharePref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
-        return sharePref.getString(ParseConstant.USERNAME_COLUMN, "");
     }
 
     public void findContactInList(String userPhoneId){

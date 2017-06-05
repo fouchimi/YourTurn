@@ -36,6 +36,7 @@ public class ParseConstant {
 
     public static final String COLUMN_NAME = "name";
     public static final String PARSE_USER_TABLE = "_User";
+    public static final String PARSE_INSTALLATION_TABLE = "_Installation";
 
     public static final String UPDATED_AT = "updatedAt";
     public static final String CREATED_AT = "createdAt";

@@ -26,6 +26,7 @@ import android.widget.TextView;
 
 import com.parse.FindCallback;
 import com.parse.GetCallback;
+import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
@@ -309,7 +310,8 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
     private String getCurrentPhoneNumber(){
-        SharedPreferences sharedPref = getActivity().getSharedPreferences(getActivity().getString(R.string.user_credentials), Context.MODE_PRIVATE);
-        return  sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
+        SharedPreferences sharedPref = getActivity().getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
+        return sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
     }
+
 }
