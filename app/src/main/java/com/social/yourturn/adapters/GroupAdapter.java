@@ -25,6 +25,7 @@ import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.models.Group;
+import com.social.yourturn.utils.ImageLoader;
 import com.social.yourturn.utils.ParseConstant;
 
 import java.util.ArrayList;
@@ -43,11 +44,13 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
     private ArrayList<Group> mGroupList;
     private final View.OnClickListener mOnClickListener = new MyOnClickListener();
     private RecyclerView mRecyclerView;
+    ImageLoader imageLoader;
 
     public GroupAdapter(Context context, ArrayList<Group> groupList, RecyclerView rv){
         mContext = context;
         mGroupList = groupList;
         mRecyclerView = rv;
+        imageLoader = new ImageLoader(mContext);
     }
 
     @Override
@@ -64,7 +67,8 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         Log.d(TAG, group.getName());
         holder.groupName.setText(group.getName());
 
-        Cursor cursor = mContext.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(getCurrentPhoneNumber()), null, null);
+        Cursor cursor = mContext.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
+                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(getCurrentPhoneNumber()), null, null);
 
         if(cursor != null && cursor.getCount() > 0) {
             holder.groupNumber.setText(String.valueOf(group.getContactList().size()));
@@ -72,20 +76,8 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
 
         cursor.close();
 
-        ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
-        query.getInBackground(group.getGroupId(), new GetCallback<ParseObject>() {
-            @Override
-            public void done(ParseObject row, ParseException e) {
-                ParseFile parseFile = (ParseFile) row.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
-                if(parseFile != null) {
-                    String imageUrl = parseFile.getUrl();
-                    Uri imageUri = Uri.parse(imageUrl);
-                    Glide.with(mContext).load(imageUri.toString()).diskCacheStrategy(DiskCacheStrategy.ALL).into(holder.groupThumbnail);
-                }else {
-                    holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
-                }
-            }
-        });
+        if(group.getThumbnail() != null && group.getThumbnail().length() > 0) imageLoader.DisplayImage(group.getThumbnail(), holder.groupThumbnail);
+        else holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
 
     }
 

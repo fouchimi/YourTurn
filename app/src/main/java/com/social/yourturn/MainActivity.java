@@ -61,7 +61,7 @@ import java.util.Locale;
 import java.util.Vector;
 
 
-public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>{
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private ParseUser mCurrentUser;
@@ -374,6 +374,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     }
 
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+    }
+
     private String sanitizePhoneNumber(String phoneNumber){
         PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
         try {
@@ -382,10 +386,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             e.printStackTrace();
         }
         return phoneNumber;
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
     }
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
@@ -444,6 +444,5 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         final static int DISPLAY_NAME = 1;
         final static int PHONE_NUMBER = 2;
     }
-
 
 }

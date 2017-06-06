@@ -4,22 +4,37 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.AsyncTask;
+import android.provider.ContactsContract;
 import android.support.v4.app.NotificationCompat;
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 
+import com.parse.FindCallback;
+import com.parse.GetCallback;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
 import com.social.yourturn.MainActivity;
 import com.social.yourturn.data.YourTurnContract;
+import com.social.yourturn.models.Contact;
+import com.social.yourturn.utils.ParseConstant;
 
+import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by ousma on 6/5/2017.
@@ -40,7 +55,7 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void processPush(Context context, Intent intent) {
-        String senderId = "";
+        String senderId = "", recipients = "";
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -55,11 +70,14 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
                     if(key.equals("senderId")) {
                         senderId = json.getString(key);
                         Log.d(TAG, "sender Id: " + senderId);
+                    }else if(key.equals("recipientIds")){
+                        recipients = json.getString(key);
+                        Log.d(TAG, "recipients Ids: " + recipients);
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(senderId.length() > 0){
-                    createNotification(context, senderId);
+                if(senderId.length() > 0 && recipients.length() > 0){
+                    createNotification(context, senderId, recipients);
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();
@@ -70,7 +88,7 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
 
     public static final int NOTIFICATION_ID = 475;
 
-    private void createNotification(Context context, String senderId){
+    private void createNotification(Context context, String senderId, String recipients){
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
@@ -83,9 +101,12 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
         Cursor cursor = context.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, new String[]{YourTurnContract.UserEntry.COLUMN_USER_NAME},
                 YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(senderId), null, null);
 
-        cursor.moveToFirst();
-        String senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
-        cursor.close();
+        String senderName = "";
+        if(cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+            cursor.close();
+        }
 
         NotificationCompat.Builder notification = new NotificationCompat.Builder(context)
                 .setSmallIcon(android.R.drawable.ic_menu_report_image)

@@ -33,6 +33,7 @@ import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.social.yourturn.R;
 import com.social.yourturn.adapters.GroupAdapter;
+import com.social.yourturn.broadcast.GroupBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Group;
@@ -52,8 +53,6 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     private static final String TAG = GroupFragment.class.getSimpleName();
     private TextView emptyTextView;
     private RecyclerView mRecyclerView;
-    private LinearLayoutManager mLinearLayout;
-    private ArrayList<Contact> mContactList = new ArrayList<>();
     private ArrayList<Group> mGroupList = new ArrayList<>();
     private GroupAdapter mGroupAdapter;
     public static final String GROUP_KEY = "Group";
@@ -76,8 +75,8 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
         emptyTextView = (TextView) view.findViewById(R.id.empty_view);
         emptyTextView.setTypeface(typeface);
         mRecyclerView = (RecyclerView) view.findViewById(R.id.group_rv);
-        mLinearLayout = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
-        mRecyclerView.setLayoutManager(mLinearLayout);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
+        mRecyclerView.setLayoutManager(linearLayoutManager);
         mGroupList = new ArrayList<>();
         mGroupAdapter = new GroupAdapter(getActivity(), mGroupList, mRecyclerView);
         mRecyclerView.setAdapter(mGroupAdapter);
@@ -93,7 +92,8 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if(id == LOADER_ID){
-            return new CursorLoader(getActivity(), YourTurnContract.GroupEntry.CONTENT_URI, null, null, null, YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE + " DESC");
+            return new CursorLoader(getActivity(), YourTurnContract.GroupEntry.CONTENT_URI,
+                    null, null, null, YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE + " DESC");
         }
         return null;
     }
@@ -110,7 +110,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
     private void loadData(Cursor data) {
-        mContactList = new ArrayList<>();
+        ArrayList<Contact> mContactList = new ArrayList<>();
         if(mGroupList != null) mGroupList.clear();
         String groupId = null, groupName = null, groupThumbnail = null, groupCreator = null, userId = null;
         String lastGroupId ="";
@@ -214,7 +214,11 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                                         membersList.add(contact);
                                     }
 
-                                    final Cursor groupCursor = getActivity().getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null, YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR + " = " + DatabaseUtils.sqlEscapeString(groupCreator) + " AND " + YourTurnContract.GroupEntry.COLUMN_GROUP_ID + " = " + DatabaseUtils.sqlEscapeString(groupId), null, null);
+                                    final Cursor groupCursor = getActivity().getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
+                                            YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR + " = " +
+                                                    DatabaseUtils.sqlEscapeString(groupCreator) + " AND " +
+                                                    YourTurnContract.GroupEntry.COLUMN_GROUP_ID + " = " +
+                                                    DatabaseUtils.sqlEscapeString(groupId), null, null);
                                     if(groupCursor != null && groupCursor.getCount() == 0) {
 
                                         ParseQuery<ParseUser> creatorQuery = ParseUser.getQuery();
@@ -239,7 +243,9 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                                                         }
                                                     }else {
                                                         Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(PhoneNumberUtils.formatNumber(groupCreator)));
-                                                        creatorCursor = getActivity().getContentResolver().query(uri, new String[]{ContactsContract.PhoneLookup._ID, ContactsContract.PhoneLookup.DISPLAY_NAME}, null, null, null);
+                                                        creatorCursor = getActivity().getContentResolver().query(uri,
+                                                                new String[]{ContactsContract.PhoneLookup._ID,
+                                                                        ContactsContract.PhoneLookup.DISPLAY_NAME}, null, null, null);
                                                         if(creatorCursor != null && creatorCursor.getCount() > 0) {
                                                             creatorCursor.moveToFirst();
                                                             creatorId =  creatorCursor.getString(creatorCursor.getColumnIndex(ContactsContract.PhoneLookup._ID));
@@ -313,5 +319,4 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
         SharedPreferences sharedPref = getActivity().getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
         return sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
     }
-
 }
