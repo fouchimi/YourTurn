@@ -9,8 +9,8 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -76,12 +76,10 @@ public class GroupActivity extends AppCompatActivity {
     private ArrayList<Contact> mContactList;
     private Vector<ContentValues> cVVectorUsers = new Vector<>();
     private Bitmap mBitmap = null;
-    private ParseFile pFile = null;
     private Task mTask = null;
     private String groupName;
     private final Object mTaskLock = new Object();
     private BroadcastReceiver mBroadcastReceiver;
-    private SmsManager smsManager;
     private String SEND_SMS_PERMISSION = android.Manifest.permission.SEND_SMS;
 
     @Override
@@ -177,9 +175,9 @@ public class GroupActivity extends AppCompatActivity {
                         synchronized (mTaskLock){
                             mTask = new Task(GroupActivity.this);
                             mTask.execute();
-                            mGroupTextView.setText("");
                             mTaskLock.notifyAll();
                         }
+
                     }
                     if(c != null ) c.close();
                 }else {
@@ -306,6 +304,7 @@ public class GroupActivity extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(Void... params) {
+            ParseFile pFile = null;
             if(mBitmap != null) {
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                 String imageFileName = "IMAGE_" + timeStamp + "_";
@@ -329,9 +328,7 @@ public class GroupActivity extends AppCompatActivity {
 
             final ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
             groupTable.put(ParseConstant.GROUP_NAME, groupName);
-            if(pFile != null) {
-                groupTable.put(ParseConstant.GROUP_THUMBNAIL_COLUMN, pFile);
-            }
+            if(pFile != null) groupTable.put(ParseConstant.GROUP_THUMBNAIL_COLUMN, pFile);
             groupTable.put(ParseConstant.USER_ID_COLUMN, mCurrentUser.getUsername());
             groupTable.put(ParseConstant.MEMBERS_COLUMN, friendList);
 
@@ -347,68 +344,72 @@ public class GroupActivity extends AppCompatActivity {
                             @Override
                             public void done(ParseObject row, ParseException e) {
                                 if(e == null){
-                                    ParseFile parseFile = (ParseFile) row.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
-                                    if(parseFile != null) {
-                                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, parseFile.getUrl());
+                                    ParseFile imageFile = (ParseFile) row.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
+                                    if(imageFile != null) {
+                                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, imageFile.getUrl());
                                     }else {
                                         dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, "");
                                     }
                                     Toast.makeText(mContext, R.string.new_group_creation, Toast.LENGTH_LONG).show();
-                                }
-                            }
-                        });
 
-                        List<ParseObject> list = new ArrayList<>();
-                        Contact currentContact = new Contact();
-                        currentContact.setPhoneNumber(mCurrentUser.getUsername());
+                                    List<ParseObject> list = new ArrayList<>();
+                                    Contact currentContact = new Contact();
+                                    currentContact.setPhoneNumber(mCurrentUser.getUsername());
 
-                        mContactList.add(currentContact);
-                        HashMap<String, Object> payload = new HashMap<>();
-                        String ids = "";
-                        payload.put("senderId", mCurrentUser.getUsername());
-                        for(Contact contact : mContactList){
-                            final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
-                            member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
-                            member_group_table.put(ParseConstant.USER_ID_COLUMN, contact.getPhoneNumber());
-                            list.add(member_group_table);
+                                    mContactList.add(currentContact);
+                                    HashMap<String, Object> payload = new HashMap<>();
+                                    String ids = "";
+                                    payload.put("senderId", mCurrentUser.getUsername());
+                                    for(Contact contact : mContactList){
+                                        final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
+                                        member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
+                                        member_group_table.put(ParseConstant.USER_ID_COLUMN, contact.getPhoneNumber());
+                                        list.add(member_group_table);
 
-                            ParseQuery<ParseObject> parseUserQuery = ParseQuery.getQuery(ParseConstant.PARSE_USER_TABLE);
-                            parseUserQuery.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
+                                        ParseQuery<ParseObject> parseUserQuery = ParseQuery.getQuery(ParseConstant.PARSE_USER_TABLE);
+                                        parseUserQuery.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
 
-                            try {
-                                if(parseUserQuery.count() > 0) {
-                                    // sent push notification here
-                                    if(!contact.getPhoneNumber().equals(mCurrentUser.getUsername()))
-                                        ids += contact.getPhoneNumber() + ",";
-                                }else {
-                                    // sent sms to the current phone number here
-                                    smsManager.sendTextMessage(contact.getPhoneNumber(), null,
-                                            "This number " + mCurrentUser.getUsername() + " added you into a group and would like you to install yourturnapp", null, null);
-                                }
-                            } catch (ParseException e1) {
-                                e1.printStackTrace();
-                            }
-                        }
-
-                        if(!ids.isEmpty()){
-                            payload.put("targetIds", ids.substring(0, ids.length()-1));
-                            ParseCloud.callFunctionInBackground("groupChannel", payload, new FunctionCallback<Object>() {
-                                @Override
-                                public void done(Object object, ParseException e) {
-                                    if(e == null) {
-                                        Log.d(TAG, "Group notification successfully sent");
-                                    }else {
-                                        Log.d(TAG, e.getMessage());
+                                        try {
+                                            if(parseUserQuery.count() > 0) {
+                                                // sent push notification here
+                                                if(!contact.getPhoneNumber().equals(mCurrentUser.getUsername())) ids += contact.getPhoneNumber() + ",";
+                                            }else {
+                                                // sent sms to the current phone number here
+                                                SmsManager smsManager = SmsManager.getDefault();
+                                                smsManager.sendTextMessage(contact.getPhoneNumber(), null,
+                                                        "This number " + mCurrentUser.getUsername() +
+                                                                " added you into a group and would like you to install yourturnapp", null, null);
+                                            }
+                                        } catch (ParseException e1) {
+                                            e1.printStackTrace();
+                                        }
                                     }
-                                }
-                            });
-                        }
 
-                        ParseObject.saveAllInBackground(list, new SaveCallback() {
-                            @Override
-                            public void done(ParseException e) {
-                                if(e == null) {
-                                    Log.d(TAG, "Successfully saved in group member table");
+                                    ParseObject.saveAllInBackground(list, new SaveCallback() {
+                                        @Override
+                                        public void done(ParseException e) {
+                                            if(e == null) {
+                                                Log.d(TAG, "Successfully saved in group member table");
+                                            }
+                                        }
+                                    });
+
+                                    if(!ids.isEmpty()){
+                                        payload.put("targetIds", ids.substring(0, ids.length()-1));
+                                        ParseCloud.callFunctionInBackground("groupChannel", payload, new FunctionCallback<Object>() {
+                                            @Override
+                                            public void done(Object object, ParseException e) {
+                                                if(e == null) {
+                                                    Log.d(TAG, "Group notification successfully sent");
+                                                }else {
+                                                    Log.d(TAG, e.getMessage());
+                                                }
+                                            }
+                                        });
+                                    }
+
+                                }else {
+                                    Log.d(TAG, e.getMessage());
                                 }
                             }
                         });
@@ -442,7 +443,6 @@ public class GroupActivity extends AppCompatActivity {
         switch (requestCode){
             case REQUEST_SEND_SMS_PERMISSION:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    smsManager = SmsManager.getDefault();
                     Toast.makeText(this, "permission granted !", Toast.LENGTH_LONG).show();
                 }
         }

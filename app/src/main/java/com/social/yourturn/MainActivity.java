@@ -56,7 +56,6 @@ import com.social.yourturn.utils.Utils;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 

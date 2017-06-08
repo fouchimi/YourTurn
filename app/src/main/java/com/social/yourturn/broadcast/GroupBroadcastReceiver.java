@@ -4,37 +4,22 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.AsyncTask;
-import android.provider.ContactsContract;
 import android.support.v4.app.NotificationCompat;
-import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 
-import com.parse.FindCallback;
-import com.parse.GetCallback;
-import com.parse.ParseException;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
-import com.parse.ParseUser;
 import com.social.yourturn.MainActivity;
 import com.social.yourturn.data.YourTurnContract;
-import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.ParseConstant;
 
-import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by ousma on 6/5/2017.

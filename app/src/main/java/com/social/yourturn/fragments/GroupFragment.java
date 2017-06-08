@@ -28,6 +28,7 @@ import com.parse.FindCallback;
 import com.parse.GetCallback;
 import com.parse.LogInCallback;
 import com.parse.ParseException;
+import com.parse.ParseFile;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
@@ -202,7 +203,10 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                                 if(e == null) {
                                     final String groupId = groupRow.getObjectId();
                                     final String groupName = groupRow.getString(ParseConstant.GROUP_NAME);
-                                    final String groupThumbnail = groupRow.getString(ParseConstant.GROUP_THUMBNAIL_COLUMN);
+                                    ParseFile groupImage = (ParseFile) groupRow.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
+                                    String groupThumbnail = null;
+                                    if(groupImage != null) groupThumbnail = groupImage.getUrl();
+                                    else groupThumbnail = "";
                                     final String groupCreator  = groupRow.getString(ParseConstant.USER_ID_COLUMN);
                                     final String members = groupRow.getString(ParseConstant.MEMBERS_COLUMN);
 
@@ -224,6 +228,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                                         ParseQuery<ParseUser> creatorQuery = ParseUser.getQuery();
                                         creatorQuery.whereEqualTo(ParseConstant.USERNAME_COLUMN, groupCreator);
 
+                                        final String finalGroupThumbnail = groupThumbnail;
                                         creatorQuery.getFirstInBackground(new GetCallback<ParseUser>() {
                                             @Override
                                             public void done(ParseUser user, ParseException e) {
@@ -264,11 +269,12 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
 
                                                     for(Contact contact : finalMemberList){
                                                         ContentValues groupValues = new ContentValues();
+                                                        String thumbnailUrl = finalGroupThumbnail;
                                                         groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
                                                         groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
                                                         groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getPhoneNumber());
                                                         groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, groupCreator);
-                                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnail);
+                                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, thumbnailUrl);
                                                         groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
                                                         groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
 
