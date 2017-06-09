@@ -352,68 +352,68 @@ public class GroupActivity extends AppCompatActivity {
                                     }
                                     Toast.makeText(mContext, R.string.new_group_creation, Toast.LENGTH_LONG).show();
 
-                                    List<ParseObject> list = new ArrayList<>();
-                                    Contact currentContact = new Contact();
-                                    currentContact.setPhoneNumber(mCurrentUser.getUsername());
-
-                                    mContactList.add(currentContact);
-                                    HashMap<String, Object> payload = new HashMap<>();
-                                    String ids = "";
-                                    payload.put("senderId", mCurrentUser.getUsername());
-                                    for(Contact contact : mContactList){
-                                        final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
-                                        member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
-                                        member_group_table.put(ParseConstant.USER_ID_COLUMN, contact.getPhoneNumber());
-                                        list.add(member_group_table);
-
-                                        ParseQuery<ParseObject> parseUserQuery = ParseQuery.getQuery(ParseConstant.PARSE_USER_TABLE);
-                                        parseUserQuery.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
-
-                                        try {
-                                            if(parseUserQuery.count() > 0) {
-                                                // sent push notification here
-                                                if(!contact.getPhoneNumber().equals(mCurrentUser.getUsername())) ids += contact.getPhoneNumber() + ",";
-                                            }else {
-                                                // sent sms to the current phone number here
-                                                SmsManager smsManager = SmsManager.getDefault();
-                                                smsManager.sendTextMessage(contact.getPhoneNumber(), null,
-                                                        "This number " + mCurrentUser.getUsername() +
-                                                                " added you into a group and would like you to install yourturnapp", null, null);
-                                            }
-                                        } catch (ParseException e1) {
-                                            e1.printStackTrace();
-                                        }
-                                    }
-
-                                    ParseObject.saveAllInBackground(list, new SaveCallback() {
-                                        @Override
-                                        public void done(ParseException e) {
-                                            if(e == null) {
-                                                Log.d(TAG, "Successfully saved in group member table");
-                                            }
-                                        }
-                                    });
-
-                                    if(!ids.isEmpty()){
-                                        payload.put("targetIds", ids.substring(0, ids.length()-1));
-                                        payload.put("groupName", groupName);
-                                        ParseCloud.callFunctionInBackground("groupChannel", payload, new FunctionCallback<Object>() {
-                                            @Override
-                                            public void done(Object object, ParseException e) {
-                                                if(e == null) {
-                                                    Log.d(TAG, "Group notification successfully sent");
-                                                }else {
-                                                    Log.d(TAG, e.getMessage());
-                                                }
-                                            }
-                                        });
-                                    }
-
                                 }else {
                                     Log.d(TAG, e.getMessage());
                                 }
                             }
                         });
+
+                        List<ParseObject> list = new ArrayList<>();
+                        Contact currentContact = new Contact();
+                        currentContact.setPhoneNumber(mCurrentUser.getUsername());
+
+                        mContactList.add(currentContact);
+                        HashMap<String, Object> payload = new HashMap<>();
+                        String ids = "";
+                        payload.put("senderId", mCurrentUser.getUsername());
+                        for(Contact contact : mContactList){
+                            final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
+                            member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
+                            member_group_table.put(ParseConstant.USER_ID_COLUMN, contact.getPhoneNumber());
+                            list.add(member_group_table);
+
+                            ParseQuery<ParseObject> parseUserQuery = ParseQuery.getQuery(ParseConstant.PARSE_USER_TABLE);
+                            parseUserQuery.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
+
+                            try {
+                                if(parseUserQuery.count() > 0) {
+                                    // sent push notification here
+                                    if(!contact.getPhoneNumber().equals(mCurrentUser.getUsername())) ids += contact.getPhoneNumber() + ",";
+                                }else {
+                                    // sent sms to the current phone number here
+                                    SmsManager smsManager = SmsManager.getDefault();
+                                    smsManager.sendTextMessage(contact.getPhoneNumber(), null,
+                                            "This number " + mCurrentUser.getUsername() +
+                                                    " added you into a group and would like you to install yourturnapp", null, null);
+                                }
+                            } catch (ParseException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+
+                        ParseObject.saveAllInBackground(list, new SaveCallback() {
+                            @Override
+                            public void done(ParseException e) {
+                                if(e == null) {
+                                    Log.d(TAG, "Successfully saved in group member table");
+                                }
+                            }
+                        });
+
+                        if(!ids.isEmpty()){
+                            payload.put("targetIds", ids.substring(0, ids.length()-1));
+                            payload.put("groupName", groupName);
+                            ParseCloud.callFunctionInBackground("groupChannel", payload, new FunctionCallback<Object>() {
+                                @Override
+                                public void done(Object object, ParseException e) {
+                                    if(e == null) {
+                                        Log.d(TAG, "Group notification successfully sent");
+                                    }else {
+                                        Log.d(TAG, e.getMessage());
+                                    }
+                                }
+                            });
+                        }
                     }else {
                         Log.d(TAG, e.getMessage());
                     }
