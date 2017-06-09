@@ -27,9 +27,21 @@
 
 
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/exit_action"
         android:orderInCategory="101"
-        android:title="@string/action_settings"
+        android:title="@string/exit_group"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/view_group_action"
+        android:orderInCategory="101"
+        android:title="@string/view_group_record"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/send_message_action"
+        android:orderInCategory="101"
+        android:title="@string/send_message"
         app:showAsAction="never" />
 
 </menu>

@@ -67,14 +67,12 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         Log.d(TAG, group.getName());
         holder.groupName.setText(group.getName());
 
-        Cursor cursor = mContext.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(getCurrentPhoneNumber()), null, null);
-
-        if(cursor != null && cursor.getCount() > 0) {
+        if(group.getContactList().size() == 1) {
+            holder.groupNumber.setText(String.valueOf(group.getContactList().size()+1));
+        }else {
             holder.groupNumber.setText(String.valueOf(group.getContactList().size()));
-        }else holder.groupNumber.setText(String.valueOf(group.getContactList().size()+1));
+        }
 
-        cursor.close();
 
         if(group.getThumbnail() != null && group.getThumbnail().length() > 0) imageLoader.DisplayImage(group.getThumbnail(), holder.groupThumbnail);
         else holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);

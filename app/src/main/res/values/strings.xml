@@ -69,5 +69,8 @@
     <string name="result_value">resultValue</string>
     <string name="payment_successful_msg">Payment was saved successfully</string>
     <string name="totalAmount">totalAmount</string>
+    <string name="exit_group">Exit Group</string>
+    <string name="view_group_record">View group record</string>
+    <string name="send_message">Send message</string>
 
 </resources>

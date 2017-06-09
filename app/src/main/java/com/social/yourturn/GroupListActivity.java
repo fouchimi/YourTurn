@@ -93,8 +93,15 @@ public class GroupListActivity extends AppCompatActivity  {
             String phoneNumber = intent.getExtras().getString(ParseConstant.USERNAME_COLUMN);
             getSupportActionBar().setTitle(group.getName());
             mContactList = group.getContactList();
-            Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
-            if(cursor != null && cursor.getCount() == 0){
+            boolean found = false;
+            for(Contact contact : group.getContactList()){
+                if(contact.getPhoneNumber().equals(phoneNumber)){
+                    found = true;
+                    break;
+                }
+            }
+
+            if(!found){
                 Contact contact = new Contact();
                 contact.setName(getString(R.string.current_user));
                 contact.setOwner(true);

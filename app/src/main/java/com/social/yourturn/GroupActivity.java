@@ -396,6 +396,7 @@ public class GroupActivity extends AppCompatActivity {
 
                                     if(!ids.isEmpty()){
                                         payload.put("targetIds", ids.substring(0, ids.length()-1));
+                                        payload.put("groupName", groupName);
                                         ParseCloud.callFunctionInBackground("groupChannel", payload, new FunctionCallback<Object>() {
                                             @Override
                                             public void done(Object object, ParseException e) {

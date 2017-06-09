@@ -40,7 +40,7 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void processPush(Context context, Intent intent) {
-        String senderId = "", recipients = "";
+        String senderId = "", recipients = "", groupName = "";
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -55,14 +55,14 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
                     if(key.equals("senderId")) {
                         senderId = json.getString(key);
                         Log.d(TAG, "sender Id: " + senderId);
-                    }else if(key.equals("recipientIds")){
-                        recipients = json.getString(key);
-                        Log.d(TAG, "recipients Ids: " + recipients);
+                    }else if(key.equals("groupName")){
+                        groupName = json.getString(key);
+                        Log.d(TAG, "group Name: " + groupName);
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(senderId.length() > 0 && recipients.length() > 0){
-                    createNotification(context, senderId, recipients);
+                if(senderId.length() > 0 && groupName.length() > 0){
+                    createNotification(context, senderId,  groupName);
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();
@@ -73,7 +73,7 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
 
     public static final int NOTIFICATION_ID = 475;
 
-    private void createNotification(Context context, String senderId, String recipients){
+    private void createNotification(Context context, String senderId, String groupName){
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
@@ -96,7 +96,7 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
         NotificationCompat.Builder notification = new NotificationCompat.Builder(context)
                 .setSmallIcon(android.R.drawable.ic_menu_report_image)
                 .setContentTitle(senderName + " sent you a message")
-                .setContentText("You been added into a new group")
+                .setContentText("You been added into a new group called " + groupName)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(groupIntent);
