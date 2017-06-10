@@ -5,10 +5,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
+import android.graphics.Color;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
@@ -27,7 +26,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.parse.FunctionCallback;
-import com.parse.LogInCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
 import com.parse.ParseUser;
@@ -51,7 +49,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 public class GroupListActivity extends AppCompatActivity  {
 
@@ -141,6 +138,8 @@ public class GroupListActivity extends AppCompatActivity  {
                 if(resultCode == RESULT_OK){
                     String resultValue = resultData.getString(getString(R.string.result_value));
                     Toast.makeText(GroupListActivity.this, resultValue, Toast.LENGTH_LONG).show();
+                    Intent confirmPaymentIntent = new Intent(GroupListActivity.this, GroupRecordActivity.class);
+                    startActivity(confirmPaymentIntent);
                 }
             }
         });
@@ -370,6 +369,14 @@ public class GroupListActivity extends AppCompatActivity  {
                     isValidateVisible = true;
                     invalidateOptionsMenu();
                     Toast.makeText(context, "All requests answered", Toast.LENGTH_LONG).show();
+
+                    for(int i = 0; i < mContactList.size(); i++) {
+                        View view = mRecyclerView.getChildAt(i);
+                        MemberGroupAdapter.MemberViewHolder mViewHolder = (MemberGroupAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
+                        mViewHolder.getSplitValueEditText().setEnabled(false);
+                        mViewHolder.getSplitValueEditText().setFocusable(false);
+                        mViewHolder.getSplitValueEditText().setBackgroundColor(Color.LTGRAY);
+                    }
                 }
             }
         }

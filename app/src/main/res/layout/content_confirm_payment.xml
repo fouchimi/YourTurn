@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.social.yourturn.GroupRecordActivity"
+    android:orientation="vertical"
+    tools:showIn="@layout/activity_confirm_payment">
+
+
+    <TextView
+        android:id="@+id/payment_text_ack"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="Thank you for the payment"
+        android:textSize="@dimen/txt_20sp"
+        android:textColor="@color/boldGrey"
+        android:gravity="center"/>
+
+</LinearLayout>

@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
-import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,13 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.parse.GetCallback;
-import com.parse.ParseException;
-import com.parse.ParseFile;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
 import com.social.yourturn.GroupListActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
@@ -67,12 +59,13 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         Log.d(TAG, group.getName());
         holder.groupName.setText(group.getName());
 
-        if(group.getContactList().size() == 1) {
-            holder.groupNumber.setText(String.valueOf(group.getContactList().size()+1));
-        }else {
-            holder.groupNumber.setText(String.valueOf(group.getContactList().size()));
-        }
+        Cursor selfCursor = mContext.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
+                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(getCurrentPhoneNumber()), null, null);
 
+        if(selfCursor.getCount() == 0) holder.groupNumber.setText(String.valueOf(group.getContactList().size()+1));
+        else holder.groupNumber.setText(String.valueOf(group.getContactList().size()));
+
+        selfCursor.close();
 
         if(group.getThumbnail() != null && group.getThumbnail().length() > 0) imageLoader.DisplayImage(group.getThumbnail(), holder.groupThumbnail);
         else holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);

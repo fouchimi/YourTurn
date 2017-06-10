@@ -122,6 +122,11 @@
         <service
             android:name=".services.ConfirmPaymentIntentService"
             android:exported="false" />
+
+        <activity
+            android:name=".GroupRecordActivity"
+            android:label="@string/title_activity_confirm_payment"
+            android:theme="@style/AppTheme"></activity>
     </application>
 
 </manifest>

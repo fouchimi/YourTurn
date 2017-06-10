@@ -1,16 +1,20 @@
 package com.social.yourturn.fragments;
 
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -23,6 +27,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.parse.FindCallback;
 import com.parse.GetCallback;
@@ -32,6 +37,7 @@ import com.parse.ParseFile;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.social.yourturn.MainActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.adapters.GroupAdapter;
 import com.social.yourturn.broadcast.GroupBroadcastReceiver;
@@ -111,7 +117,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
     private void loadData(Cursor data) {
-        ArrayList<Contact> mContactList = new ArrayList<>();
+        ArrayList<Contact> contactList = new ArrayList<>();
         if(mGroupList != null) mGroupList.clear();
         String groupId = null, groupName = null, groupThumbnail = null, groupCreator = null, userId = null;
         String lastGroupId ="";
@@ -136,11 +142,11 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 Contact contact = new Contact(contactId, username, phoneNumber);
                 if(lastGroupId.isEmpty() || groupId.equals(lastGroupId)) {
                     lastGroupId = groupId;
-                    mContactList.add(contact);
+                    contactList.add(contact);
                 }else {
                     lastGroupId = groupId;
-                    mContactList = new ArrayList<>();
-                    mContactList.add(contact);
+                    contactList = new ArrayList<>();
+                    contactList.add(contact);
                 }
                 userCursor.close();
             }
@@ -153,7 +159,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 group.setGroupCreator(groupCreator);
                 group.setDateInMillis(dateInMillis);
                 group.setGroupUserRef(userId);
-                group.setContactList(mContactList);
+                group.setContactList(contactList);
                 mGroupList.add(group);
             }else if (mGroupList.size() > 0 && mGroupList.get(mGroupList.size() -1).getGroupId().equals(groupId)) continue;
             else {
@@ -164,7 +170,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 group.setGroupCreator(groupCreator);
                 group.setDateInMillis(dateInMillis);
                 group.setGroupUserRef(userId);
-                group.setContactList(mContactList);
+                group.setContactList(contactList);
                 mGroupList.add(group);
             }
 

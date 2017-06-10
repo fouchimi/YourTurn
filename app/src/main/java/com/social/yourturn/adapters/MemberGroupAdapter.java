@@ -151,6 +151,10 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
         public ImageView getCheckedIcon() {
             return checkedIcon;
         }
+
+        public EditText getSplitValueEditText() {
+            return splitValueEditText;
+        }
     }
 
 }

@@ -72,5 +72,6 @@
     <string name="exit_group">Exit Group</string>
     <string name="view_group_record">View group record</string>
     <string name="send_message">Send message</string>
+    <string name="title_activity_confirm_payment">Group Records</string>
 
 </resources>

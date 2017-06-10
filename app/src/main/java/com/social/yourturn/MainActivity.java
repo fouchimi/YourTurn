@@ -64,12 +64,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private ParseUser mCurrentUser;
-    private static final int READ_CONTACT_PERMISSION = 0;
-    private static final int READ_PHONE_STATE_PERMISSION = 1;
-    private static final int WRITE_EXTERNAL_STORAGE_PERMISSION = 2;
-    private SectionsPagerAdapter mSectionsPagerAdapter;
-    private ViewPager mViewPager;
-    private FloatingActionButton fab;
+    private static final  int PERMISSION_ALL = 1;
+    private static final String[] PERMISSIONS = {Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE};
     private static final int LOADER_ID = 1;
     private ArrayList<Contact> mContactList;
     public static final String ALL_CONTACTS = "Contacts";
@@ -81,20 +77,14 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!hasPermission(getApplicationContext(), Manifest.permission.READ_CONTACTS)) {
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_CONTACTS}, READ_CONTACT_PERMISSION);
-                }
-                if(!hasPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_STORAGE_PERMISSION);
-                }
-                if(!hasPermission(getApplicationContext(), Manifest.permission.READ_PHONE_STATE)) {
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_PHONE_STATE}, READ_PHONE_STATE_PERMISSION);
-                }
-                if(hasAllPermissions(getApplicationContext())){
+
+                if(!hasPermissions(MainActivity.this, PERMISSIONS)){
+                    ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, PERMISSION_ALL);
+                }else {
                     Intent intent = new Intent(getApplicationContext(), ContactActivity.class);
                     intent.putExtra(ALL_CONTACTS, mContactList);
                     startActivity(intent);
@@ -102,7 +92,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
             }
         });
-        requestAllPermissions(this);
+
+        ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, PERMISSION_ALL);
     }
 
     @Override
@@ -111,16 +102,17 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         if(isConnected()){
 
-            mSectionsPagerAdapter = new SectionsPagerAdapter((getSupportFragmentManager()));
+            SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter((getSupportFragmentManager()));
 
-            mViewPager = (ViewPager) findViewById(R.id.container);
+            ViewPager mViewPager = (ViewPager) findViewById(R.id.container);
             mViewPager.setAdapter(mSectionsPagerAdapter);
 
             TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
             tabLayout.setupWithViewPager(mViewPager);
 
-            if(hasPermission(this, Manifest.permission.READ_PHONE_STATE)){
+            if(hasPermissions(this, PERMISSIONS)){
                 // Load groups here.
+                getSupportLoaderManager().initLoader(LOADER_ID, null, this);
                 SharedPreferences sharedPref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
                 String phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
                 String phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
@@ -137,8 +129,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                         }
                     });
                 }
-            }else {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE}, READ_PHONE_STATE_PERMISSION);
             }
         }else {
             //Display dialog box here
@@ -164,35 +154,30 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         return false;
     }
 
-    private void requestAllPermissions(Activity context){
-        ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.READ_CONTACTS}, READ_CONTACT_PERMISSION);
-        ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.READ_PHONE_STATE}, READ_PHONE_STATE_PERMISSION);
-        ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_STORAGE_PERMISSION);
-    }
 
-    private boolean hasPermission(Context context, String permission){
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permission != null){
-            if(ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) return false;
+    private boolean hasPermissions(Context context, String... permissions){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null){
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
         }
         return true;
     }
 
-    private boolean hasAllPermissions(Context context){
-        if(ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) return true;
-        return false;
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch(requestCode){
-            case READ_PHONE_STATE_PERMISSION:
+            case PERMISSION_ALL:
                 Log.d(TAG, String.valueOf(grantResults.length));
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                        grantResults[1] == PackageManager.PERMISSION_GRANTED &&
+                        grantResults[2] == PackageManager.PERMISSION_GRANTED){
+
                     Log.d(TAG, "permission granted");
-                    Toast.makeText(this, "Read phone state permission accepted !", Toast.LENGTH_LONG).show();
                     String phoneId="", phoneNumber="";
 
                     phoneId = getDeviceMetaData().split(" ")[0];
@@ -238,28 +223,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     });
 
 
-                }else if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED){
-                    Toast.makeText(this, "Permission denied !", Toast.LENGTH_SHORT).show();
+                }else {
+                    Toast.makeText(this, "Make sure to accept all permissions", Toast.LENGTH_SHORT).show();
                 }
-                break;
-            case READ_CONTACT_PERMISSION:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                   // Toast.makeText(this, "Read contact permission accepted !", Toast.LENGTH_LONG).show();
-                    getSupportLoaderManager().initLoader(LOADER_ID, null, MainActivity.this);
-                }else if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED){
-                    Toast.makeText(this, "Read contact denied", Toast.LENGTH_LONG).show();
-                }
-                break;
-            case WRITE_EXTERNAL_STORAGE_PERMISSION:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    Toast.makeText(this, "Write permission accepted !", Toast.LENGTH_LONG).show();
-                }else if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED){
-                    Toast.makeText(this, "Write permission denied !", Toast.LENGTH_LONG).show();
-                }
-            break;
-
-            default:
-                return;
         }
     }
 
