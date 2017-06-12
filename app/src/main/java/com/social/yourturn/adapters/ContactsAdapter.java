@@ -2,6 +2,7 @@ package com.social.yourturn.adapters;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.graphics.Color;
 import android.support.v4.widget.CursorAdapter;
 import android.text.style.TextAppearanceSpan;
@@ -14,8 +15,12 @@ import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.social.yourturn.R;
 import com.social.yourturn.ContactActivity.MemberQuery;
+import com.social.yourturn.data.YourTurnContract;
+import com.social.yourturn.utils.ImageLoader;
+
 import org.apache.commons.lang3.text.WordUtils;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -32,7 +37,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
     private Context mContext;
     private final static String TAG = ContactsAdapter.class.getSimpleName();
     private SparseBooleanArray selectionArray = new SparseBooleanArray();
-
+    private ImageLoader imageLoader;
 
     public ContactsAdapter(Context context){
         super(context, null, 0);
@@ -41,6 +46,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         final String alphabet = context.getString(R.string.alphabet);
         mAlphabetIndexer = new AlphabetIndexer(null, MemberQuery.DISPLAY_NAME, alphabet);
         highlightTextSpan = new TextAppearanceSpan(context, R.style.searchTextHighlight);
+        imageLoader = new ImageLoader(mContext);
     }
 
     @Override
@@ -79,8 +85,17 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         boolean isSelected = selectionArray.get(position);
         final ViewHolder holder = (ViewHolder) view.getTag();
         final String displayName = cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase();
+        final String phoneNumber = cursor.getString(MemberQuery.PHONE_NUMBER);
 
-        holder.thumbnail.setImageResource(R.drawable.default_profile);
+        Cursor thumbnailCursor = mContext.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL},
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
+        thumbnailCursor.moveToNext();
+        String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
+
+        thumbnailCursor.close();
+
+        imageLoader.DisplayImage(thumbnail, holder.thumbnail);
         holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
         if (isSelected) {

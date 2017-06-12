@@ -45,4 +45,5 @@ public class ParseConstant {
 
     //Directory constants
     public static final String USER_PROFILE_DIR = "user_profile";
+    public static final String FRIEND_IDS = "friends";
 }

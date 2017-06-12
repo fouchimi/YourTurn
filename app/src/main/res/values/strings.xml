@@ -74,5 +74,6 @@
     <string name="send_message">Send message</string>
     <string name="title_activity_confirm_payment">Group Records</string>
     <string name="selected_group">selected_group</string>
+    <string name="profileDataReceiver">profileDataReceiver</string>
 
 </resources>

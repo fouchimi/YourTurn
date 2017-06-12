@@ -21,7 +21,6 @@ import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in

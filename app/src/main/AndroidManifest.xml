@@ -108,7 +108,17 @@
                 <action android:name="com.parse.push.intent.OPEN" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".broadcast.LedgerBroadcastReceiver"
+        <receiver
+            android:name=".broadcast.LedgerBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.parse.push.intent.RECEIVE" />
+                <action android:name="com.parse.push.intent.DELETE" />
+                <action android:name="com.parse.push.intent.OPEN" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".broadcast.UserThumbnailBroadcastReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.parse.push.intent.RECEIVE" />
@@ -127,14 +137,18 @@
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
 
+        <activity
+            android:name=".GroupRecordActivity"
+            android:label="@string/title_activity_confirm_payment"
+            android:theme="@style/AppTheme" />
+
         <service
             android:name=".services.ConfirmPaymentIntentService"
             android:exported="false" />
 
-        <activity
-            android:name=".GroupRecordActivity"
-            android:label="@string/title_activity_confirm_payment"
-            android:theme="@style/AppTheme"></activity>
+        <service
+            android:name=".services.ProfileDataService"
+            android:exported="false" />
     </application>
 
 </manifest>

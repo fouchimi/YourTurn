@@ -22,6 +22,7 @@ import com.parse.SaveCallback;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.utils.ParseConstant;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
 
 public class EditProfileNameActivity extends AppCompatActivity {
@@ -49,7 +50,7 @@ public class EditProfileNameActivity extends AppCompatActivity {
                 YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
         if(cursor.getCount() > 0){
             cursor.moveToNext();
-            editNameText.setText(cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME)));
+            editNameText.setText(WordUtils.capitalize(cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME)).toLowerCase(), null));
         }
     }
 

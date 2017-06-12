@@ -1,5 +1,7 @@
 package com.social.yourturn.adapters;
 
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,7 +12,9 @@ import android.widget.TextView;
 
 import com.social.yourturn.ContactActivity;
 import com.social.yourturn.R;
+import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.utils.ImageLoader;
 
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -28,10 +32,12 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
     private ContactActivity mContext;
     private ArrayList<Contact> mContactList;
     private final static String TAG = SelectedContactAdapter.class.getSimpleName();
+    private ImageLoader imageLoader;
 
     public SelectedContactAdapter(ContactActivity context, ArrayList<Contact> contactList){
         this.mContext = context;
         this.mContactList = contactList;
+        imageLoader = new ImageLoader(mContext);
     }
 
     @Override
@@ -64,8 +70,15 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
         Contact contact = mContactList.get(position);
         if(contact != null) {
             final String displayName = contact.getName();
-            holder.thumbnailView.setImageResource(R.drawable.default_profile);
             holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
+
+            Cursor thumbnailCursor = mContext.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                    new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL},
+                    YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
+            thumbnailCursor.moveToNext();
+            String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
+
+            imageLoader.DisplayImage(thumbnail, holder.thumbnailView);
         }
     }
 
