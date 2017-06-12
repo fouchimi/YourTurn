@@ -1,6 +1,8 @@
 package com.social.yourturn.adapters;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,7 +10,9 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.social.yourturn.R;
+import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.utils.ImageLoader;
 
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -25,10 +29,12 @@ public class GroupRecordAdapter extends BaseAdapter {
 
     private Context mContext;
     private ArrayList<Contact> mList;
+    private ImageLoader imageLoader;
 
     public GroupRecordAdapter(Context context, ArrayList<Contact> list){
         mContext = context;
         mList = list;
+        imageLoader = new ImageLoader(mContext);
     }
 
     @Override
@@ -65,7 +71,15 @@ public class GroupRecordAdapter extends BaseAdapter {
 
         Contact contact = getItem(position);
 
-        holder.imageView.setImageResource(R.drawable.default_profile);
+        Cursor thumbnailCursor = mContext.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL},
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
+        thumbnailCursor.moveToNext();
+        String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
+
+        thumbnailCursor.close();
+
+        imageLoader.DisplayImage(thumbnail, holder.imageView);
         holder.usernameView.setText(WordUtils.capitalize(contact.getName().toLowerCase(), null));
         if(contact.getShare() != null && !contact.getShare().equals(mContext.getString(R.string.zero_default_values))){
             DecimalFormat df = new DecimalFormat("#.00");
