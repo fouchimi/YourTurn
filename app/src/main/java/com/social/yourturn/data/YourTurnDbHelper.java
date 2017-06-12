@@ -44,7 +44,7 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 UserEntry.COLUMN_USER_ID + " TEXT, " +
                 UserEntry.COLUMN_USER_PASSWORD + " TEXT, " +
                 UserEntry.COLUMN_USER_DEVICE_ID + " TEXT, " +
-                UserEntry.COLUMN_USER_PHONE_NUMBER + " TEXT, " +
+                UserEntry.COLUMN_USER_PHONE_NUMBER + " TEXT NOT NULL, " +
                 UserEntry.COLUMN_USER_THUMBNAIL + " TEXT, " +
                 UserEntry.COLUMN_USER_CREATED_DATE + " INTEGER NOT NULL, " +
                 UserEntry.COLUMN_USER_UPDATED_DATE + " INTEGER NOT NULL" +

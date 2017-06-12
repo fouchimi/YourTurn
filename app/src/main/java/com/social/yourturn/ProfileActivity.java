@@ -132,7 +132,7 @@ public class ProfileActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch(requestCode) {
             case PICK_IMAGE_ID:
-                mBitmap = ImagePicker.getImageFromResult(this, resultCode, data, mImageProfileView);
+                mBitmap = ImagePicker.getImageFromResult(this, resultCode, data);
                 mProfileDir = new File(Environment.getExternalStorageDirectory().toString()+ "/" + ParseConstant.USER_PROFILE_DIR);
                 if(mProfileDir != null && !mProfileDir.exists()){
                     mProfileDir.mkdirs();

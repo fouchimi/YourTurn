@@ -30,6 +30,7 @@ import com.parse.ParseCloud;
 import com.parse.ParseException;
 import com.parse.ParseUser;
 import com.social.yourturn.adapters.MemberGroupAdapter;
+import com.social.yourturn.broadcast.LedgerBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.models.Contact;
@@ -56,16 +57,16 @@ public class GroupListActivity extends AppCompatActivity  {
     private RecyclerView mRecyclerView;
     private MemberGroupAdapter mAdapter;
     private ArrayList<Contact> mContactList = new ArrayList<>();
-    private Toolbar mActionBarToolbar;
-    private LinearLayoutManager mLinearLayout;
+    private Group mGroup = null;
     private boolean isVisible = false, isValidateVisible = false;
     private ParseUser mCurrentUser;
-    private BroadcastReceiver mBroadcastReceiver;
+    private BroadcastReceiver mPushSenderBroadcastReceiver;
+    private BroadcastReceiver mLedgerBroadcastReceiver;
     private String mSharedAmount, mTotalAmount;
     private int totalCount = 0;
     private PushReplyBroadcastReceiver pReplyBroadcastReceiver = new PushReplyBroadcastReceiver();
     private ConfirmPaymentReceiver mPaymentReceiver;
-    private String mGroupId;
+    private String shareValueList = "", recipientList= "", currentUserValue="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +75,7 @@ public class GroupListActivity extends AppCompatActivity  {
 
         mCurrentUser = ParseUser.getCurrentUser();
 
-        mActionBarToolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar mActionBarToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mActionBarToolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -85,14 +86,15 @@ public class GroupListActivity extends AppCompatActivity  {
 
         Intent intent = getIntent();
         if(intent != null) {
-            Group group = intent.getParcelableExtra(GroupFragment.GROUP_KEY);
-            mGroupId = group.getGroupId();
+            mGroup = intent.getParcelableExtra(GroupFragment.GROUP_KEY);
             String phoneNumber = intent.getExtras().getString(ParseConstant.USERNAME_COLUMN);
-            getSupportActionBar().setTitle(group.getName());
-            mContactList = group.getContactList();
+            getSupportActionBar().setTitle(mGroup.getName());
+            mContactList = mGroup.getContactList();
             boolean found = false;
-            for(Contact contact : group.getContactList()){
+            for(Contact contact : mGroup.getContactList()){
                 if(contact.getPhoneNumber().equals(phoneNumber)){
+                    contact.setName(getString(R.string.current_user));
+                    contact.setOwner(true);
                     found = true;
                     break;
                 }
@@ -114,15 +116,22 @@ public class GroupListActivity extends AppCompatActivity  {
             });
 
             mAdapter = new MemberGroupAdapter(this, mContactList);
-            mLinearLayout = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+            LinearLayoutManager mLinearLayout = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
             mRecyclerView.setLayoutManager(mLinearLayout);
             mRecyclerView.setAdapter(mAdapter);
 
-            mBroadcastReceiver = new BroadcastReceiver() {
+            mPushSenderBroadcastReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     Log.d(TAG, "On received invoked");
                     Toast.makeText(getApplicationContext(), "On Received invoked !", Toast.LENGTH_SHORT).show();
+                }
+            };
+
+            mLedgerBroadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    Log.d(TAG, "On received invoked");
                 }
             };
         }
@@ -137,9 +146,28 @@ public class GroupListActivity extends AppCompatActivity  {
             public void onReceivedResult(int resultCode, Bundle resultData) {
                 if(resultCode == RESULT_OK){
                     String resultValue = resultData.getString(getString(R.string.result_value));
+                    final Group group = resultData.getParcelable(getString(R.string.selected_group));
                     Toast.makeText(GroupListActivity.this, resultValue, Toast.LENGTH_LONG).show();
-                    Intent confirmPaymentIntent = new Intent(GroupListActivity.this, GroupRecordActivity.class);
-                    startActivity(confirmPaymentIntent);
+                    HashMap<String, Object> payload = new HashMap<>();
+                    shareValueList += "," + currentUserValue;
+                    payload.put("groupId", group.getGroupId());
+                    payload.put("totalAmount", mTotalAmount);
+                    payload.put("sharedValueList", shareValueList);
+                    payload.put("friendIds", recipientList);
+                    payload.put("sender", mCurrentUser.getUsername());
+                    ParseCloud.callFunctionInBackground("ledgerChannel", payload, new FunctionCallback<Object>() {
+                        @Override
+                        public void done(Object object, ParseException e) {
+                            if(e == null) {
+                                Log.d(TAG, "Successfully sent");
+                                Intent confirmPaymentIntent = new Intent(GroupListActivity.this, GroupRecordActivity.class);
+                                confirmPaymentIntent.putExtra(getString(R.string.selected_group), group);
+                                startActivity(confirmPaymentIntent);
+                            }else {
+                                Log.d(TAG, e.getMessage());
+                            }
+                        }
+                    });
                 }
             }
         });
@@ -158,7 +186,8 @@ public class GroupListActivity extends AppCompatActivity  {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(PushSenderBroadcastReceiver.intentAction));
+        LocalBroadcastManager.getInstance(this).registerReceiver(mPushSenderBroadcastReceiver, new IntentFilter(PushSenderBroadcastReceiver.intentAction));
+        LocalBroadcastManager.getInstance(this).registerReceiver(mLedgerBroadcastReceiver, new IntentFilter(LedgerBroadcastReceiver.intentAction));
         IntentFilter filter = new IntentFilter("com.parse.push.intent.RECEIVE");
         registerReceiver(pReplyBroadcastReceiver, filter);
     }
@@ -166,7 +195,8 @@ public class GroupListActivity extends AppCompatActivity  {
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mPushSenderBroadcastReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mLedgerBroadcastReceiver);
         unregisterReceiver(pReplyBroadcastReceiver);
     }
 
@@ -183,9 +213,6 @@ public class GroupListActivity extends AppCompatActivity  {
                 // Kick off push notification here
                 HashMap<String, Object> payload = new HashMap<>();
                 double totalValue = 0.00;
-                String recipientList = "", shareValueList = "";
-                int count = 0;
-                DecimalFormat df = new DecimalFormat("#.00");
                 mAdapter.notifyDataSetChanged();
                 for(int pos = 0; pos < mAdapter.getContactList().size(); pos++){
                     String value = mAdapter.getContactList().get(pos).getShare();
@@ -197,7 +224,8 @@ public class GroupListActivity extends AppCompatActivity  {
                         if(!friend.equals(mCurrentUser.getUsername())){
                             recipientList += friend +",";
                             shareValueList += value + ",";
-                            count++;
+                        }else {
+                            currentUserValue = value;
                         }
 
                     }else {
@@ -215,7 +243,6 @@ public class GroupListActivity extends AppCompatActivity  {
                     payload.put("senderId", mCurrentUser.getUsername());
                     payload.put("sharedValueList", shareValueList);
                     payload.put("recipientList", recipientList);
-                    payload.put("friendCount", count);
 
                     ParseCloud.callFunctionInBackground("senderChannel", payload, new FunctionCallback<Object>() {
                         @Override
@@ -235,10 +262,15 @@ public class GroupListActivity extends AppCompatActivity  {
             case R.id.validateBillAction:
                 Intent intent = new Intent(this, ConfirmPaymentIntentService.class);
                 intent.putParcelableArrayListExtra(getString(R.string.friendList), mAdapter.getContactList());
-                intent.putExtra(getString(R.string.groupId), mGroupId);
+                intent.putExtra(getString(R.string.selected_group), mGroup);
                 intent.putExtra(getString(R.string.paymentReceiver), mPaymentReceiver);
                 intent.putExtra(getString(R.string.totalAmount), mTotalAmount);
                 startService(intent);
+                return true;
+            case R.id.viewGroupAction:
+                Intent recordIntent = new Intent(this, GroupRecordActivity.class);
+                recordIntent.putExtra(getString(R.string.selected_group), mGroup);
+                startActivity(recordIntent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

@@ -70,8 +70,9 @@
     <string name="payment_successful_msg">Payment was saved successfully</string>
     <string name="totalAmount">totalAmount</string>
     <string name="exit_group">Exit Group</string>
-    <string name="view_group_record">View group record</string>
+    <string name="view_group_record">View group records</string>
     <string name="send_message">Send message</string>
     <string name="title_activity_confirm_payment">Group Records</string>
+    <string name="selected_group">selected_group</string>
 
 </resources>

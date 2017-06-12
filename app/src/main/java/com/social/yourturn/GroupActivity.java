@@ -244,7 +244,7 @@ public class GroupActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch(requestCode) {
             case PICK_IMAGE_ID:
-                mBitmap = ImagePicker.getImageFromResult(this, resultCode, data, mGroupImageView);
+                mBitmap = ImagePicker.getImageFromResult(this, resultCode, data);
                 if(mBitmap == null) {
                     mGroupImageView.setImageResource(R.drawable.ic_group_black_36dp);
                 }else {
@@ -257,13 +257,10 @@ public class GroupActivity extends AppCompatActivity {
         }
     }
 
-    private void saveThumbnailFile(File file, Bitmap bitmap){
+    private void saveThumbnailFile(File file){
         try {
 
             FileOutputStream out = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out);
-            mBitmap = Compressor.getDefault(this).compressToBitmap(thumbnailFile);
-            thumbnailFile = Compressor.getDefault(this).compressToFile(thumbnailFile);
             out.flush();
             out.close();
         } catch (Exception e) {
@@ -311,9 +308,9 @@ public class GroupActivity extends AppCompatActivity {
 
                 String groupThumbnailPath = imageFileName + timeStamp + ".jpg";
                 thumbnailFile = new File(mGroupDirectory, groupThumbnailPath);
-                saveThumbnailFile(thumbnailFile, mBitmap);
+                saveThumbnailFile(thumbnailFile);
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                mBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                 byte[] groupImageByteData = stream.toByteArray();
                 pFile = new ParseFile(ParseConstant.GROUP_THUMBNAIL_EXTENSION, groupImageByteData);
             }

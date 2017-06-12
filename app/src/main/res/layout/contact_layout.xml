@@ -55,8 +55,10 @@
             android:fontFamily="sans-serif-light"
             android:textColor="@android:color/black"
             android:gravity="center_vertical"
-            android:textSize="22sp"
+            android:textSize="@dimen/txt_22sp"
             android:paddingLeft="@dimen/pad_8dp"
+            android:paddingStart="@dimen/pad_8dp"
+            android:paddingEnd="@dimen/pad_8dp"
             android:layout_gravity="center"
             android:textAppearance="?android:attr/textAppearanceLarge" />
 

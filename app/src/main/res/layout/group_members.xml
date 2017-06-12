@@ -26,65 +26,64 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="6"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:weightSum="1">
 
             <TextView
                 android:id="@+id/member_name"
-                android:layout_width="@dimen/txt_80dp"
+                android:layout_width="150dp"
                 android:layout_height="?android:attr/listPreferredItemHeight"
+                android:layout_gravity="center"
+                android:layout_marginLeft="@dimen/pad_12dp"
+                android:layout_marginStart="@dimen/pad_12dp"
                 android:ellipsize="end"
+                android:gravity="center_vertical"
                 android:maxLines="1"
-                android:layout_weight="2"
+                android:maxWidth="@dimen/txt_100dp"
+                android:textAppearance="?android:attr/textAppearanceLarge"
                 android:fontFamily="sans-serif-light"
                 android:textColor="@android:color/black"
-                android:gravity="center_vertical"
-                android:textSize="@dimen/txt_22sp"
-                android:layout_marginLeft="@dimen/pad_12dp"
-                android:maxWidth="@dimen/txt_100dp"
-                android:layout_gravity="center"
-                android:textAppearance="?android:attr/textAppearanceLarge" />
+                android:textSize="@dimen/txt_20sp"
+                android:layout_weight="0.63" />
 
             <TextView
                 android:id="@+id/currencyTextView"
                 android:layout_width="@dimen/w_15dp"
                 android:layout_height="@dimen/txt_45dp"
-                android:textStyle="bold"
-                android:textSize="@dimen/txt_22sp"
-                android:layout_marginLeft="@dimen/mar_4dp"
                 android:layout_gravity="center_vertical"
-                android:gravity="center_vertical"
+                android:layout_marginLeft="@dimen/mar_4dp"
                 android:layout_marginRight="@dimen/mar_4dp"
-                android:text="@string/currency"/>
+                android:gravity="center_vertical"
+                android:text="@string/currency"
+                android:textSize="@dimen/txt_22sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/splitValue"
-                android:layout_width="@dimen/txt_60dp"
-                android:layout_height="@dimen/txt_45dp"
+                android:layout_width="50dp"
+                android:layout_height="match_parent"
                 android:layout_gravity="center_vertical"
-                android:layout_marginRight="@dimen/mar_8dp"
-                android:layout_marginEnd="@dimen/mar_8dp"
-                android:layout_weight="0.23"
                 android:background="@android:color/transparent"
+                android:layout_marginRight="@dimen/mar_4dp"
+                android:layout_marginEnd="@dimen/mar_4dp"
                 android:ellipsize="end"
-                android:fontFamily="sans-serif-light"
+                android:gravity="start|center"
                 android:inputType="numberDecimal"
                 android:maxLines="1"
-                android:gravity="center"
                 android:scrollHorizontally="true"
                 android:text="@string/zero_default_values"
                 android:textColor="@android:color/black"
                 android:textSize="@dimen/txt_20sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_weight="1.18" />
 
             <ImageView
                 android:id="@+id/check_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/txt_45dp"
+                android:layout_width="45dp"
+                android:layout_height="match_parent"
                 android:layout_gravity="center_vertical"
-                android:layout_marginRight="@dimen/mar_4dp"
-                android:layout_marginEnd="@dimen/mar_4dp"
-                android:visibility="invisible"
-                android:src="@drawable/ic_done_green_48dp"/>
+                android:src="@drawable/ic_done_green_48dp"
+                android:visibility="invisible" />
 
         </LinearLayout>
 

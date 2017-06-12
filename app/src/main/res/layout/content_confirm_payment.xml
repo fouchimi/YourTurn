@@ -9,14 +9,9 @@
     android:orientation="vertical"
     tools:showIn="@layout/activity_confirm_payment">
 
-
-    <TextView
-        android:id="@+id/payment_text_ack"
+    <ListView
+        android:id="@+id/group_contact_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Thank you for the payment"
-        android:textSize="@dimen/txt_20sp"
-        android:textColor="@color/boldGrey"
-        android:gravity="center"/>
+        android:layout_height="match_parent" />
 
 </LinearLayout>
