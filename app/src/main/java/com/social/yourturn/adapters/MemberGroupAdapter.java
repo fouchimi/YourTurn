@@ -32,6 +32,7 @@ import com.parse.ParseUser;
 import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.utils.ImageLoader;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
@@ -51,10 +52,12 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
     private static final String TAG = MemberGroupAdapter.class.getSimpleName();
     private Context mContext;
     private ArrayList<Contact> mContactList;
+    private ImageLoader imageLoader;
 
     public MemberGroupAdapter(Context context, ArrayList<Contact> contactList){
-        this.mContext = context;
+        mContext = context;
         this.mContactList = contactList;
+        imageLoader = new ImageLoader(mContext);
     }
 
 
@@ -98,25 +101,10 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
         else {
             holder.splitValueEditText.setText(R.string.zero_default_values);
         }
-        holder.imageView.setImageResource(R.drawable.default_profile);
+
         holder.checkedIcon.setVisibility(View.INVISIBLE);
-        ParseQuery<ParseUser> query = ParseUser.getQuery();
-        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
-        query.getFirstInBackground(new GetCallback<ParseUser>() {
-            @Override
-            public void done(ParseUser user, ParseException e) {
-                if(e == null){
-                    ParseFile parseFile = (ParseFile) user.get(ParseConstant.USER_THUMBNAIL_COLUMN);
-                    if(parseFile != null) {
-                        String imageUrl = parseFile.getUrl();
-                        Uri imageUri = Uri.parse(imageUrl);
-                        Glide.with(mContext).load(imageUri.toString()).into(holder.imageView);
-                    }
-                }else {
-                    Log.d(TAG, e.getMessage());
-                }
-            }
-        });
+
+        imageLoader.DisplayImage(contact.getThumbnailUrl(), holder.imageView);
     }
 
     @Override

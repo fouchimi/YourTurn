@@ -66,7 +66,8 @@ public class GroupRecordActivity extends AppCompatActivity implements LoaderMana
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(this, YourTurnContract.LedgerEntry.CONTENT_URI, null, YourTurnContract.LedgerEntry.COLUMN_GROUP_KEY + "=" + DatabaseUtils.sqlEscapeString(mGroup.getGroupId()), null, null);
+        return new CursorLoader(this, YourTurnContract.LedgerEntry.CONTENT_URI, null,
+                YourTurnContract.LedgerEntry.COLUMN_GROUP_KEY + "=" + DatabaseUtils.sqlEscapeString(mGroup.getGroupId()), null, null);
     }
 
     @Override

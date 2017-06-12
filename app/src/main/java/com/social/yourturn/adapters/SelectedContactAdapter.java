@@ -72,13 +72,7 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
             final String displayName = contact.getName();
             holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
-            Cursor thumbnailCursor = mContext.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
-                    new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL},
-                    YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
-            thumbnailCursor.moveToNext();
-            String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
-
-            imageLoader.DisplayImage(thumbnail, holder.thumbnailView);
+            imageLoader.DisplayImage(contact.getThumbnailUrl(), holder.thumbnailView);
         }
     }
 

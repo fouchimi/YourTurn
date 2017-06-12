@@ -139,7 +139,9 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 String contactId = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_ID));
                 String username = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
                 String phoneNumber = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
+                String thumbnail = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL));
                 Contact contact = new Contact(contactId, username, phoneNumber);
+                contact.setThumbnailUrl(thumbnail);
                 if(lastGroupId.isEmpty() || groupId.equals(lastGroupId)) {
                     lastGroupId = groupId;
                     contactList.add(contact);

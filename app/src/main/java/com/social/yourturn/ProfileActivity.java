@@ -66,7 +66,6 @@ public class ProfileActivity extends AppCompatActivity {
     private ParseFile pFile;
     private ParseUser mCurrentUser;
     private BroadcastReceiver mBroadcastReceiver;
-    private String userThumbnailPath = "";
     private ProfileDataReceiver profileReceiver;
 
     private static final  int PICK_IMAGE_ID = 2014;
@@ -157,7 +156,7 @@ public class ProfileActivity extends AppCompatActivity {
             usernameTextView.setText(WordUtils.capitalize(cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME)).toLowerCase(), null));
             String thumbnail = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL));
             if(thumbnail != null && thumbnail.length() > 0) {
-                Glide.with(this).load(new File(Environment.getExternalStorageDirectory().toString() + "/" + ParseConstant.USER_PROFILE_DIR + "/" +  thumbnail)).into(mImageProfileView);
+                Glide.with(this).load(thumbnail).into(mImageProfileView);
             }
         }
     }
@@ -201,7 +200,7 @@ public class ProfileActivity extends AppCompatActivity {
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
                 String imageFileName = "IMAGE_" + timeStamp + "_";
 
-                userThumbnailPath = imageFileName + timeStamp + ".jpg";
+                String userThumbnailPath = imageFileName + timeStamp + ".jpg";
                 File profilePicFile = new File(mProfileDir, userThumbnailPath);
 
                 ProfileAsyncTask task = new ProfileAsyncTask(this);
@@ -267,7 +266,7 @@ public class ProfileActivity extends AppCompatActivity {
             if(bitmap != null) {
                 mImageProfileView.setImageBitmap(bitmap);
 
-                ParseQuery<ParseUser> query = ParseUser.getQuery();
+                final ParseQuery<ParseUser> query = ParseUser.getQuery();
                 query.whereEqualTo(ParseConstant.USERNAME_COLUMN, mCurrentUser.getUsername());
                 query.getFirstInBackground(new GetCallback<ParseUser>() {
                     @Override
@@ -279,13 +278,22 @@ public class ProfileActivity extends AppCompatActivity {
                                 @Override
                                 public void done(ParseException e) {
                                     if(e == null) {
-                                        Toast.makeText(ProfileActivity.this, R.string.thumbnail_updated_msg, Toast.LENGTH_SHORT).show();
-                                        Intent intent = new Intent(mContext, ProfileDataService.class);
-                                        intent.putExtra(ParseConstant.USERNAME_COLUMN, mCurrentUser.getUsername());
-                                        intent.putExtra(ParseConstant.FRIEND_IDS, getFriendIds());
-                                        intent.putExtra(ParseConstant.USER_THUMBNAIL_COLUMN, userThumbnailPath);
-                                        intent.putExtra(getString(R.string.profileDataReceiver), profileReceiver);
-                                        mContext.startService(intent);
+                                        query.getFirstInBackground(new GetCallback<ParseUser>() {
+                                            @Override
+                                            public void done(ParseUser currentUser, ParseException e) {
+                                                if(e == null) {
+                                                    ParseFile image = (ParseFile) currentUser.get(ParseConstant.USER_THUMBNAIL_COLUMN);
+                                                    Intent intent = new Intent(mContext, ProfileDataService.class);
+                                                    intent.putExtra(ParseConstant.USERNAME_COLUMN, mCurrentUser.getUsername());
+                                                    intent.putExtra(ParseConstant.FRIEND_IDS, getFriendIds());
+                                                    intent.putExtra(ParseConstant.USER_THUMBNAIL_COLUMN, image.getUrl());
+                                                    intent.putExtra(getString(R.string.profileDataReceiver), profileReceiver);
+                                                    mContext.startService(intent);
+                                                }else {
+                                                    Log.d(TAG, e.getMessage());
+                                                }
+                                            }
+                                        });
                                     }
                                 }
                             });

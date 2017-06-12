@@ -207,8 +207,10 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
                 String contactId = cursor.getString(MemberQuery.ID);
                 String displayName = cursor.getString(MemberQuery.DISPLAY_NAME);
                 String phoneNumber = cursor.getString(MemberQuery.PHONE_NUMBER);
+                String imageUrl = cursor.getString(MemberQuery.THUMBNAIL);
 
                 Contact contact = new Contact(contactId, displayName, phoneNumber);
+                contact.setThumbnailUrl(imageUrl);
                 mContactList.add(contact);
             }
 
@@ -344,10 +346,12 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
                 YourTurnContract.MemberEntry._ID,
                 YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME,
                 YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER,
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL
         };
         final static int ID = 0;
         final static int DISPLAY_NAME = 1;
         final static int PHONE_NUMBER = 2;
+        final static int THUMBNAIL = 3;
     }
 
 }

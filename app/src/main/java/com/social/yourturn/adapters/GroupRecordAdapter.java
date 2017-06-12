@@ -71,15 +71,7 @@ public class GroupRecordAdapter extends BaseAdapter {
 
         Contact contact = getItem(position);
 
-        Cursor thumbnailCursor = mContext.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
-                new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL},
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
-        thumbnailCursor.moveToNext();
-        String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
-
-        thumbnailCursor.close();
-
-        imageLoader.DisplayImage(thumbnail, holder.imageView);
+        imageLoader.DisplayImage(contact.getThumbnailUrl(), holder.imageView);
         holder.usernameView.setText(WordUtils.capitalize(contact.getName().toLowerCase(), null));
         if(contact.getShare() != null && !contact.getShare().equals(mContext.getString(R.string.zero_default_values))){
             DecimalFormat df = new DecimalFormat("#.00");
