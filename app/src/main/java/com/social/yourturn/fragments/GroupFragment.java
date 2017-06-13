@@ -1,20 +1,17 @@
 package com.social.yourturn.fragments;
 
 
-import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Typeface;
+import android.icu.lang.UScript;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -27,20 +24,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.parse.FindCallback;
 import com.parse.GetCallback;
-import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
-import com.social.yourturn.MainActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.adapters.GroupAdapter;
-import com.social.yourturn.broadcast.GroupBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Group;
@@ -140,6 +133,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 String username = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
                 String phoneNumber = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
                 String thumbnail = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL));
+
                 Contact contact = new Contact(contactId, username, phoneNumber);
                 contact.setThumbnailUrl(thumbnail);
                 if(lastGroupId.isEmpty() || groupId.equals(lastGroupId)) {
@@ -193,6 +187,55 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     public void onResume() {
         super.onResume();
         fetchLatestGroup();
+        fetchFriendThumbnail();
+    }
+
+    private void fetchFriendThumbnail(){
+        Cursor memberCursor = getActivity().getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, null, null, null);
+        if(memberCursor != null && memberCursor.getCount() > 0) {
+            while (memberCursor.moveToNext()) {
+                final String userId = memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry._ID));
+                final String phoneNumber = memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER));
+                final String name = memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
+                ParseQuery<ParseUser> query = ParseUser.getQuery();
+                query.whereEqualTo(ParseConstant.USERNAME_COLUMN, phoneNumber);
+
+                query.getFirstInBackground(new GetCallback<ParseUser>() {
+                    @Override
+                    public void done(ParseUser parseUser, ParseException e) {
+                        if(e == null) {
+                            ParseFile parseFile = (ParseFile) parseUser.get(ParseConstant.USER_THUMBNAIL_COLUMN);
+                            if(parseFile != null) {
+                                ContentValues imageValue = new ContentValues();
+                                imageValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL, parseFile.getUrl());
+
+                                getActivity().getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, imageValue,
+                                        YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(phoneNumber), null);
+
+                                Cursor userCursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
+                                        YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER +"=" +DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
+
+                                ContentValues userValue = new ContentValues();
+                                userValue.put(YourTurnContract.UserEntry.COLUMN_USER_ID, userId);
+                                userValue.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, name);
+                                userValue.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, parseFile.getUrl());
+                                if(userCursor != null && userCursor.getCount() > 0) {
+                                    getActivity().getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, userValue,
+                                            YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(phoneNumber), null);
+                                }else {
+                                   // insert here
+                                    getActivity().getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, userValue);
+                                }
+                                userCursor.close();
+                            }
+                        }else {
+                            Log.d(TAG, e.getMessage());
+                        }
+                    }
+                });
+            }
+        }
+        memberCursor.close();
     }
 
     private void fetchLatestGroup(){

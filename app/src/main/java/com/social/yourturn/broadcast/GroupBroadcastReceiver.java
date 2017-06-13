@@ -83,19 +83,19 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
 
         PendingIntent groupIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Cursor cursor = context.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, new String[]{YourTurnContract.UserEntry.COLUMN_USER_NAME},
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(senderId), null, null);
+        Cursor cursor = context.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME},
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(senderId), null, null);
 
         String senderName = "";
         if(cursor != null && cursor.getCount() > 0) {
-            cursor.moveToFirst();
-            senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+            cursor.moveToNext();
+            senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
             cursor.close();
         }
 
         NotificationCompat.Builder notification = new NotificationCompat.Builder(context)
                 .setSmallIcon(android.R.drawable.ic_menu_report_image)
-                .setContentTitle(senderName + " sent you a message")
+                .setContentTitle(senderName + " added you in a new group")
                 .setContentText("You been added into a new group called " + groupName)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)

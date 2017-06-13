@@ -3,6 +3,7 @@ package com.social.yourturn;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -12,8 +13,10 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -23,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.parse.DeleteCallback;
 import com.parse.FunctionCallback;
 import com.parse.GetCallback;
 import com.parse.LogInCallback;
@@ -67,6 +71,7 @@ public class ProfileActivity extends AppCompatActivity {
     private ParseUser mCurrentUser;
     private BroadcastReceiver mBroadcastReceiver;
     private ProfileDataReceiver profileReceiver;
+    private FloatingActionButton delFab;
 
     private static final  int PICK_IMAGE_ID = 2014;
 
@@ -86,6 +91,7 @@ public class ProfileActivity extends AppCompatActivity {
             actionBar.setTitle(R.string.profile_text);
         }
 
+        delFab = (FloatingActionButton) findViewById(R.id.delFab);
         usernameTextView = (TextView) findViewById(R.id.nameTextField);
         phoneNumberTextView = (TextView) findViewById(R.id.phoneNumberField);
         mImageProfileView = (CircleImageView) findViewById(R.id.profile_picture);
@@ -151,14 +157,22 @@ public class ProfileActivity extends AppCompatActivity {
         phoneNumberTextView.setText(mCurrentUser.getUsername());
         Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
                 YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(mCurrentUser.getUsername()), null, null);
-        if(cursor.getCount() > 0) {
+        if(cursor != null && cursor.getCount() > 0) {
             cursor.moveToNext();
-            usernameTextView.setText(WordUtils.capitalize(cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME)).toLowerCase(), null));
+            String name = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+            if(name != null) {
+                usernameTextView.setText(WordUtils.capitalize(name, null).toLowerCase(), null);
+            }
             String thumbnail = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL));
             if(thumbnail != null && thumbnail.length() > 0) {
                 Glide.with(this).load(thumbnail).into(mImageProfileView);
+                delFab.setVisibility(View.VISIBLE);
+            }else {
+                delFab.setVisibility(View.INVISIBLE);
             }
         }
+
+        cursor.close();
     }
 
     @Override
@@ -179,32 +193,90 @@ public class ProfileActivity extends AppCompatActivity {
         startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
     }
 
+    public void deleteProfilePic(View view){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle("Delete Action")
+                .setMessage("Are you sure you want to delete profile picture")
+                .setPositiveButton(R.string.ok_text, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mImageProfileView.setImageResource(R.drawable.ic_account_grey);
+                        delFab.hide();
+                        ParseQuery<ParseUser> query = ParseUser.getQuery();
+                        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, mCurrentUser.getUsername());
+                        query.getFirstInBackground(new GetCallback<ParseUser>() {
+                            @Override
+                            public void done(ParseUser user, ParseException e) {
+                                if(e == null){
+                                    if(e == null) {
+                                        user.remove(ParseConstant.USER_THUMBNAIL_COLUMN);
+                                        ContentValues profileValues = new ContentValues();
+                                        profileValues.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, "");
+                                        Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
+                                                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(mCurrentUser.getUsername()), null, null);
+
+                                        if(cursor!= null && cursor.getCount() > 0){
+                                            getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, profileValues,
+                                                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(mCurrentUser.getUsername()), null);
+                                        }
+
+                                        cursor.close();
+                                        user.saveInBackground(new SaveCallback() {
+                                            @Override
+                                            public void done(ParseException e) {
+                                                if(e == null) {
+                                                    Toast.makeText(ProfileActivity.this, "profile image deleted successfully", Toast.LENGTH_LONG).show();
+                                                    HashMap<String, Object> payload = new HashMap<>();
+                                                    payload.put("sender", mCurrentUser.getUsername());
+                                                    payload.put("friends", getFriendIds());
+                                                    payload.put("url", "");
+                                                    ParseCloud.callFunctionInBackground("thumbnailChannel", payload, new FunctionCallback<Object>() {
+                                                        @Override
+                                                        public void done(Object object, ParseException e) {
+                                                            if(e == null) {
+                                                                Log.d(TAG, "Successfully sent");
+                                                            }else {
+                                                                Log.d(TAG, e.getMessage());
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        });
+                                    }
+                                }else {
+                                    Log.d(TAG, e.getMessage());
+                                }
+                            }
+                        });
+                    }
+                }).setNegativeButton(R.string.cancel_text, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch(requestCode) {
             case PICK_IMAGE_ID:
                 mBitmap = ImagePicker.getImageFromResult(this, resultCode, data);
-                File mProfileDir = new File(Environment.getExternalStorageDirectory().toString()+ "/" + ParseConstant.USER_PROFILE_DIR);
-                if(!mProfileDir.exists()){
-                    mProfileDir.mkdirs();
-                }else {
-                    try {
-                        FileUtils.cleanDirectory(mProfileDir);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        Log.d(TAG, "File not created");
-                    }
+                if(mBitmap != null) {
+                    delFab.show();
+
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+                    String imageFileName = "IMAGE_" + timeStamp + "_";
+
+                    String userThumbnailPath = imageFileName + timeStamp + ".jpg";
+                    File profilePicFile = new File(getCacheDir(), userThumbnailPath);
+
+                    ProfileAsyncTask task = new ProfileAsyncTask(this);
+                    task.execute(profilePicFile);
                 }
-
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-                String imageFileName = "IMAGE_" + timeStamp + "_";
-
-                String userThumbnailPath = imageFileName + timeStamp + ".jpg";
-                File profilePicFile = new File(mProfileDir, userThumbnailPath);
-
-                ProfileAsyncTask task = new ProfileAsyncTask(this);
-                task.execute(profilePicFile);
                 break;
             default:
                 super.onActivityResult(requestCode, resultCode, data);
@@ -215,20 +287,21 @@ public class ProfileActivity extends AppCompatActivity {
     private String getFriendIds(){
         ArrayList<String> friendList = new ArrayList<>();
         String friendIds = "";
-        Cursor groupCursor = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null, null, null, null);
-        if(groupCursor != null && groupCursor.getCount() > 0) {
-            while (groupCursor.moveToNext()){
-                String friendId = groupCursor.getString(groupCursor.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_USER_KEY));
+        Cursor memberCursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, null, null, null);
+        if(memberCursor != null && memberCursor.getCount() > 0) {
+            while (memberCursor.moveToNext()){
+                String friendId = memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER));
                 if(!friendList.contains(friendId) && !friendId.equals(mCurrentUser.getUsername())){
                     friendList.add(friendId);
                     friendIds += friendId + ",";
                 }
             }
         }
-        if(groupCursor != null) groupCursor.close();
+        if(memberCursor != null) memberCursor.close();
 
-        friendIds = friendIds.substring(0, friendIds.length()-1);
-        return friendIds;
+        if(friendIds.length() > 0) {
+            return friendIds.substring(0, friendIds.length()-1);
+        }else return null;
     }
 
     private class ProfileAsyncTask extends AsyncTask<File, Void, Bitmap> {

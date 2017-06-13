@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.util.Log;
 
@@ -81,6 +82,17 @@ public class UserThumbnailBroadcastReceiver extends BroadcastReceiver {
 
         if(user_id > 0) {
             Log.d(TAG, "imageUrl successfully updated in user table with id: " + user_id);
+        }else {
+            memberValue.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, sender);
+           Cursor nameCursor =  context.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(sender), null, null);
+            if(nameCursor != null && nameCursor.getCount() > 0) {
+                nameCursor.moveToNext();
+                String name = nameCursor.getString(nameCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
+                memberValue.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, name);
+            }
+            nameCursor.close();
+            context.getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, memberValue,
+                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(sender), null);
         }
     }
 }

@@ -59,6 +59,19 @@
                 app:srcCompat="@drawable/ic_photo_camera_white_48dp"
                 app:fabSize="mini"/>
 
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/delFab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/profile_picture"
+                android:layout_alignLeft="@+id/profile_picture"
+                android:layout_alignStart="@+id/profile_picture"
+                android:layout_marginBottom="@dimen/mar_18dp"
+                android:onClick="deleteProfilePic"
+                android:visibility="invisible"
+                app:srcCompat="@drawable/ic_delete_white_48dp"
+                app:fabSize="mini"/>
+
         </RelativeLayout>
 
     </FrameLayout>
