@@ -7,7 +7,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Typeface;
-import android.icu.lang.UScript;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;

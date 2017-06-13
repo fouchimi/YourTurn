@@ -1,7 +1,5 @@
 package com.social.yourturn.adapters;
 
-import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,7 +10,6 @@ import android.widget.TextView;
 
 import com.social.yourturn.ContactActivity;
 import com.social.yourturn.R;
-import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.utils.ImageLoader;
 

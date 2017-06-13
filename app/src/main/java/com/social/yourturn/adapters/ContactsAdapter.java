@@ -15,7 +15,6 @@ import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.social.yourturn.R;
 import com.social.yourturn.ContactActivity.MemberQuery;
 import com.social.yourturn.data.YourTurnContract;

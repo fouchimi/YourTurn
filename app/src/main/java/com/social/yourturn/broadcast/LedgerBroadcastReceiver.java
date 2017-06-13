@@ -15,7 +15,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Iterator;
-import java.util.Vector;
 
 /**
  * Created by ousma on 6/10/2017.
