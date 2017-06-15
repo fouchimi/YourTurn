@@ -313,7 +313,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                                                     creatorContact.setPhoneNumber(groupCreator);
                                                     finalMemberList.add(creatorContact);
 
-                                                    if(creatorContact != null) creatorCursor.close();
+                                                    creatorCursor.close();
 
                                                     DateTime dayTime = new DateTime();
 

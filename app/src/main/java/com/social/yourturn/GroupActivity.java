@@ -257,17 +257,6 @@ public class GroupActivity extends AppCompatActivity {
         }
     }
 
-    private void saveThumbnailFile(File file){
-        try {
-
-            FileOutputStream out = new FileOutputStream(file);
-            out.flush();
-            out.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -308,7 +297,6 @@ public class GroupActivity extends AppCompatActivity {
 
                 String groupThumbnailPath = imageFileName + timeStamp + ".jpg";
                 thumbnailFile = new File(mGroupDirectory, groupThumbnailPath);
-                saveThumbnailFile(thumbnailFile);
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                 byte[] groupImageByteData = stream.toByteArray();
@@ -400,6 +388,7 @@ public class GroupActivity extends AppCompatActivity {
                         if(!ids.isEmpty()){
                             payload.put("targetIds", ids.substring(0, ids.length()-1));
                             payload.put("groupName", groupName);
+                            payload.put("groupId", groupTable.getObjectId());
                             ParseCloud.callFunctionInBackground("groupChannel", payload, new FunctionCallback<Object>() {
                                 @Override
                                 public void done(Object object, ParseException e) {
