@@ -55,7 +55,7 @@ public class UserThumbnailBroadcastReceiver extends BroadcastReceiver {
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(sender.length() > 0 && thumbnailUrl.length() > 0) {
+                if(sender.length() > 0 && thumbnailUrl != null) {
                     updateImageUrl(context, sender, thumbnailUrl);
                 }
             }catch (JSONException ex){
@@ -71,28 +71,24 @@ public class UserThumbnailBroadcastReceiver extends BroadcastReceiver {
         ContentValues memberValue = new ContentValues();
         memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL, url);
 
-        long member_id = context.getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, memberValue,
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(sender), null);
+        long member_id = context.getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI,
+                memberValue,
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
+                new String[]{sender});
         if(member_id > 0) {
             Log.d(TAG, "imageUrl successfully updated in members table with id: " + member_id);
         }
 
-        long user_id = context.getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, memberValue,
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(sender), null);
+        ContentValues userValue = new ContentValues();
+        userValue.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, url);
+
+        long user_id = context.getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI,
+                userValue,
+                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=?",
+                new String[]{sender});
 
         if(user_id > 0) {
             Log.d(TAG, "imageUrl successfully updated in user table with id: " + user_id);
-        }else {
-            memberValue.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, sender);
-           Cursor nameCursor =  context.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(sender), null, null);
-            if(nameCursor != null && nameCursor.getCount() > 0) {
-                nameCursor.moveToNext();
-                String name = nameCursor.getString(nameCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
-                memberValue.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, name);
-            }
-            nameCursor.close();
-            context.getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, memberValue,
-                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(sender), null);
         }
     }
 }

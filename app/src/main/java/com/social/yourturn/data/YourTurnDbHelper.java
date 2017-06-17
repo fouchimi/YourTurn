@@ -28,7 +28,7 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
 
         final String SQL_CREATE_MEMBER_TABLE = "CREATE TABLE " + MemberEntry.TABLE_NAME + " (" +
                 MemberEntry._ID + " INTEGER PRIMARY KEY, " +
-                MemberEntry.COLUMN_MEMBER_NAME + " TEXT NOT NULL, " +
+                MemberEntry.COLUMN_MEMBER_NAME + " TEXT NULL, " +
                 MemberEntry.COLUMN_MEMBER_LOOKUP_KEY + " TEXT, " +
                 MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + " TEXT NOT NULL, " +
                 MemberEntry.COLUMN_MEMBER_REGISTERED + " TEXT, " +

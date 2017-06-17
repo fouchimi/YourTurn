@@ -17,6 +17,7 @@ public class Group implements Parcelable{
     private String groupCreator;
     private String groupUserRef;
     private ArrayList<Contact> contactList = new ArrayList<>();
+    private int size;
 
     public Group(){
 
@@ -46,6 +47,14 @@ public class Group implements Parcelable{
         return groupCreator;
     }
 
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
     public ArrayList<Contact> getContactList() {
         return contactList;
     }
@@ -63,6 +72,7 @@ public class Group implements Parcelable{
         groupCreator = in.readString();
         groupUserRef = in.readString();
         in.readTypedList(contactList, Contact.CREATOR);
+        size = in.readInt();
     }
 
     @Override
@@ -74,6 +84,7 @@ public class Group implements Parcelable{
         dest.writeString(groupCreator);
         dest.writeString(groupUserRef);
         dest.writeTypedList(contactList);
+        dest.writeInt(size);
     }
 
     public static Creator<Group> CREATOR = new Creator<Group>() {

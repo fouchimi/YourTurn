@@ -21,6 +21,7 @@ import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.social.yourturn.MainActivity;
 import com.social.yourturn.data.YourTurnContract;
+import com.social.yourturn.models.Contact;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
@@ -49,7 +50,7 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void processPush(Context context, Intent intent) {
-        String senderId = "", groupId = "", groupName = "", groupMembers = "";
+        String senderId = "", groupId = "", groupName = "", groupMembers = "", groupUrl="", friendList="";
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -73,11 +74,17 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
                     }else if(key.equals("targetIds")) {
                         groupMembers = json.getString(key);
                         Log.d(TAG, "group members" + groupMembers);
+                    }else if(key.equals("groupUrl")){
+                        groupUrl = json.getString(key);
+                        Log.d(TAG, "group Url: " + groupUrl);
+                    }else if(key.equals("friendList")){
+                        friendList = json.getString(key);
+                        Log.d(TAG, "friendList: " + friendList);
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(senderId.length() > 0 && groupName.length() > 0 && groupId.length() > 0 && groupMembers.length() > 0){
-                    createNotification(context, senderId,  groupName, groupId, groupMembers);
+                if(senderId.length() > 0 && groupName.length() > 0 && groupId.length() > 0 && friendList.length() > 0){
+                    createNotification(context, senderId,  groupName, groupId, groupUrl, friendList);
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();
@@ -88,7 +95,34 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
 
     public static final int NOTIFICATION_ID = 475;
 
-    private void createNotification(final Context context, String senderId, String groupName, String groupId, String groupMemberIds){
+    private void insertUserEntry(Context context, String id, Cursor memberCursor) {
+        DateTime dayTime = new DateTime();
+        ContentValues userValues = new ContentValues();
+        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, id);
+        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry._ID)));
+        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME)));
+        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
+        userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
+
+        context.getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, userValues);
+    }
+
+    private void insertGroupEntry(Context context, String groupId, String groupName, String number, String senderId, String groupUrl){
+
+        DateTime dayTime = new DateTime();
+        ContentValues groupValues = new ContentValues();
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, number);
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, senderId);
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupUrl);
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
+
+        context.getContentResolver().insert(YourTurnContract.GroupEntry.CONTENT_URI, groupValues);
+    }
+
+    private void createNotification(final Context context, String senderId, String groupName, String groupId, String groupUrl, String friendList){
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
@@ -99,7 +133,7 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
         PendingIntent groupIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Cursor cursor = context.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME},
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(senderId), null, null);
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{senderId}, null);
 
         String senderName = "";
         if(cursor != null && cursor.getCount() > 0) {
@@ -122,54 +156,55 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(NOTIFICATION_ID, notification.build());
 
-        final Cursor groupCursor = context.getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
-                YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR + " = " +
-                        DatabaseUtils.sqlEscapeString(senderId) + " AND " +
-                        YourTurnContract.GroupEntry.COLUMN_GROUP_ID + " = " +
-                        DatabaseUtils.sqlEscapeString(groupId), null, null);
+        String[] friendChunks = friendList.split(",");
 
-        if(groupCursor != null && groupCursor.getCount() == 0) {
-            groupMemberIds += "," + senderId;
-            String[] ids = groupMemberIds.split(",");
+        DateTime dayTime = new DateTime();
+        for(String chunk : friendChunks) {
+            String[] contactChunks = chunk.split(":");
+            Contact contact = new Contact(contactChunks[0], contactChunks[1], contactChunks[2]);
 
-            for(String id : ids) {
-                Cursor memberCursor = context.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null,
-                        YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(id), null, null);
-                DateTime dayTime = new DateTime();
-                if(memberCursor != null && memberCursor.getCount() > 0) {
-                    memberCursor.moveToNext();
-                    final ContentValues groupValues = new ContentValues();
-                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
-                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
-                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, id);
-                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, senderId);
-                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
-                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
+            Cursor memberCursor = context.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null,
+                    YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{contact.getPhoneNumber()}, null);
 
-                    ParseQuery<ParseObject> groupQuery = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
-                    groupQuery.getInBackground(groupId, new GetCallback<ParseObject>() {
-                        @Override
-                        public void done(ParseObject row, ParseException e) {
-                            if(e == null) {
-                                ParseFile groupImage = (ParseFile) row.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
-                                if(groupImage != null) {
-                                    groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupImage.getUrl());
-                                }
-                                context.getContentResolver().insert(YourTurnContract.GroupEntry.CONTENT_URI, groupValues);
-                            }else {
-                                Log.d(TAG, e.getMessage());
-                            }
-                        }
-                    });
+            if(memberCursor != null && memberCursor.getCount() > 0) {
+                memberCursor.moveToNext();
+
+                Cursor userCursor = context.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI,
+                        null,
+                        YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER +"=?",
+                        new String[]{contact.getPhoneNumber()},
+                        null);
+                if(userCursor != null && userCursor.getCount() <= 0) {
+                    insertUserEntry(context, contact.getPhoneNumber(), memberCursor);
                 }
-                memberCursor.close();
+
+            }else if(memberCursor != null && memberCursor.getCount() <=0){
+                ContentValues memberValues = new ContentValues();
+                memberValues.put(YourTurnContract.MemberEntry._ID, contact.getId());
+                memberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, contact.getName());
+                memberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER, contact.getPhoneNumber());
+                memberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE, dayTime.getMillis());
+                memberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_UPDATED_DATE, dayTime.getMillis());
+
+                context.getContentResolver().insert(YourTurnContract.MemberEntry.CONTENT_URI, memberValues);
+
+                ContentValues userValues = new ContentValues();
+                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, contact.getPhoneNumber());
+                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, contact.getId());
+                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, contact.getName());
+                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
+                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
+
+                context.getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, userValues);
+
             }
 
-        }else {
-            Log.d(TAG, "Record was already inserted");
+            insertGroupEntry(context, groupId, groupName, contact.getPhoneNumber(), senderId, groupUrl);
+            memberCursor.close();
+
         }
 
-        groupCursor.close();
+        insertGroupEntry(context, groupId, groupName, senderId, senderId, groupUrl);
 
     }
 }

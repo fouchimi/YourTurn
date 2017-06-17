@@ -34,9 +34,9 @@ import com.social.yourturn.adapters.ContactsAdapter;
 import com.social.yourturn.adapters.SelectedContactAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.services.UpdateNameService;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import jp.wasabeef.recyclerview.adapters.AlphaInAnimationAdapter;
 import jp.wasabeef.recyclerview.animators.FadeInAnimator;
@@ -57,7 +57,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
     private static final int ITEM_WIDTH = 280;
     public static final String SELECTED_CONTACT = "Selected";
     public static final String TOTAL_COUNT = "TotalCount";
-    private List<Contact> mContactList =  new ArrayList<>(), mList = new ArrayList<>();
+    private ArrayList<Contact> mContactList =  new ArrayList<>(), mList = new ArrayList<>();
 
 
     @Override
@@ -213,7 +213,6 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
                 contact.setThumbnailUrl(imageUrl);
                 mContactList.add(contact);
             }
-
         }
         mAdapter.swapCursor(cursor);
         mAdapter.notifyDataSetChanged();
@@ -245,7 +244,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         cursor.moveToPosition(position);
         for(Contact contact : mContactList){
             if(contact.getId().equals(cursor.getString(MemberQuery.ID)) &&
-                    contact.getName().equals(cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase()) &&
+                    contact.getName().toUpperCase().equals(cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase()) &&
                     contact.getPhoneNumber().equals(cursor.getString(MemberQuery.PHONE_NUMBER))){
                 if(contact.isSelected()) contact.setSelected(false);
                 else contact.setSelected(true);

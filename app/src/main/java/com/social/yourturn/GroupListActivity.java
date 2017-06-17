@@ -94,22 +94,11 @@ public class GroupListActivity extends AppCompatActivity  {
             String phoneNumber = intent.getExtras().getString(ParseConstant.USERNAME_COLUMN);
             getSupportActionBar().setTitle(mGroup.getName());
             mContactList = mGroup.getContactList();
-            boolean found = false;
             for(Contact contact : mGroup.getContactList()){
                 if(contact.getPhoneNumber().equals(phoneNumber)){
                     contact.setName(getString(R.string.current_user));
-                    contact.setOwner(true);
-                    found = true;
                     break;
                 }
-            }
-
-            if(!found){
-                Contact contact = new Contact();
-                contact.setName(getString(R.string.current_user));
-                contact.setOwner(true);
-                contact.setPhoneNumber(phoneNumber);
-                mContactList.add(contact);
             }
 
             Collections.sort(mContactList, new Comparator<Contact>() {

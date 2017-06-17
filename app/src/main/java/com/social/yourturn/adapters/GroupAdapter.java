@@ -59,13 +59,14 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         Log.d(TAG, group.getName());
         holder.groupName.setText(group.getName());
 
-        Cursor selfCursor = mContext.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(getCurrentPhoneNumber()), null, null);
+        String[] selectionArgs = {group.getGroupId()};
 
-        if(selfCursor.getCount() == 0) holder.groupNumber.setText(String.valueOf(group.getContactList().size()+1));
-        else holder.groupNumber.setText(String.valueOf(group.getContactList().size()));
+        Cursor groupCursor = mContext.getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
+                YourTurnContract.GroupEntry.COLUMN_GROUP_ID + "=?", selectionArgs, null);
 
-        selfCursor.close();
+        holder.groupNumber.setText(String.valueOf(groupCursor.getCount()));
+
+        groupCursor.close();
 
         if(group.getThumbnail() != null && group.getThumbnail().length() > 0) imageLoader.DisplayImage(group.getThumbnail(), holder.groupThumbnail);
         else holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
@@ -103,13 +104,13 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
             Group group = getGroup(itemPosition);
             intent.putExtra(GroupFragment.GROUP_KEY, group);
 
-            intent.putExtra(ParseConstant.USERNAME_COLUMN, getCurrentPhoneNumber());
+            intent.putExtra(ParseConstant.USERNAME_COLUMN, getUsername());
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             mContext.startActivity(intent);
         }
     }
 
-    private String getCurrentPhoneNumber(){
+    private String getUsername(){
         SharedPreferences sharedPref = mContext.getSharedPreferences(mContext.getString(R.string.user_credentials), Context.MODE_PRIVATE);
         return  sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
     }

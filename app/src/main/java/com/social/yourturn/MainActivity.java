@@ -50,6 +50,7 @@ import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.fragments.LatestUpdateFragment;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.services.UpdateNameService;
 import com.social.yourturn.utils.ParseConstant;
 import com.social.yourturn.utils.Utils;
 
@@ -154,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         return false;
     }
 
-
     private boolean hasPermissions(Context context, String... permissions){
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null){
             for (String permission : permissions) {
@@ -165,7 +165,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         }
         return true;
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -257,6 +256,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 intent.putExtra(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
             }
             if(c != null) c.close();
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
             return true;
         }

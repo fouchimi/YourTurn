@@ -5,12 +5,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -50,16 +50,15 @@ import org.joda.time.DateTime;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
+import bolts.Continuation;
+import bolts.Task;
+import bolts.TaskCompletionSource;
 import de.hdodenhof.circleimageview.CircleImageView;
-import id.zelory.compressor.Compressor;
 
 
 public class GroupActivity extends AppCompatActivity {
@@ -69,18 +68,18 @@ public class GroupActivity extends AppCompatActivity {
     private static final int REQUEST_SEND_SMS_PERMISSION =0 ;
     private FloatingActionButton fb;
     private TextView mGroupTextView;
-    private ParseUser mCurrentUser;
     private String friendList = "";
     private CircleImageView mGroupImageView;
-    private File mGroupDirectory = null, thumbnailFile = null;
+    private File mGroupDirectory = null;
     private ArrayList<Contact> mContactList;
     private Vector<ContentValues> cVVectorUsers = new Vector<>();
     private Bitmap mBitmap = null;
-    private Task mTask = null;
+    private MyTask myTask = null;
     private String groupName;
     private final Object mTaskLock = new Object();
     private BroadcastReceiver mBroadcastReceiver;
     private String SEND_SMS_PERMISSION = android.Manifest.permission.SEND_SMS;
+    private String groupUrl = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,7 +105,8 @@ public class GroupActivity extends AppCompatActivity {
 
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, NUM_COLUMNS));
 
-        mCurrentUser = ParseUser.getCurrentUser();
+
+        Log.d(TAG, "Current User: " + getUsername());
 
         Intent intent = getIntent();
         if(intent != null) {
@@ -155,6 +155,44 @@ public class GroupActivity extends AppCompatActivity {
             }
         };
 
+        DateTime dayTime = new DateTime();
+
+        Cursor currentMemberCursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                null,
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
+                new String[]{getUsername()},
+                null);
+
+        if(currentMemberCursor != null && currentMemberCursor.getCount() <=0) {
+            ContentValues currentMemberValues = new ContentValues();
+            currentMemberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER, getUsername());
+            currentMemberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, getString(R.string.current_user));
+            currentMemberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE, dayTime.getMillis());
+            currentMemberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_UPDATED_DATE, dayTime.getMillis());
+
+            getContentResolver().insert(YourTurnContract.MemberEntry.CONTENT_URI, currentMemberValues);
+        }
+
+        currentMemberCursor.close();
+
+        Cursor currentCursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI,
+                null, YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER +"=?",
+                new String[]{getUsername()},
+                null);
+
+        if(currentCursor != null && currentCursor.getCount() <=0) {
+            ContentValues currentValues = new ContentValues();
+            currentValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, getUsername());
+            currentValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, getUsername());
+            currentValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, getString(R.string.current_user));
+            currentValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
+            currentValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
+
+            getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, currentValues);
+        }
+
+        currentCursor.close();
+
     }
 
     private class SaveDataOnClickListener implements View.OnClickListener {
@@ -173,8 +211,8 @@ public class GroupActivity extends AppCompatActivity {
                     } else {
                         if(!isGroupCreated(groupName)) createGroup();
                         synchronized (mTaskLock){
-                            mTask = new Task(GroupActivity.this);
-                            mTask.execute();
+                            myTask = new MyTask(GroupActivity.this);
+                            myTask.execute();
                             mTaskLock.notifyAll();
                         }
 
@@ -190,7 +228,22 @@ public class GroupActivity extends AppCompatActivity {
         }
     }
 
-    private void dumpGroupValuesInContentProvider(final String groupId, final String groupName, final String groupThumbnail){
+    private void selfGroup(String groupId, String groupName, String groupThumbnail){
+        DateTime dayTime = new DateTime();
+        ContentValues groupValues = new ContentValues();
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
+
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, getUsername());
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, getUsername());
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnail);
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
+        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
+
+        getContentResolver().insert(YourTurnContract.GroupEntry.CONTENT_URI, groupValues);
+    }
+
+    private void savedGroup(final String groupId, final String groupName, final String groupThumbnail){
         if(groupName.length() > 0){
             DateTime dayTime = new DateTime();
 
@@ -201,7 +254,7 @@ public class GroupActivity extends AppCompatActivity {
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
 
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getPhoneNumber());
-                groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, mCurrentUser.getUsername());
+                groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, getUsername());
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnail);
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
                 groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
@@ -213,6 +266,9 @@ public class GroupActivity extends AppCompatActivity {
                 GroupActivity.this.getContentResolver().bulkInsert(YourTurnContract.GroupEntry.CONTENT_URI, cvArray);
                 Log.d(TAG, "Group Bulk insert successful");
             }
+
+            selfGroup(groupId, groupName, groupThumbnail);
+
         }else {
             Log.d(TAG, "Group Name cannot be left empty !!!");
         }
@@ -266,19 +322,63 @@ public class GroupActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if(mTask != null) {
-            if(mTask.getStatus().equals(AsyncTask.Status.RUNNING)){
-                mTask.cancel(true);
+        if(myTask != null) {
+            if(myTask.getStatus().equals(AsyncTask.Status.RUNNING)){
+                myTask.cancel(true);
             }
         }
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
     }
 
-    private class Task extends AsyncTask<Void, Void, Void>{
+    public Task<ParseObject> fetchAsync(ParseQuery<ParseObject> query, String groupId) {
+        final TaskCompletionSource<ParseObject> tcs = new TaskCompletionSource<>();
+        query.getInBackground(groupId, new GetCallback<ParseObject>() {
+            public void done(ParseObject row, ParseException e) {
+                if (e == null) {
+                    tcs.setResult(row);
+                } else {
+                    tcs.setError(e);
+                }
+            }
+        });
+        return tcs.getTask();
+    }
+
+    public Task<ParseObject> savedAsync(ParseObject query) {
+        final TaskCompletionSource<ParseObject> tcs = new TaskCompletionSource<>();
+        query.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e == null) {
+                    tcs.setResult(null);
+                } else {
+                    tcs.setError(e);
+                }
+            }
+        });
+        return tcs.getTask();
+    }
+
+    public Task<ParseObject> savedListAsync(List<ParseObject> rows) {
+        final TaskCompletionSource<ParseObject> tcs = new TaskCompletionSource<>();
+        ParseObject.saveAllInBackground(rows, new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e == null) {
+                    tcs.setResult(null);
+                } else {
+                    tcs.setError(e);
+                }
+            }
+        });
+        return tcs.getTask();
+    }
+
+    private class MyTask extends AsyncTask<Void, Void, Void>{
 
         private Context mContext;
 
-        public Task(Context context){
+        public MyTask(Context context){
             mContext = context;
         }
 
@@ -292,11 +392,7 @@ public class GroupActivity extends AppCompatActivity {
         protected Void doInBackground(Void... params) {
             ParseFile pFile = null;
             if(mBitmap != null) {
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-                String imageFileName = "IMAGE_" + timeStamp + "_";
 
-                String groupThumbnailPath = imageFileName + timeStamp + ".jpg";
-                thumbnailFile = new File(mGroupDirectory, groupThumbnailPath);
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                 byte[] groupImageByteData = stream.toByteArray();
@@ -314,95 +410,86 @@ public class GroupActivity extends AppCompatActivity {
             final ParseObject groupTable = new ParseObject(ParseConstant.GROUP_TABLE);
             groupTable.put(ParseConstant.GROUP_NAME, groupName);
             if(pFile != null) groupTable.put(ParseConstant.GROUP_THUMBNAIL_COLUMN, pFile);
-            groupTable.put(ParseConstant.USER_ID_COLUMN, mCurrentUser.getUsername());
+            groupTable.put(ParseConstant.USER_ID_COLUMN, getUsername());
             groupTable.put(ParseConstant.MEMBERS_COLUMN, friendList);
 
+            final List<ParseQuery<ParseObject>> listOfQueries = new ArrayList<>();
 
-            groupTable.saveInBackground(new SaveCallback() {
+            savedAsync(groupTable).onSuccessTask(new Continuation<ParseObject, Task<ParseObject>>() {
                 @Override
-                public void done(ParseException e) {
-                    if(e == null){
-                        Log.d(TAG, "Group table created!");
+                public Task<ParseObject> then(Task<ParseObject> task) throws Exception {
+                    final ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
+                    return fetchAsync(query, groupTable.getObjectId());
+                }
+            }).onSuccessTask(new Continuation<ParseObject, Task<ParseObject>>() {
+                public Task<ParseObject> then(Task<ParseObject> task) throws Exception {
+                    ParseObject groupRow = task.getResult();
+                    ParseFile imageFile = (ParseFile) groupRow.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
 
-                        ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
-                        query.getInBackground(groupTable.getObjectId(), new GetCallback<ParseObject>() {
-                            @Override
-                            public void done(ParseObject row, ParseException e) {
-                                if(e == null){
-                                    ParseFile imageFile = (ParseFile) row.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
-                                    if(imageFile != null) {
-                                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, imageFile.getUrl());
-                                    }else {
-                                        dumpGroupValuesInContentProvider(groupTable.getObjectId(), groupName, "");
-                                    }
-                                    Toast.makeText(mContext, R.string.new_group_creation, Toast.LENGTH_LONG).show();
-
-                                }else {
-                                    Log.d(TAG, e.getMessage());
-                                }
-                            }
-                        });
-
-                        List<ParseObject> list = new ArrayList<>();
-                        Contact currentContact = new Contact();
-                        currentContact.setPhoneNumber(mCurrentUser.getUsername());
-
-                        mContactList.add(currentContact);
-                        HashMap<String, Object> payload = new HashMap<>();
-                        String ids = "";
-                        payload.put("senderId", mCurrentUser.getUsername());
-                        for(Contact contact : mContactList){
-                            final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
-                            member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
-                            member_group_table.put(ParseConstant.USER_ID_COLUMN, contact.getPhoneNumber());
-                            list.add(member_group_table);
-
-                            ParseQuery<ParseObject> parseUserQuery = ParseQuery.getQuery(ParseConstant.PARSE_USER_TABLE);
-                            parseUserQuery.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
-
-                            try {
-                                if(parseUserQuery.count() > 0) {
-                                    // sent push notification here
-                                    if(!contact.getPhoneNumber().equals(mCurrentUser.getUsername())) ids += contact.getPhoneNumber() + ",";
-                                }else {
-                                    // sent sms to the current phone number here
-                                    SmsManager smsManager = SmsManager.getDefault();
-                                    smsManager.sendTextMessage(contact.getPhoneNumber(), null,
-                                            "This number " + mCurrentUser.getUsername() +
-                                                    " added you into a group and would like you to install yourturnapp", null, null);
-                                }
-                            } catch (ParseException e1) {
-                                e1.printStackTrace();
-                            }
-                        }
-
-                        ParseObject.saveAllInBackground(list, new SaveCallback() {
-                            @Override
-                            public void done(ParseException e) {
-                                if(e == null) {
-                                    Log.d(TAG, "Successfully saved in group member table");
-                                }
-                            }
-                        });
-
-                        if(!ids.isEmpty()){
-                            payload.put("targetIds", ids.substring(0, ids.length()-1));
-                            payload.put("groupName", groupName);
-                            payload.put("groupId", groupTable.getObjectId());
-                            ParseCloud.callFunctionInBackground("groupChannel", payload, new FunctionCallback<Object>() {
-                                @Override
-                                public void done(Object object, ParseException e) {
-                                    if(e == null) {
-                                        Log.d(TAG, "Group notification successfully sent");
-                                    }else {
-                                        Log.d(TAG, e.getMessage());
-                                    }
-                                }
-                            });
-                        }
-                    }else {
-                        Log.d(TAG, e.getMessage());
+                    if(imageFile != null) {
+                        groupUrl = imageFile.getUrl();
+                        savedGroup(groupTable.getObjectId(), groupName, groupUrl);
                     }
+                    else savedGroup(groupTable.getObjectId(), groupName, "");
+
+                    Toast.makeText(mContext, R.string.new_group_creation, Toast.LENGTH_LONG).show();
+
+                    List<ParseObject> list = new ArrayList<>();
+                    Contact currentContact = new Contact();
+                    currentContact.setPhoneNumber(getUsername());
+
+                    mContactList.add(currentContact);
+
+                    for(Contact contact : mContactList) {
+                        final ParseObject member_group_table = new ParseObject(ParseConstant.GROUP_MEMBER_TABLE);
+                        member_group_table.put(ParseConstant.GROUP_MEMBER_TABLE_ID, groupTable.getObjectId());
+                        member_group_table.put(ParseConstant.USER_ID_COLUMN, contact.getPhoneNumber());
+                        list.add(member_group_table);
+
+                        ParseQuery<ParseObject> parseUserQuery = ParseQuery.getQuery(ParseConstant.PARSE_USER_TABLE);
+                        parseUserQuery.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
+
+                        listOfQueries.add(parseUserQuery);
+                    }
+
+                    return savedListAsync(list);
+                }
+            }).onSuccess(new Continuation<ParseObject, Task<Void>>() {
+                @Override
+                public Task<Void> then(Task<ParseObject> task) throws Exception {
+                    HashMap<String, Object> payload = new HashMap<>();
+                    String ids = "";
+                    int index = 0;
+                    for(ParseQuery<ParseObject> query: listOfQueries) {
+                        if(query.count() > 0) {
+                            if(!mContactList.get(index).getPhoneNumber().equals(getUsername())){
+                                ids += mContactList.get(index).getPhoneNumber() +",";
+                            }
+                        }else {
+                            SmsManager smsManager = SmsManager.getDefault();
+                            smsManager.sendTextMessage(mContactList.get(index).getPhoneNumber(), null, "I would like you to install yourturnapp", null, null);
+                        }
+                        index++;
+                    }
+
+                    payload.put("senderId", getUsername());
+                    payload.put("targetIds", ids.substring(0, ids.length()-1));
+                    payload.put("groupName", groupName);
+                    payload.put("groupId", groupTable.getObjectId());
+                    payload.put("groupUrl", groupUrl);
+                    payload.put("friendList", friendList);
+
+                    ParseCloud.callFunctionInBackground("groupChannel", payload, new FunctionCallback<Object>() {
+                        @Override
+                        public void done(Object object, ParseException e) {
+                            if(e == null) {
+                                Log.d(TAG, "Group notification successfully sent");
+                            }else {
+                                Log.d(TAG, e.getMessage());
+                            }
+                        }
+                    });
+                    return null;
                 }
             });
             return null;
@@ -433,5 +520,11 @@ public class GroupActivity extends AppCompatActivity {
                     Toast.makeText(this, "permission granted !", Toast.LENGTH_LONG).show();
                 }
         }
+    }
+
+    private String getUsername() {
+        SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
+        String username = (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
+        return username;
     }
 }

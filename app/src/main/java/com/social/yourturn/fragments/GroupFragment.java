@@ -3,13 +3,12 @@ package com.social.yourturn.fragments;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -17,7 +16,6 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,12 +34,17 @@ import com.social.yourturn.adapters.GroupAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Group;
+import com.social.yourturn.services.UpdateNameService;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import bolts.Continuation;
+import bolts.Task;
+import bolts.TaskCompletionSource;
 
 
 /**
@@ -56,6 +59,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     private GroupAdapter mGroupAdapter;
     public static final String GROUP_KEY = "Group";
     private static final int LOADER_ID = 0;
+    private String groupThumbnail = "";
 
     public GroupFragment() {
         // Required empty public constructor
@@ -108,6 +112,14 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
         }
     }
 
+    private void addContact(String contactId, String name, String number, String thumbnail, ArrayList<Contact> list) {
+        if(contactId == null) contactId = String.valueOf(0);
+        if(name == null) name = getString(R.string.current_user);
+        Contact contact = new Contact(contactId, name, number);
+        if(thumbnail != null) contact.setThumbnailUrl(thumbnail);
+        list.add(contact);
+    }
+
     private void loadData(Cursor data) {
         ArrayList<Contact> contactList = new ArrayList<>();
         if(mGroupList != null) mGroupList.clear();
@@ -125,7 +137,8 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
             userId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_USER_KEY));
 
             Cursor userCursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(userId), null, null);
+                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=?", new String[]{userId}, null);
+
             if(userCursor != null && userCursor.getCount() > 0){
                 userCursor.moveToFirst();
                 String contactId = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_ID));
@@ -133,17 +146,47 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 String phoneNumber = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
                 String thumbnail = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL));
 
-                Contact contact = new Contact(contactId, username, phoneNumber);
-                contact.setThumbnailUrl(thumbnail);
                 if(lastGroupId.isEmpty() || groupId.equals(lastGroupId)) {
                     lastGroupId = groupId;
-                    contactList.add(contact);
                 }else {
                     lastGroupId = groupId;
                     contactList = new ArrayList<>();
-                    contactList.add(contact);
                 }
+                addContact(contactId, username, phoneNumber, thumbnail, contactList);
                 userCursor.close();
+
+            }else if(userCursor != null && userCursor.getCount() <= 0) {
+
+                ContentValues userValues = new ContentValues();
+                DateTime dayTime = new DateTime();
+
+                Cursor memberCursor = getActivity().getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null,
+                        YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(userId), null, null);
+
+                if(memberCursor != null && memberCursor.getCount() > 0) {
+                    memberCursor.moveToNext();
+                    String contactId = memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry._ID));
+                    String username = memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
+                    String phoneNumber = memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER));
+                    String thumbnail = memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
+
+                    if(lastGroupId.isEmpty() || groupId.equals(lastGroupId)) {
+                        lastGroupId = groupId;
+                    }else {
+                        lastGroupId = groupId;
+                        contactList = new ArrayList<>();
+                    }
+                    addContact(contactId, username, phoneNumber, thumbnail, contactList);
+
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, phoneNumber);
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, contactId);
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, username);
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
+                    userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
+
+                    getActivity().getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, userValues);
+                    memberCursor.close();
+                }
             }
 
             if(mGroupList.isEmpty()){
@@ -156,7 +199,9 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 group.setGroupUserRef(userId);
                 group.setContactList(contactList);
                 mGroupList.add(group);
-            }else if (mGroupList.size() > 0 && mGroupList.get(mGroupList.size() -1).getGroupId().equals(groupId)) continue;
+            }else if (mGroupList.size() > 0 && mGroupList.get(mGroupList.size()-1).getGroupId().equals(groupId)) {
+                continue;
+            }
             else {
                 group = new Group();
                 group.setGroupId(groupId);
@@ -187,6 +232,23 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
         super.onResume();
         fetchLatestGroup();
         fetchFriendThumbnail();
+        updateName();
+    }
+
+    private synchronized void updateName() {
+        Cursor userCursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, null, null, null);
+        if(userCursor != null && userCursor.getCount() > 0) {
+            ArrayList<Contact> list = new ArrayList<>();
+            while (userCursor.moveToNext()){
+                String id = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry._ID));
+                String name = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+                String number = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
+                list.add(new Contact(id, name, number));
+            }
+            Intent intent = new Intent(getActivity(), UpdateNameService.class);
+            intent.putParcelableArrayListExtra(getString(R.string.contact_list), list);
+            getActivity().startService(intent);
+        }
     }
 
     private void fetchFriendThumbnail(){
@@ -237,138 +299,116 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
         memberCursor.close();
     }
 
+    public Task<List<ParseObject>> fetchGroupsAsync(ParseQuery<ParseObject> query) {
+        final TaskCompletionSource<List<ParseObject>> tcs = new TaskCompletionSource<>();
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> groups, ParseException e) {
+                if (e == null) {
+                    tcs.setResult(groups);
+                } else {
+                    tcs.setError(e);
+                }
+            }
+        });
+        return tcs.getTask();
+    }
+
+    private Task<ParseObject> fetchGroupAsync(ParseQuery<ParseObject> query, String groupId) {
+        final TaskCompletionSource<ParseObject> tcs = new TaskCompletionSource<>();
+        query.getInBackground(groupId, new GetCallback<ParseObject>() {
+            @Override
+            public void done(ParseObject row, ParseException e) {
+                if(e == null){
+                    tcs.setResult(row);
+                }else {
+                    tcs.setError(e);
+                }
+            }
+        });
+
+        return tcs.getTask();
+    }
+
+
     private void fetchLatestGroup(){
         ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.GROUP_MEMBER_TABLE);
         query.whereEqualTo(ParseConstant.USER_ID_COLUMN, getCurrentPhoneNumber());
 
-        query.findInBackground(new FindCallback<ParseObject>() {
+        fetchGroupsAsync(query).onSuccessTask(new Continuation<List<ParseObject>, Task<ParseObject>>() {
             @Override
-            public void done(List<ParseObject> rows, ParseException e) {
-                if(e == null) {
-                    for(ParseObject row : rows) {
-                        ParseQuery<ParseObject> groupQuery = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
-                        groupQuery.getInBackground(row.getString(ParseConstant.GROUP_MEMBER_TABLE_ID), new GetCallback<ParseObject>() {
-                            @Override
-                            public void done(final ParseObject groupRow, ParseException e) {
-                                if(e == null) {
-                                    final String groupId = groupRow.getObjectId();
-                                    final String groupName = groupRow.getString(ParseConstant.GROUP_NAME);
-                                    ParseFile groupImage = (ParseFile) groupRow.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
-                                    String groupThumbnail = null;
-                                    if(groupImage != null) groupThumbnail = groupImage.getUrl();
-                                    else groupThumbnail = "";
-                                    final String groupCreator  = groupRow.getString(ParseConstant.USER_ID_COLUMN);
-                                    final String members = groupRow.getString(ParseConstant.MEMBERS_COLUMN);
-
-                                    String[] membersArray = members.split(",");
-                                    final ArrayList<Contact> membersList = new ArrayList<>();
-                                    for(String member : membersArray) {
-                                        String[] contactArray = member.split(":");
-                                        Contact contact = new Contact(contactArray[0], contactArray[1], contactArray[2]);
-                                        membersList.add(contact);
-                                    }
-
-                                    final Cursor groupCursor = getActivity().getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
-                                            YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR + " = " +
-                                                    DatabaseUtils.sqlEscapeString(groupCreator) + " AND " +
-                                                    YourTurnContract.GroupEntry.COLUMN_GROUP_ID + " = " +
-                                                    DatabaseUtils.sqlEscapeString(groupId), null, null);
-                                    if(groupCursor != null && groupCursor.getCount() == 0) {
-
-                                        ParseQuery<ParseUser> creatorQuery = ParseUser.getQuery();
-                                        creatorQuery.whereEqualTo(ParseConstant.USERNAME_COLUMN, groupCreator);
-
-                                        final String finalGroupThumbnail = groupThumbnail;
-                                        creatorQuery.getFirstInBackground(new GetCallback<ParseUser>() {
-                                            @Override
-                                            public void done(ParseUser user, ParseException e) {
-                                                if(e == null) {
-                                                    List<Contact> finalMemberList = membersList;
-                                                    Contact creatorContact = new Contact();
-                                                    Cursor creatorCursor = null;
-                                                    String creatorName = user.getString(ParseConstant.COLUMN_NAME);
-                                                    String creatorId = null;
-                                                    if(creatorName != null && creatorName.length() > 0){
-                                                        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(PhoneNumberUtils.formatNumber(groupCreator)));
-                                                        creatorCursor = getActivity().getContentResolver().query(uri, new String[]{ContactsContract.PhoneLookup._ID}, null, null, null);
-                                                        if(creatorCursor != null && creatorCursor.getCount() > 0){
-                                                            creatorCursor.moveToFirst();
-                                                            creatorId =  creatorCursor.getString(creatorCursor.getColumnIndex(ContactsContract.PhoneLookup._ID));
-                                                            creatorName = user.getString(ParseConstant.COLUMN_NAME);
-                                                        }
-                                                    }else {
-                                                        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(PhoneNumberUtils.formatNumber(groupCreator)));
-                                                        creatorCursor = getActivity().getContentResolver().query(uri,
-                                                                new String[]{ContactsContract.PhoneLookup._ID,
-                                                                        ContactsContract.PhoneLookup.DISPLAY_NAME}, null, null, null);
-                                                        if(creatorCursor != null && creatorCursor.getCount() > 0) {
-                                                            creatorCursor.moveToFirst();
-                                                            creatorId =  creatorCursor.getString(creatorCursor.getColumnIndex(ContactsContract.PhoneLookup._ID));
-                                                            creatorName = creatorCursor.getString(creatorCursor.getColumnIndex(ContactsContract.PhoneLookup.DISPLAY_NAME));
-                                                        }
-                                                    }
-
-                                                    creatorContact.setId(creatorId);
-                                                    creatorContact.setName(creatorName);
-                                                    creatorContact.setPhoneNumber(groupCreator);
-                                                    finalMemberList.add(creatorContact);
-
-                                                    creatorCursor.close();
-
-                                                    DateTime dayTime = new DateTime();
-
-                                                    for(Contact contact : finalMemberList){
-                                                        ContentValues groupValues = new ContentValues();
-                                                        String thumbnailUrl = finalGroupThumbnail;
-                                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
-                                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
-                                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getPhoneNumber());
-                                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, groupCreator);
-                                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, thumbnailUrl);
-                                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
-                                                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
-
-                                                        // Insert individual contact here
-                                                        Cursor userCursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
-                                                        if(userCursor != null && userCursor.getCount() == 0){
-                                                            ContentValues userValues = new ContentValues();
-                                                            userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, contact.getPhoneNumber());
-                                                            userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, contact.getId());
-                                                            userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, contact.getName());
-                                                            userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
-                                                            userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
-                                                            // Insert individual row here
-                                                            getActivity().getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, userValues);
-                                                            if(userCursor != null) userCursor.close();
-                                                        }
-                                                        // insert individual group here
-                                                        getActivity().getContentResolver().insert(YourTurnContract.GroupEntry.CONTENT_URI, groupValues);
-                                                    }
-
-                                                    if(groupCursor != null) groupCursor.close();
-                                                    getActivity().getSupportLoaderManager().restartLoader(LOADER_ID, null, GroupFragment.this);
-
-                                                }else {
-                                                    Log.d(TAG, e.getMessage());
-                                                }
-                                            }
-                                        });
-
-                                    }else {
-                                        Log.d(TAG, "Record was already inserted");
-                                    }
-
-                                }else {
-                                    Log.d(TAG, e.getMessage());
-                                }
-                            }
-                        });
-                    }
-                }else {
-                    Log.d(TAG, e.getMessage());
+            public Task<ParseObject> then(Task<List<ParseObject>> task) throws Exception {
+                final ParseQuery<ParseObject> rowQuery = ParseQuery.getQuery(ParseConstant.GROUP_TABLE);
+                List<ParseObject> results = task.getResult();
+                Task<ParseObject> baseTask = Task.forResult(null);
+                for(ParseObject result : results) {
+                    final String id = result.getString(ParseConstant.GROUP_MEMBER_TABLE_ID);
+                    baseTask = baseTask.continueWithTask(new Continuation<ParseObject, Task<ParseObject>>() {
+                        public Task<ParseObject> then(Task<ParseObject> ignored) throws Exception {
+                            return fetchGroupAsync(rowQuery, id);
+                        }
+                    });
                 }
+                return baseTask;
+            }
+        }).onSuccess(new Continuation<ParseObject, Task<Void>>() {
+            @Override
+            public Task<Void> then(Task<ParseObject> task) throws Exception {
+                ParseObject groupRow = task.getResult();
+                String groupId = groupRow.getObjectId();
+                String groupName = groupRow.getString(ParseConstant.GROUP_NAME);
+                ParseFile groupImage = (ParseFile) groupRow.get(ParseConstant.GROUP_THUMBNAIL_COLUMN);
+                if(groupImage != null) groupThumbnail = groupImage.getUrl();
+                String groupCreator  = groupRow.getString(ParseConstant.USER_ID_COLUMN);
+                String members = groupRow.getString(ParseConstant.MEMBERS_COLUMN);
+
+                String[] chunks = members.split(",");
+                ArrayList<Contact> membersList = new ArrayList<>();
+                for(String member : chunks) {
+                    String[] contactChunks = member.split(":");
+                    Contact contact = new Contact(contactChunks[0], contactChunks[1], contactChunks[2]);
+                    membersList.add(contact);
+                }
+
+                for(Contact contact : membersList){
+                    final Cursor groupCursor = getActivity().getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
+                            YourTurnContract.GroupEntry.COLUMN_USER_KEY + " = " +
+                                    DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()) + " AND " +
+                                    YourTurnContract.GroupEntry.COLUMN_GROUP_ID + " = " +
+                                    DatabaseUtils.sqlEscapeString(groupId), null, null);
+
+                    DateTime dayTime = new DateTime();
+                    if(groupCursor != null && groupCursor.getCount() <=0) {
+                        ContentValues groupValues = new ContentValues();
+                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
+                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
+                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getPhoneNumber());
+                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, groupCreator);
+                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnail);
+                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
+                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
+
+                        // Insert individual contact here
+                        Cursor userCursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
+                        if(userCursor != null && userCursor.getCount() == 0){
+                            ContentValues userValues = new ContentValues();
+                            userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, contact.getPhoneNumber());
+                            userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, contact.getId());
+                            userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, contact.getName());
+                            userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
+                            userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
+                            // Insert individual row here
+                            getActivity().getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, userValues);
+                            userCursor.close();
+                        }
+                        // insert individual group here
+                        getActivity().getContentResolver().insert(YourTurnContract.GroupEntry.CONTENT_URI, groupValues);
+                    }
+                }
+                return null;
             }
         });
+
     }
 
     private String getCurrentPhoneNumber(){

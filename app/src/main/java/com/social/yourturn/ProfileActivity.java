@@ -119,7 +119,6 @@ public class ProfileActivity extends AppCompatActivity {
                     String resultValue = resultData.getString(getString(R.string.result_value));
                     Toast.makeText(ProfileActivity.this, resultValue, Toast.LENGTH_LONG).show();
                     final String username = resultData.getString(ParseConstant.USERNAME_COLUMN);
-                    final String friends = resultData.getString(ParseConstant.FRIEND_IDS);
                     ParseQuery<ParseUser> query = ParseUser.getQuery();
                     query.whereEqualTo(ParseConstant.USERNAME_COLUMN, username);
 
@@ -129,7 +128,7 @@ public class ProfileActivity extends AppCompatActivity {
                             ParseFile image = (ParseFile) parseUser.get(ParseConstant.USER_THUMBNAIL_COLUMN);
                             HashMap<String, Object> payload = new HashMap<>();
                             payload.put("sender", username);
-                            payload.put("friends", friends);
+                            payload.put("friends", getFriendIds());
                             payload.put("url", image.getUrl());
                             ParseCloud.callFunctionInBackground("thumbnailChannel", payload, new FunctionCallback<Object>() {
                                 @Override
@@ -161,7 +160,7 @@ public class ProfileActivity extends AppCompatActivity {
             cursor.moveToNext();
             String name = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
             if(name != null) {
-                usernameTextView.setText(WordUtils.capitalize(name, null).toLowerCase(), null);
+                usernameTextView.setText(WordUtils.capitalize(name.toLowerCase(), null));
             }
             String thumbnail = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL));
             if(thumbnail != null && thumbnail.length() > 0) {
@@ -213,11 +212,18 @@ public class ProfileActivity extends AppCompatActivity {
                                         ContentValues profileValues = new ContentValues();
                                         profileValues.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, "");
                                         Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                                                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(mCurrentUser.getUsername()), null, null);
+                                                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " =?", new String[]{mCurrentUser.getUsername()}, null);
 
                                         if(cursor!= null && cursor.getCount() > 0){
                                             getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, profileValues,
-                                                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(mCurrentUser.getUsername()), null);
+                                                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=?", new String[]{mCurrentUser.getUsername()});
+                                        }
+
+                                        Cursor memberCursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER+ "=?", new String[]{mCurrentUser.getUsername()}, null);
+                                        if(memberCursor != null && memberCursor.getCount() > 0) {
+                                            ContentValues memberValues = new ContentValues();
+                                            memberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL, "");
+                                            getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, memberValues, YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL + "=?", new String[]{mCurrentUser.getUsername()});
                                         }
 
                                         cursor.close();
@@ -285,23 +291,28 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private String getFriendIds(){
-        ArrayList<String> friendList = new ArrayList<>();
         String friendIds = "";
-        Cursor memberCursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, null, null, null);
-        if(memberCursor != null && memberCursor.getCount() > 0) {
-            while (memberCursor.moveToNext()){
-                String friendId = memberCursor.getString(memberCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER));
-                if(!friendList.contains(friendId) && !friendId.equals(mCurrentUser.getUsername())){
-                    friendList.add(friendId);
-                    friendIds += friendId + ",";
-                }
+        Cursor userCursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, null, null, null);
+        if(userCursor != null && userCursor.getCount() > 0) {
+            while (userCursor.moveToNext()){
+                String number = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
+                if(!number.equals(mCurrentUser.getUsername())) friendIds += number + ",";
             }
         }
-        if(memberCursor != null) memberCursor.close();
+
+        if(userCursor != null) userCursor.close();
 
         if(friendIds.length() > 0) {
             return friendIds.substring(0, friendIds.length()-1);
-        }else return null;
+        }else return "";
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startService(intent);
     }
 
     private class ProfileAsyncTask extends AsyncTask<File, Void, Bitmap> {
