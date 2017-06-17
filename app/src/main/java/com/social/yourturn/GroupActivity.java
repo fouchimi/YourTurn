@@ -3,6 +3,7 @@ package com.social.yourturn;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -10,6 +11,10 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -17,6 +22,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
@@ -36,12 +42,12 @@ import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
-import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.social.yourturn.adapters.CustomAdapter;
 import com.social.yourturn.broadcast.GroupBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.utils.Connectivity;
 import com.social.yourturn.utils.ImagePicker;
 import com.social.yourturn.utils.ParseConstant;
 
@@ -107,6 +113,8 @@ public class GroupActivity extends AppCompatActivity {
 
 
         Log.d(TAG, "Current User: " + getUsername());
+
+        isConnectionStrong();
 
         Intent intent = getIntent();
         if(intent != null) {
@@ -199,31 +207,44 @@ public class GroupActivity extends AppCompatActivity {
 
         @Override
         public void onClick(View v) {
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), SEND_SMS_PERMISSION) == PackageManager.PERMISSION_GRANTED){
-                groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
-                if(groupName.length() > 0){
-                    Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
-                            YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
+            if(isConnectionStrong()){
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), SEND_SMS_PERMISSION) == PackageManager.PERMISSION_GRANTED){
+                    groupName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
+                    if(groupName.length() > 0){
+                        Cursor c = getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
+                                YourTurnContract.GroupEntry.COLUMN_GROUP_NAME + " = " + DatabaseUtils.sqlEscapeString(groupName), null, null);
 
-                    if(c != null && c.getCount() > 0){
-                        Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
-                        return;
-                    } else {
-                        if(!isGroupCreated(groupName)) createGroup();
-                        synchronized (mTaskLock){
-                            myTask = new MyTask(GroupActivity.this);
-                            myTask.execute();
-                            mTaskLock.notifyAll();
+                        if(c != null && c.getCount() > 0){
+                            Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
+                            return;
+                        } else {
+                            if(!isGroupCreated(groupName)) createGroup();
+                            synchronized (mTaskLock){
+                                myTask = new MyTask(GroupActivity.this);
+                                myTask.execute();
+                                mTaskLock.notifyAll();
+                            }
+
                         }
-
+                        if(c != null ) c.close();
+                    }else {
+                        Toast.makeText(GroupActivity.this, "Group name can't be empty", Toast.LENGTH_LONG).show();
                     }
-                    if(c != null ) c.close();
                 }else {
-                    Toast.makeText(GroupActivity.this, "Group name can't be empty", Toast.LENGTH_LONG).show();
+                    Toast.makeText(GroupActivity.this, "Accept this permission to invite unregistered members", Toast.LENGTH_LONG).show();
+                    ActivityCompat.requestPermissions(GroupActivity.this, new String[]{SEND_SMS_PERMISSION}, REQUEST_SEND_SMS_PERMISSION);
                 }
             }else {
-                Toast.makeText(GroupActivity.this, "Accept this permission to invite unregistered members", Toast.LENGTH_LONG).show();
-                ActivityCompat.requestPermissions(GroupActivity.this, new String[]{SEND_SMS_PERMISSION}, REQUEST_SEND_SMS_PERMISSION);
+                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext())
+                        .setTitle("Low internet Connection")
+                        .setMessage("Your connection is low, you can't create group")
+                        .setPositiveButton(R.string.ok_text, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        });
+                builder.create().show();
             }
         }
     }
@@ -526,5 +547,19 @@ public class GroupActivity extends AppCompatActivity {
         SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
         String username = (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
         return username;
+    }
+
+    private boolean isConnectionStrong() {
+        if(Connectivity.isConnectedWifi(getApplicationContext())){
+            if(Connectivity.isConnected(getApplicationContext()) && Connectivity.isConnectedFast(getApplicationContext())){
+                return true;
+            }
+        }else if(Connectivity.isConnectedMobile(getApplicationContext())){
+            if(Connectivity.isConnected(getApplicationContext()) && Connectivity.isConnectedFast(getApplicationContext())){
+                return true;
+            }
+        }
+
+        return false;
     }
 }
