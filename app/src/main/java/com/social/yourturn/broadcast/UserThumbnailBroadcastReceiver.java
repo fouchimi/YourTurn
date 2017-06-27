@@ -22,7 +22,7 @@ import java.util.Iterator;
 public class UserThumbnailBroadcastReceiver extends BroadcastReceiver {
 
     private static final String TAG = UserThumbnailBroadcastReceiver.class.getSimpleName();
-    public static final String intentAction = "com.parse.push.intent.RECEIVE";
+    public static final String intentAction = "com.placeParse.push.intent.RECEIVE";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -38,11 +38,11 @@ public class UserThumbnailBroadcastReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
-            String channel = intent.getExtras().getString("com.parse.Channel");
+            String channel = intent.getExtras().getString("com.placeParse.Channel");
             Log.d(TAG, "got action " + action + " on channel " + channel + " with:");
             try{
-                JSONObject json = new JSONObject(intent.getExtras().getString("com.parse.Data"));
-                // Iterate the parse keys if needed
+                JSONObject json = new JSONObject(intent.getExtras().getString("com.placeParse.Data"));
+                // Iterate the placeParse keys if needed
                 Iterator<String> itr = json.keys();
                 while(itr.hasNext()){
                     String key = (String) itr.next();

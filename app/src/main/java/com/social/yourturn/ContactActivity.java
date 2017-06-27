@@ -2,12 +2,14 @@ package com.social.yourturn;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
@@ -29,6 +31,7 @@ import android.view.View;
 
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.social.yourturn.adapters.ContactsAdapter;
 import com.social.yourturn.adapters.SelectedContactAdapter;
@@ -58,6 +61,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
     public static final String SELECTED_CONTACT = "Selected";
     public static final String TOTAL_COUNT = "TotalCount";
     private ArrayList<Contact> mContactList =  new ArrayList<>(), mList = new ArrayList<>();
+    private static final int REQUEST_CODE = 34;
 
 
     @Override
@@ -163,9 +167,15 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
+        switch (item.getItemId()) {
+            // Sends a request to the People app to display the create contact screen
+            case R.id.menu_add_contact:
+                final Intent contactIntent = new Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI);
+                contactIntent.putExtra("finishActivityOnSaveCompleted", true);
+                startActivity(contactIntent);
+                break;
+            default:
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }

@@ -14,6 +14,9 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.SEND_SMS" />
 
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <permission
         android:name="${packageName}.permission.C2D_MESSAGE"
         android:protectionLevel="signature" />
@@ -152,12 +155,12 @@
             android:label="@string/title_activity_confirm_payment"
             android:theme="@style/AppTheme" />
 
-        <service
-            android:name=".services.ConfirmPaymentIntentService"
-            android:exported="false" />
+        <activity android:name=".LocationActivity"
+            android:label="@string/event_activity"
+            android:theme="@style/AppTheme" />
 
         <service
-            android:name=".services.ProfileDataService"
+            android:name=".services.ConfirmPaymentIntentService"
             android:exported="false" />
 
         <service android:name=".services.UpdateNameService"

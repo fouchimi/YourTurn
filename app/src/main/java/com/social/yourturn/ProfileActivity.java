@@ -11,7 +11,6 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
-import android.os.Environment;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
@@ -26,10 +25,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.parse.DeleteCallback;
 import com.parse.FunctionCallback;
 import com.parse.GetCallback;
-import com.parse.LogInCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
 import com.parse.ParseFile;
@@ -39,21 +36,15 @@ import com.parse.SaveCallback;
 import com.social.yourturn.broadcast.UserThumbnailBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.services.ProfileDataReceiver;
-import com.social.yourturn.services.ProfileDataService;
 import com.social.yourturn.utils.ImagePicker;
 import com.social.yourturn.utils.ParseConstant;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.text.WordUtils;
-import org.joda.time.DateTime;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -68,9 +59,7 @@ public class ProfileActivity extends AppCompatActivity {
     private TextView phoneNumberTextView;
     private Bitmap mBitmap = null;
     private ParseFile pFile;
-    private ParseUser mCurrentUser;
     private BroadcastReceiver mBroadcastReceiver;
-    private ProfileDataReceiver profileReceiver;
     private FloatingActionButton delFab;
 
     private static final  int PICK_IMAGE_ID = 2014;
@@ -96,10 +85,6 @@ public class ProfileActivity extends AppCompatActivity {
         phoneNumberTextView = (TextView) findViewById(R.id.phoneNumberField);
         mImageProfileView = (CircleImageView) findViewById(R.id.profile_picture);
 
-        mCurrentUser = ParseUser.getCurrentUser();
-
-        profileReceiver = new ProfileDataReceiver(new Handler());
-
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -108,54 +93,16 @@ public class ProfileActivity extends AppCompatActivity {
             }
         };
 
-        setUpProfileReceiver();
     }
-
-    private void setUpProfileReceiver(){
-        profileReceiver.setReceiver(new ProfileDataReceiver.ProfileReceiver() {
-            @Override
-            public void onReceivedResult(int resultCode, Bundle resultData) {
-                if(resultCode == RESULT_OK){
-                    String resultValue = resultData.getString(getString(R.string.result_value));
-                    Toast.makeText(ProfileActivity.this, resultValue, Toast.LENGTH_LONG).show();
-                    final String username = resultData.getString(ParseConstant.USERNAME_COLUMN);
-                    ParseQuery<ParseUser> query = ParseUser.getQuery();
-                    query.whereEqualTo(ParseConstant.USERNAME_COLUMN, username);
-
-                    query.getFirstInBackground(new GetCallback<ParseUser>() {
-                        @Override
-                        public void done(ParseUser parseUser, ParseException e) {
-                            ParseFile image = (ParseFile) parseUser.get(ParseConstant.USER_THUMBNAIL_COLUMN);
-                            HashMap<String, Object> payload = new HashMap<>();
-                            payload.put("sender", username);
-                            payload.put("friends", getFriendIds());
-                            payload.put("url", image.getUrl());
-                            ParseCloud.callFunctionInBackground("thumbnailChannel", payload, new FunctionCallback<Object>() {
-                                @Override
-                                public void done(Object object, ParseException e) {
-                                    if(e == null) {
-                                        Log.d(TAG, "Successfully sent");
-                                    }else {
-                                        Log.d(TAG, e.getMessage());
-                                    }
-                                }
-                            });
-                        }
-                    });
-                }
-            }
-        });
-    }
-
 
     @Override
     protected void onResume() {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(UserThumbnailBroadcastReceiver.intentAction));
         Log.d(TAG, "On Resume");
-        phoneNumberTextView.setText(mCurrentUser.getUsername());
+        phoneNumberTextView.setText(getUsername());
         Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(mCurrentUser.getUsername()), null, null);
+                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(getUsername()), null, null);
         if(cursor != null && cursor.getCount() > 0) {
             cursor.moveToNext();
             String name = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
@@ -202,7 +149,7 @@ public class ProfileActivity extends AppCompatActivity {
                         mImageProfileView.setImageResource(R.drawable.ic_account_grey);
                         delFab.hide();
                         ParseQuery<ParseUser> query = ParseUser.getQuery();
-                        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, mCurrentUser.getUsername());
+                        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
                         query.getFirstInBackground(new GetCallback<ParseUser>() {
                             @Override
                             public void done(ParseUser user, ParseException e) {
@@ -211,29 +158,24 @@ public class ProfileActivity extends AppCompatActivity {
                                         user.remove(ParseConstant.USER_THUMBNAIL_COLUMN);
                                         ContentValues profileValues = new ContentValues();
                                         profileValues.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, "");
-                                        Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                                                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " =?", new String[]{mCurrentUser.getUsername()}, null);
 
-                                        if(cursor!= null && cursor.getCount() > 0){
-                                            getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, profileValues,
-                                                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=?", new String[]{mCurrentUser.getUsername()});
-                                        }
+                                        getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, profileValues,
+                                                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=?", new String[]{getUsername()});
 
-                                        Cursor memberCursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER+ "=?", new String[]{mCurrentUser.getUsername()}, null);
-                                        if(memberCursor != null && memberCursor.getCount() > 0) {
-                                            ContentValues memberValues = new ContentValues();
-                                            memberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL, "");
-                                            getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, memberValues, YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL + "=?", new String[]{mCurrentUser.getUsername()});
-                                        }
+                                        ContentValues memberValues = new ContentValues();
+                                        memberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL, "");
 
-                                        cursor.close();
+                                        getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI,
+                                                memberValues,
+                                                YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL + "=?", new String[]{getUsername()});
+
                                         user.saveInBackground(new SaveCallback() {
                                             @Override
                                             public void done(ParseException e) {
                                                 if(e == null) {
                                                     Toast.makeText(ProfileActivity.this, "profile image deleted successfully", Toast.LENGTH_LONG).show();
                                                     HashMap<String, Object> payload = new HashMap<>();
-                                                    payload.put("sender", mCurrentUser.getUsername());
+                                                    payload.put("sender", getUsername());
                                                     payload.put("friends", getFriendIds());
                                                     payload.put("url", "");
                                                     ParseCloud.callFunctionInBackground("thumbnailChannel", payload, new FunctionCallback<Object>() {
@@ -296,7 +238,7 @@ public class ProfileActivity extends AppCompatActivity {
         if(userCursor != null && userCursor.getCount() > 0) {
             while (userCursor.moveToNext()){
                 String number = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
-                if(!number.equals(mCurrentUser.getUsername())) friendIds += number + ",";
+                if(!number.equals(getUsername())) friendIds += number + ",";
             }
         }
 
@@ -313,6 +255,11 @@ public class ProfileActivity extends AppCompatActivity {
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startService(intent);
+    }
+
+    private String getUsername() {
+        SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
     }
 
     private class ProfileAsyncTask extends AsyncTask<File, Void, Bitmap> {
@@ -351,7 +298,7 @@ public class ProfileActivity extends AppCompatActivity {
                 mImageProfileView.setImageBitmap(bitmap);
 
                 final ParseQuery<ParseUser> query = ParseUser.getQuery();
-                query.whereEqualTo(ParseConstant.USERNAME_COLUMN, mCurrentUser.getUsername());
+                query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
                 query.getFirstInBackground(new GetCallback<ParseUser>() {
                     @Override
                     public void done(ParseUser currentUser, ParseException e) {
@@ -367,12 +314,38 @@ public class ProfileActivity extends AppCompatActivity {
                                             public void done(ParseUser currentUser, ParseException e) {
                                                 if(e == null) {
                                                     ParseFile image = (ParseFile) currentUser.get(ParseConstant.USER_THUMBNAIL_COLUMN);
-                                                    Intent intent = new Intent(mContext, ProfileDataService.class);
-                                                    intent.putExtra(ParseConstant.USERNAME_COLUMN, mCurrentUser.getUsername());
-                                                    intent.putExtra(ParseConstant.FRIEND_IDS, getFriendIds());
-                                                    intent.putExtra(ParseConstant.USER_THUMBNAIL_COLUMN, image.getUrl());
-                                                    intent.putExtra(getString(R.string.profileDataReceiver), profileReceiver);
-                                                    mContext.startService(intent);
+
+                                                    ContentValues memberValue = new ContentValues();
+                                                    memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL, image.getUrl());
+
+                                                    getApplicationContext().getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI,
+                                                            memberValue,
+                                                            YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
+                                                            new String[]{getUsername()});
+
+                                                    ContentValues userValue = new ContentValues();
+                                                    userValue.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, image.getUrl());
+
+                                                    getApplicationContext().getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI,
+                                                            userValue,
+                                                            YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=?",
+                                                            new String[]{getUsername()});
+
+
+                                                    HashMap<String, Object> payload = new HashMap<>();
+                                                    payload.put("sender", getUsername());
+                                                    payload.put("friends", getFriendIds());
+                                                    payload.put("url", image.getUrl());
+                                                    ParseCloud.callFunctionInBackground("thumbnailChannel", payload, new FunctionCallback<Object>() {
+                                                        @Override
+                                                        public void done(Object object, ParseException e) {
+                                                            if(e == null) {
+                                                                Log.d(TAG, "Successfully sent");
+                                                            }else {
+                                                                Log.d(TAG, e.getMessage());
+                                                            }
+                                                        }
+                                                    });
                                                 }else {
                                                     Log.d(TAG, e.getMessage());
                                                 }

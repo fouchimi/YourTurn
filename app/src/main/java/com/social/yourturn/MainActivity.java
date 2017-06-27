@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 if(!hasPermissions(MainActivity.this, PERMISSIONS)){
                     ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, PERMISSION_ALL);
                 }else {
-                    Intent intent = new Intent(getApplicationContext(), ContactActivity.class);
+                    Intent intent = new Intent(getApplicationContext(), LocationActivity.class);
                     intent.putExtra(ALL_CONTACTS, mContactList);
                     startActivity(intent);
                 }

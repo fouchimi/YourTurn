@@ -82,4 +82,11 @@
     <string name="no_network_connection_toast">No network connection found</string>
     <string name="contact_list">contactList</string>
 
+    <string name="google_places_api_key">AIzaSyCuC9Fatk3IvjCKrjw2rwpmzsRH6JiTREQ</string>
+    <string name="event_activity">Event Activity</string>
+    <string name="no_location_detected">No location detected. Make sure location is enabled on the device.</string>
+    <string name="location_permission_rationale">Location permission is needed for core functionality</string>
+    <string name="proceed_text">Proceed</string>
+    <string name="add_new_contact">Add New Contact</string>
+
 </resources>

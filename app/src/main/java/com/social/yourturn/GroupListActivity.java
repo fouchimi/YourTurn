@@ -181,7 +181,7 @@ public class GroupListActivity extends AppCompatActivity  {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(mPushSenderBroadcastReceiver, new IntentFilter(PushSenderBroadcastReceiver.intentAction));
         LocalBroadcastManager.getInstance(this).registerReceiver(mLedgerBroadcastReceiver, new IntentFilter(LedgerBroadcastReceiver.intentAction));
-        IntentFilter filter = new IntentFilter("com.parse.push.intent.RECEIVE");
+        IntentFilter filter = new IntentFilter("com.placeParse.push.intent.RECEIVE");
         registerReceiver(pReplyBroadcastReceiver, filter);
     }
 
@@ -197,8 +197,6 @@ public class GroupListActivity extends AppCompatActivity  {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id) {
-            case R.id.action_settings :
-                return true;
             case R.id.splitMenuAction :
                 showDialogBox();
                 return true;
@@ -332,7 +330,7 @@ public class GroupListActivity extends AppCompatActivity  {
 
 
     private class PushReplyBroadcastReceiver extends BroadcastReceiver  {
-        private static final String intentAction = "com.parse.push.intent.RECEIVE";
+        private static final String intentAction = "com.placeParse.push.intent.RECEIVE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -348,11 +346,11 @@ public class GroupListActivity extends AppCompatActivity  {
             String action = intent.getAction();
             Log.d(TAG, "got action " + action);
             if(action.equals(intentAction)){
-                String channel = intent.getExtras().getString("com.parse.Channel");
+                String channel = intent.getExtras().getString("com.placeParse.Channel");
                 Log.d(TAG, "got action " + action + " on channel " + channel + " with:");
                 try{
-                    JSONObject json = new JSONObject(intent.getExtras().getString("com.parse.Data"));
-                    // Iterate the parse keys if needed
+                    JSONObject json = new JSONObject(intent.getExtras().getString("com.placeParse.Data"));
+                    // Iterate the placeParse keys if needed
                     Iterator<String> itr = json.keys();
                     while(itr.hasNext()){
                         String key = (String) itr.next();
