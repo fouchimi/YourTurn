@@ -10,14 +10,17 @@
 
     <ImageView
         android:id="@+id/placeIcon"
-        android:layout_width="0dp"
-        android:layout_weight="0.5"
-        android:layout_height="80dp" />
+        android:layout_width="35dp"
+        android:layout_gravity="center"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="@dimen/mar_4dp"
+        android:layout_marginEnd="@dimen/mar_4dp"/>
 
     <LinearLayout
         android:layout_width="0dp"
-        android:layout_weight="1.5"
+        android:layout_weight="2"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:orientation="vertical">
 
         <TextView

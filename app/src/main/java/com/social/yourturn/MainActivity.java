@@ -66,7 +66,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private static final String TAG = MainActivity.class.getSimpleName();
     private ParseUser mCurrentUser;
     private static final  int PERMISSION_ALL = 1;
-    private static final String[] PERMISSIONS = {Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE};
+    private static final String[] PERMISSIONS = {
+            Manifest.permission.WRITE_CONTACTS,
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_PHONE_STATE};
     private static final int LOADER_ID = 1;
     private ArrayList<Contact> mContactList;
     public static final String ALL_CONTACTS = "Contacts";
@@ -174,7 +178,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 Log.d(TAG, String.valueOf(grantResults.length));
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED &&
                         grantResults[1] == PackageManager.PERMISSION_GRANTED &&
-                        grantResults[2] == PackageManager.PERMISSION_GRANTED){
+                        grantResults[2] == PackageManager.PERMISSION_GRANTED &&
+                        grantResults[3] == PackageManager.PERMISSION_GRANTED){
 
                     Log.d(TAG, "permission granted");
                     String phoneId="", phoneNumber="";

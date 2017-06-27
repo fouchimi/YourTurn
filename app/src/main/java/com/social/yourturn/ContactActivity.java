@@ -1,17 +1,21 @@
 package com.social.yourturn;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -33,13 +37,18 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.social.yourturn.adapters.ContactsAdapter;
 import com.social.yourturn.adapters.SelectedContactAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.services.UpdateNameService;
+import com.social.yourturn.utils.Utils;
+
+import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import jp.wasabeef.recyclerview.adapters.AlphaInAnimationAdapter;
 import jp.wasabeef.recyclerview.animators.FadeInAnimator;
@@ -51,11 +60,9 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
     private static final String TAG = ContactActivity.class.getSimpleName();
     private ContactsAdapter mAdapter;
     private SelectedContactAdapter mSelectedContactAdapter;
-    private ListView mListView;
     private String mSearchTerm = null;
     private ArrayList<Contact> mSelectedContactList = new ArrayList<>(), oldList = null;
     private RecyclerView mRecyclerView;
-    private RecyclerView.LayoutManager mLayoutManager;
     private FloatingActionButton fb;
     private static final int ITEM_WIDTH = 280;
     public static final String SELECTED_CONTACT = "Selected";
@@ -96,7 +103,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
 
         mSelectedContactAdapter = new SelectedContactAdapter(this, mSelectedContactList);
         mRecyclerView.setHasFixedSize(true);
-        mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false){
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false){
             @Override
             public void smoothScrollToPosition(final RecyclerView recyclerView, RecyclerView.State state, int position) {
                 super.smoothScrollToPosition(recyclerView, state, position);
@@ -124,7 +131,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         alphaAdapter.setDuration(1000);
         mRecyclerView.setItemAnimator(new FadeInAnimator());
         mRecyclerView.setAdapter(alphaAdapter);
-        mListView = (ListView) findViewById(R.id.contactList);
+        ListView mListView = (ListView) findViewById(R.id.contactList);
         mListView.setOnItemClickListener(new MyListViewItemListener());
         mAdapter = new ContactsAdapter(this);
         mListView.setAdapter(mAdapter);
@@ -166,13 +173,62 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == REQUEST_CODE){
+            if(resultCode == RESULT_OK) {
+                String DISPLAY_NAME = Utils.hasHoneycomb() ? ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY : ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME;
+                Cursor recentCursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                        new String[]{ContactsContract.CommonDataKinds.Phone._ID,
+                                DISPLAY_NAME,
+                                ContactsContract.CommonDataKinds.Phone.NUMBER}, null, null,  ContactsContract.CommonDataKinds.Phone._ID + " DESC ");
+                if(recentCursor != null && recentCursor.getCount() > 0) {
+                    recentCursor.moveToNext();
+                    String id = recentCursor.getString(recentCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone._ID));
+                    String displayName = recentCursor.getString(recentCursor.getColumnIndex(DISPLAY_NAME));
+                    String phoneNumber = sanitizePhoneNumber(recentCursor.getString(recentCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)));
+
+                    Log.d(TAG, "Id: " + id + " , displayName: " + displayName + ", phoneNumber: " + phoneNumber);
+                    DateTime dayTime = new DateTime();
+                    ContentValues newContactValues = new ContentValues();
+                    newContactValues.put(YourTurnContract.MemberEntry._ID, id);
+                    newContactValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, displayName);
+                    newContactValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER, phoneNumber);
+                    newContactValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE, dayTime.getMillis());
+                    newContactValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_UPDATED_DATE, dayTime.getMillis());
+
+                    getContentResolver().insert(YourTurnContract.MemberEntry.CONTENT_URI, newContactValues);
+
+                    Toast.makeText(this, "contact saved", Toast.LENGTH_LONG).show();
+
+                    getSupportLoaderManager().restartLoader(MemberQuery.QUERY_ID, null, this);
+                }
+
+                recentCursor.close();
+            }else if(resultCode == RESULT_CANCELED){
+                Toast.makeText(this, "contact failed to saved", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private String sanitizePhoneNumber(String phoneNumber){
+        PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+        try {
+            phoneNumber = phoneUtil.format(phoneUtil.parse(phoneNumber, Locale.getDefault().getCountry()), PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+        } catch (NumberParseException e) {
+            e.printStackTrace();
+        }
+        return phoneNumber;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             // Sends a request to the People app to display the create contact screen
             case R.id.menu_add_contact:
                 final Intent contactIntent = new Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI);
                 contactIntent.putExtra("finishActivityOnSaveCompleted", true);
-                startActivity(contactIntent);
+                startActivityForResult(contactIntent, REQUEST_CODE);
                 break;
             default:
                 return true;
