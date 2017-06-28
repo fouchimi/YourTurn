@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -74,10 +73,12 @@ public class ConfirmAmountActivity extends AppCompatActivity {
         Log.d(TAG, bundle.getString(PushSenderBroadcastReceiver.TITLE));
         Log.d(TAG, bundle.getString(PushSenderBroadcastReceiver.MESSAGE));
 
-        Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, new String[]{YourTurnContract.UserEntry.COLUMN_USER_NAME},
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(senderPhoneNumber), null, null);
+        Cursor cursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME},
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
+                new String[]{senderPhoneNumber}, null);
         cursor.moveToFirst();
-        String senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+        String senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
         cursor.close();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -88,7 +89,7 @@ public class ConfirmAmountActivity extends AppCompatActivity {
 
                         HashMap<String, Object> payload = new HashMap<>();
                         payload.put("targetId", bundle.getString(PushSenderBroadcastReceiver.SENDER_ID));
-                        payload.put("recipientId", getCurrentPhoneNumber());
+                        payload.put("recipientId", getUsername());
                         ParseCloud.callFunctionInBackground("receiverChannel", payload, new FunctionCallback<Object>() {
                             @Override
                             public void done(Object object, ParseException e) {
@@ -117,7 +118,7 @@ public class ConfirmAmountActivity extends AppCompatActivity {
         builder.create().show();
     }
 
-    private String getCurrentPhoneNumber(){
+    private String getUsername(){
         SharedPreferences sharePref = getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
         return sharePref.getString(ParseConstant.USERNAME_COLUMN, "");
     }

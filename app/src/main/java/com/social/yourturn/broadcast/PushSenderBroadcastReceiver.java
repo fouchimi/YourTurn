@@ -28,7 +28,7 @@ import java.util.Iterator;
 public class PushSenderBroadcastReceiver extends BroadcastReceiver {
 
     private static final String TAG = PushSenderBroadcastReceiver.class.getSimpleName();
-    public static final String intentAction = "com.placeParse.push.intent.RECEIVE";
+    public static final String intentAction = "com.parse.push.intent.RECEIVE";
     public static final String TITLE = "title";
     public static final String MESSAGE = "message";
     public static final String SENDER_ID = "senderId";
@@ -47,10 +47,10 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
-            String channel = intent.getExtras().getString("com.placeParse.Channel");
+            String channel = intent.getExtras().getString("com.parse.Channel");
             Log.d(TAG, "got action " + action + " on channel " + channel + " with:");
             try{
-                JSONObject json = new JSONObject(intent.getExtras().getString("com.placeParse.Data"));
+                JSONObject json = new JSONObject(intent.getExtras().getString("com.parse.Data"));
                 // Iterate the placeParse keys if needed
                 Iterator<String> itr = json.keys();
                 while(itr.hasNext()){
@@ -88,10 +88,14 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
         PendingIntent senderIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
-        Cursor cursor = context.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, new String[]{YourTurnContract.UserEntry.COLUMN_USER_NAME},
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(senderPhoneNumber), null, null);
+        Cursor cursor = context.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME},
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
+                new String[]{senderPhoneNumber},
+                null);
+
         cursor.moveToFirst();
-        String senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+        String senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
         cursor.close();
 
         NotificationCompat.Builder notification = new NotificationCompat.Builder(context)
@@ -103,7 +107,6 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
                 .setContentIntent(senderIntent);
 
         notification.setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE);
-
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(NOTIFICATION_ID, notification.build());

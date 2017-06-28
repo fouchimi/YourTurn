@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Color;
@@ -29,11 +30,9 @@ import android.widget.Toast;
 import com.parse.FunctionCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
-import com.parse.ParseUser;
 import com.social.yourturn.adapters.MemberGroupAdapter;
 import com.social.yourturn.broadcast.LedgerBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
-import com.social.yourturn.fragments.GroupFragment;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Group;
 import com.social.yourturn.broadcast.PushSenderBroadcastReceiver;
@@ -59,7 +58,6 @@ public class GroupListActivity extends AppCompatActivity  {
     private MemberGroupAdapter mAdapter;
     private ArrayList<Contact> mContactList = new ArrayList<>();
     private boolean isVisible = false, isValidateVisible = false;
-    private ParseUser mCurrentUser;
     private BroadcastReceiver mPushSenderBroadcastReceiver;
     private BroadcastReceiver mLedgerBroadcastReceiver;
     private String mSharedAmount, mTotalAmount;
@@ -72,8 +70,6 @@ public class GroupListActivity extends AppCompatActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_list);
-
-        mCurrentUser = ParseUser.getCurrentUser();
 
         Toolbar mActionBarToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mActionBarToolbar);
@@ -90,10 +86,9 @@ public class GroupListActivity extends AppCompatActivity  {
         Intent intent = getIntent();
         if(intent != null) {
             mContactList = intent.getParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT);
-            String phoneNumber = intent.getExtras().getString(ParseConstant.USERNAME_COLUMN);
             String eventName = intent.getExtras().getString(GroupActivity.EVENT_NAME);
             getSupportActionBar().setTitle(eventName);
-            Contact currentUser = new Contact("0", "You", phoneNumber);
+            Contact currentUser = new Contact("0", "You", getUsername());
             mContactList.add(currentUser);
 
             Collections.sort(mContactList, new Comparator<Contact>() {
@@ -142,7 +137,7 @@ public class GroupListActivity extends AppCompatActivity  {
                     payload.put("totalAmount", mTotalAmount);
                     payload.put("sharedValueList", shareValueList);
                     payload.put("friendIds", recipientList);
-                    payload.put("sender", mCurrentUser.getUsername());
+                    payload.put("sender", getUsername());
                     ParseCloud.callFunctionInBackground("ledgerChannel", payload, new FunctionCallback<Object>() {
                         @Override
                         public void done(Object object, ParseException e) {
@@ -176,7 +171,7 @@ public class GroupListActivity extends AppCompatActivity  {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(mPushSenderBroadcastReceiver, new IntentFilter(PushSenderBroadcastReceiver.intentAction));
         LocalBroadcastManager.getInstance(this).registerReceiver(mLedgerBroadcastReceiver, new IntentFilter(LedgerBroadcastReceiver.intentAction));
-        IntentFilter filter = new IntentFilter("com.placeParse.push.intent.RECEIVE");
+        IntentFilter filter = new IntentFilter("com.parse.push.intent.RECEIVE");
         registerReceiver(pReplyBroadcastReceiver, filter);
     }
 
@@ -202,12 +197,12 @@ public class GroupListActivity extends AppCompatActivity  {
                 mAdapter.notifyDataSetChanged();
                 for(int pos = 0; pos < mAdapter.getContactList().size(); pos++){
                     String value = mAdapter.getContactList().get(pos).getShare();
-                    String friend = mContactList.get(pos).getPhoneNumber();
+                    String friend = mAdapter.getContactList().get(pos).getPhoneNumber();
                     //matches positive decimal points.
                     if(value.matches("\\d*\\.?\\d+")){
                         double dValue = Double.parseDouble(value);
                         totalValue += dValue;
-                        if(!friend.equals(mCurrentUser.getUsername())){
+                        if(!friend.equals(getUsername())){
                             recipientList += friend +",";
                             shareValueList += value + ",";
                         }else {
@@ -226,7 +221,7 @@ public class GroupListActivity extends AppCompatActivity  {
                 recipientList = recipientList.substring(0, recipientList.length()-1);
                 shareValueList = shareValueList.substring(0, shareValueList.length()-1);
                 if(diff <= 1){
-                    payload.put("senderId", mCurrentUser.getUsername());
+                    payload.put("senderId", getUsername());
                     payload.put("sharedValueList", shareValueList);
                     payload.put("recipientList", recipientList);
 
@@ -235,7 +230,7 @@ public class GroupListActivity extends AppCompatActivity  {
                         public void done(Object object, ParseException e) {
                             if(e == null) {
                                 Log.d(TAG, "Successfully sent");
-                                findContactInList(mCurrentUser.getUsername());
+                                findContactInList(getUsername());
                             }else {
                                 Log.d(TAG, e.getMessage());
                             }
@@ -323,9 +318,14 @@ public class GroupListActivity extends AppCompatActivity  {
         }
     }
 
+    private String getUsername() {
+        SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
+    }
+
 
     private class PushReplyBroadcastReceiver extends BroadcastReceiver  {
-        private static final String intentAction = "com.placeParse.push.intent.RECEIVE";
+        private static final String intentAction = "com.parse.push.intent.RECEIVE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -341,10 +341,10 @@ public class GroupListActivity extends AppCompatActivity  {
             String action = intent.getAction();
             Log.d(TAG, "got action " + action);
             if(action.equals(intentAction)){
-                String channel = intent.getExtras().getString("com.placeParse.Channel");
+                String channel = intent.getExtras().getString("com.parse.Channel");
                 Log.d(TAG, "got action " + action + " on channel " + channel + " with:");
                 try{
-                    JSONObject json = new JSONObject(intent.getExtras().getString("com.placeParse.Data"));
+                    JSONObject json = new JSONObject(intent.getExtras().getString("com.parse.Data"));
                     // Iterate the placeParse keys if needed
                     Iterator<String> itr = json.keys();
                     while(itr.hasNext()){
@@ -366,11 +366,15 @@ public class GroupListActivity extends AppCompatActivity  {
 
         private void displayAcceptanceMessage(Context context, String rec_id){
 
-            Cursor receiverCursor = context.getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, new String[]{YourTurnContract.UserEntry.COLUMN_USER_NAME},
-                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(rec_id), null, null);
+            Cursor receiverCursor = context.getContentResolver().query(
+                    YourTurnContract.MemberEntry.CONTENT_URI,
+                    new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME},
+                    YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
+                    new String[]{rec_id}, null);
+
             if(receiverCursor != null && receiverCursor.getCount() > 0) {
                 receiverCursor.moveToFirst();
-                String receiverName = receiverCursor.getString(receiverCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
+                String receiverName = receiverCursor.getString(receiverCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
                 Toast.makeText(context, receiverName + " accepted to pay", Toast.LENGTH_LONG).show();
                 findContactInList(rec_id);
 
@@ -391,9 +395,12 @@ public class GroupListActivity extends AppCompatActivity  {
                     for(int i = 0; i < mContactList.size(); i++) {
                         View view = mRecyclerView.getChildAt(i);
                         MemberGroupAdapter.MemberViewHolder mViewHolder = (MemberGroupAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
-                        mViewHolder.getSplitValueEditText().setEnabled(false);
-                        mViewHolder.getSplitValueEditText().setFocusable(false);
-                        mViewHolder.getSplitValueEditText().setBackgroundColor(Color.LTGRAY);
+                        mViewHolder.getRequestedEditText().setEnabled(false);
+                        mViewHolder.getRequestedEditText().setFocusable(false);
+                        mViewHolder.getRequestedEditText().setBackgroundColor(Color.LTGRAY);
+                        mViewHolder.getPaidEditText().setEnabled(false);
+                        mViewHolder.getPaidEditText().setFocusable(false);
+                        mViewHolder.getPaidEditText().setBackgroundColor(Color.LTGRAY);
                     }
                 }
             }

@@ -43,7 +43,7 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
     public MemberViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         final View view = LayoutInflater.from(mContext).inflate(R.layout.group_members, null);
         final MemberViewHolder viewHolder = new MemberViewHolder(view);
-        viewHolder.splitValueEditText.addTextChangedListener(new TextWatcher() {
+        viewHolder.requestedEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -74,10 +74,13 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
         final Contact contact = mContactList.get(position);
         String displayName = contact.getName();
         holder.nameTextView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
-        if(contact.getShare() != null && contact.getShare().length() > 0)
-            holder.splitValueEditText.setText(contact.getShare());
+        if(contact.getShare() != null && contact.getShare().length() > 0){
+            holder.requestedEditText.setText(contact.getShare());
+            holder.paidEditText.setText(contact.getShare());
+        }
         else {
-            holder.splitValueEditText.setText(R.string.zero_default_values);
+            holder.requestedEditText.setText(R.string.zero_default_values);
+            holder.paidEditText.setText(R.string.zero_default_values);
         }
 
         holder.checkedIcon.setVisibility(View.INVISIBLE);
@@ -103,14 +106,16 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
     public static class MemberViewHolder extends RecyclerView.ViewHolder {
         TextView nameTextView;
         CircleImageView imageView;
-        EditText splitValueEditText;
+        EditText requestedEditText;
+        EditText paidEditText;
         ImageView checkedIcon;
 
         public MemberViewHolder(View itemView){
             super(itemView);
             nameTextView = (TextView) itemView.findViewById(R.id.member_name);
             imageView = (CircleImageView) itemView.findViewById(R.id.member_thumbnail);
-            splitValueEditText = (EditText) itemView.findViewById(R.id.splitValue);
+            requestedEditText = (EditText) itemView.findViewById(R.id.requestValue);
+            paidEditText = (EditText) itemView.findViewById(R.id.paidValue);
             checkedIcon = (ImageView) itemView.findViewById(R.id.check_icon);
         }
 
@@ -118,8 +123,12 @@ public class MemberGroupAdapter extends RecyclerView.Adapter<MemberGroupAdapter.
             return checkedIcon;
         }
 
-        public EditText getSplitValueEditText() {
-            return splitValueEditText;
+        public EditText getRequestedEditText() {
+            return requestedEditText;
+        }
+
+        public EditText getPaidEditText(){
+            return paidEditText;
         }
     }
 

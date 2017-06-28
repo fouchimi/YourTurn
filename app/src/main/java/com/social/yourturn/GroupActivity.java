@@ -23,6 +23,7 @@ import com.bumptech.glide.Glide;
 import com.social.yourturn.adapters.CustomAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.models.Place;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
@@ -40,6 +41,8 @@ public class GroupActivity extends AppCompatActivity {
     private TextView mGroupTextView;
     private String SEND_SMS_PERMISSION = android.Manifest.permission.SEND_SMS;
     public static final String EVENT_NAME = "event_name";
+    private Place mPlace = null;
+    private String locationUrl = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +75,8 @@ public class GroupActivity extends AppCompatActivity {
         if(intent != null) {
             mContactList = intent.getParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT);
             Bundle bundle = intent.getExtras();
-            String locationUrl = bundle.getString(LocationActivity.PLACE_URL);
+            locationUrl = bundle.getString(LocationActivity.PLACE_URL);
+            mPlace = bundle.getParcelable(LocationActivity.CURRENT_PLACE);
             Glide.with(this).load(locationUrl).into(mEventImageView);
             int selectedCount = mContactList.size();
             int totalContact = bundle.getInt(ContactActivity.TOTAL_COUNT);
@@ -103,6 +107,8 @@ public class GroupActivity extends AppCompatActivity {
                         Intent intent = new Intent(GroupActivity.this, GroupListActivity.class);
                         intent.putExtra(ContactActivity.SELECTED_CONTACT, mContactList);
                         intent.putExtra(GroupActivity.EVENT_NAME, eventName);
+                        intent.putExtra(LocationActivity.CURRENT_PLACE, mPlace);
+                        intent.putExtra(LocationActivity.PLACE_URL, locationUrl);
                         startActivity(intent);
                     }
                     if(c != null ) c.close();
@@ -129,8 +135,7 @@ public class GroupActivity extends AppCompatActivity {
 
     private String getUsername() {
         SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
-        String username = (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
-        return username;
+        return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
     }
 
 }

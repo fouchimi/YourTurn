@@ -10,8 +10,8 @@
     <string name="new_group_label">New Event Group</string>
 
     <!-- HEROKU APP CONFIGURATION -->
-    <string name="app_id">3L3nrFqVD2Ilg_6RXuMusgVba0_uARi6E</string>
-    <string name="master_key">sMVHq9lgSmQUtNxyEdsBJaUvZUkqB7eKg</string>
+    <string name="app_id">sMVHq9lgSmQUtNxyEdsBJaUvZUkqB7eKg</string>
+    <string name="master_key">3L3nrFqVD2Ilg_6RXuMusgVba0_uARi6E</string>
     <string name="server">https://yourturnapp.herokuapp.com/parse/</string>
     <string name="required_group_name">Please enter group name, only alphanumeric allowed</string>
     <string name="preference_file_key">login_credentials</string>
@@ -55,7 +55,7 @@
     <string name="user_credentials">credentials</string>
 
     <string name="gcm_sender_id">id:1098418675632</string>
-    <string name="yourturn_server_gcm_id">AIzaSyDjYbJSqNmIMAWV2t-YWyW1Cgg97-x2jMo</string>
+    <string name="yourturn_server_gcm_id">AIzaSyB23E-VBvU2NBNThultMJUXeEfiVdF1RxI</string>
     <string name="confirm_price">Confirm price</string>
     <string name="refused_payment_message">You denied to pay</string>
     <string name="accepted_payment_message">You accept to pay</string>
@@ -88,5 +88,7 @@
     <string name="location_permission_rationale">Location permission is needed for core functionality</string>
     <string name="proceed_text">Proceed</string>
     <string name="add_new_contact">Add New Contact</string>
+    <string name="paid_text">paid</string>
+    <string name="requestedValueText">requested</string>
 
 </resources>

@@ -23,7 +23,7 @@ import java.util.Iterator;
 public class LedgerBroadcastReceiver extends BroadcastReceiver {
 
     private static final String TAG = LedgerBroadcastReceiver.class.getSimpleName();
-    public static final String intentAction = "com.placeParse.push.intent.RECEIVE";
+    public static final String intentAction = "com.parse.push.intent.RECEIVE";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -39,10 +39,10 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
-            String channel = intent.getExtras().getString("com.placeParse.Channel");
+            String channel = intent.getExtras().getString("com.parse.Channel");
             Log.d(TAG, "got action " + action + " on channel " + channel + " with:");
             try{
-                JSONObject json = new JSONObject(intent.getExtras().getString("com.placeParse.Data"));
+                JSONObject json = new JSONObject(intent.getExtras().getString("com.parse.Data"));
                 // Iterate the placeParse keys if needed
                 Iterator<String> itr = json.keys();
                 while(itr.hasNext()){

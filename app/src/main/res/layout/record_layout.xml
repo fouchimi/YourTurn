@@ -58,7 +58,7 @@
                 android:textSize="@dimen/txt_20sp" />
 
             <TextView
-                android:id="@+id/currencyTextView"
+                android:id="@+id/currencyOne"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="0.2"
