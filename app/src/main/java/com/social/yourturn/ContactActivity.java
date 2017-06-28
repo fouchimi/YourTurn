@@ -1,21 +1,17 @@
 package com.social.yourturn;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ContentValues;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -39,10 +35,13 @@ import android.widget.Toast;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.parse.ParseUser;
 import com.social.yourturn.adapters.ContactsAdapter;
 import com.social.yourturn.adapters.SelectedContactAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
+import com.social.yourturn.models.Place;
+import com.social.yourturn.utils.ParseConstant;
 import com.social.yourturn.utils.Utils;
 
 import org.joda.time.DateTime;
@@ -69,6 +68,8 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
     public static final String TOTAL_COUNT = "TotalCount";
     private ArrayList<Contact> mContactList =  new ArrayList<>(), mList = new ArrayList<>();
     private static final int REQUEST_CODE = 34;
+    private Place mPlace = null;
+    private String placeUrl = "";
 
 
     @Override
@@ -85,6 +86,8 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         if(getIntent() != null) {
             Bundle bundle = getIntent().getExtras();
             oldList = bundle.getParcelableArrayList(MainActivity.ALL_CONTACTS);
+            mPlace = bundle.getParcelable(LocationActivity.CURRENT_PLACE);
+            placeUrl = bundle.getString(LocationActivity.PLACE_URL);
         }
 
         fb.setOnClickListener(new View.OnClickListener() {
@@ -93,7 +96,10 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
                 if(mSelectedContactList.size() > 0){
                     Intent intent = new Intent(ContactActivity.this, GroupActivity.class);
                     intent.putParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT, mSelectedContactList);
+                    intent.putExtra(ParseConstant.USERNAME_COLUMN, ParseUser.getCurrentUser().getUsername());
                     intent.putExtra(ContactActivity.TOTAL_COUNT, oldList.size());
+                    intent.putExtra(LocationActivity.CURRENT_PLACE, mPlace);
+                    intent.putExtra(LocationActivity.PLACE_URL, placeUrl);
                     ContactActivity.this.startActivity(intent);
                 }
             }
@@ -181,7 +187,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
                 Cursor recentCursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                         new String[]{ContactsContract.CommonDataKinds.Phone._ID,
                                 DISPLAY_NAME,
-                                ContactsContract.CommonDataKinds.Phone.NUMBER}, null, null,  ContactsContract.CommonDataKinds.Phone._ID + " DESC ");
+                                ContactsContract.CommonDataKinds.Phone.NUMBER}, null, null,  ContactsContract.CommonDataKinds.Phone._ID + " DESC LIMIT 1");
                 if(recentCursor != null && recentCursor.getCount() > 0) {
                     recentCursor.moveToNext();
                     String id = recentCursor.getString(recentCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone._ID));

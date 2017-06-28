@@ -60,7 +60,7 @@ public class YourTurnProvider extends ContentProvider {
             }
             case GROUP:{
                 retCursor = mOpenHelper.getReadableDatabase().query(true,
-                        YourTurnContract.GroupEntry.TABLE_NAME,
+                        YourTurnContract.EventEntry.TABLE_NAME,
                         projection,
                         selection,
                         selectionArgs,
@@ -101,7 +101,7 @@ public class YourTurnProvider extends ContentProvider {
             case USER:
                 return YourTurnContract.UserEntry.CONTENT_TYPE;
             case GROUP:
-                return YourTurnContract.GroupEntry.CONTENT_TYPE;
+                return YourTurnContract.EventEntry.CONTENT_TYPE;
             case LEDGER:
                 return YourTurnContract.LedgerEntry.CONTENT_TYPE;
             default:
@@ -140,9 +140,9 @@ public class YourTurnProvider extends ContentProvider {
             }
             case GROUP: {
                 normalizeDate(values);
-                long _id = db.insert(YourTurnContract.GroupEntry.TABLE_NAME, null, values);
+                long _id = db.insert(YourTurnContract.EventEntry.TABLE_NAME, null, values);
                 if( _id > 0 ){
-                    returnUri = YourTurnContract.GroupEntry.buildGroupUri(_id);
+                    returnUri = YourTurnContract.EventEntry.buildGroupUri(_id);
                 }else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 }
@@ -187,7 +187,7 @@ public class YourTurnProvider extends ContentProvider {
                 rowsDeleted = db.delete(YourTurnContract.UserEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             case GROUP :
-                rowsDeleted = db.delete(YourTurnContract.GroupEntry.TABLE_NAME, selection, selectionArgs);
+                rowsDeleted = db.delete(YourTurnContract.EventEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             case LEDGER :
                 rowsDeleted = db.delete(YourTurnContract.LedgerEntry.TABLE_NAME, selection, selectionArgs);
@@ -219,7 +219,7 @@ public class YourTurnProvider extends ContentProvider {
                 break;
             case GROUP :
                 normalizeDate(values);
-                rowsUpdated = db.update(YourTurnContract.GroupEntry.TABLE_NAME, values, selection, selectionArgs);
+                rowsUpdated = db.update(YourTurnContract.EventEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
             case LEDGER:
                 normalizeDate(values);
@@ -296,7 +296,7 @@ public class YourTurnProvider extends ContentProvider {
                 try{
                     for(ContentValues value : values){
                         normalizeDate(value);
-                        long _id = db.insert(YourTurnContract.GroupEntry.TABLE_NAME, null, value);
+                        long _id = db.insert(YourTurnContract.EventEntry.TABLE_NAME, null, value);
                         if(_id != -1) {
                             returnCount++;
                         }

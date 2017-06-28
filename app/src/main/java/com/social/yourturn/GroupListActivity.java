@@ -58,7 +58,6 @@ public class GroupListActivity extends AppCompatActivity  {
     private RecyclerView mRecyclerView;
     private MemberGroupAdapter mAdapter;
     private ArrayList<Contact> mContactList = new ArrayList<>();
-    private Group mGroup = null;
     private boolean isVisible = false, isValidateVisible = false;
     private ParseUser mCurrentUser;
     private BroadcastReceiver mPushSenderBroadcastReceiver;
@@ -90,16 +89,12 @@ public class GroupListActivity extends AppCompatActivity  {
 
         Intent intent = getIntent();
         if(intent != null) {
-            mGroup = intent.getParcelableExtra(GroupFragment.GROUP_KEY);
+            mContactList = intent.getParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT);
             String phoneNumber = intent.getExtras().getString(ParseConstant.USERNAME_COLUMN);
-            getSupportActionBar().setTitle(mGroup.getName());
-            mContactList = mGroup.getContactList();
-            for(Contact contact : mGroup.getContactList()){
-                if(contact.getPhoneNumber().equals(phoneNumber)){
-                    contact.setName(getString(R.string.current_user));
-                    break;
-                }
-            }
+            String eventName = intent.getExtras().getString(GroupActivity.EVENT_NAME);
+            getSupportActionBar().setTitle(eventName);
+            Contact currentUser = new Contact("0", "You", phoneNumber);
+            mContactList.add(currentUser);
 
             Collections.sort(mContactList, new Comparator<Contact>() {
                 @Override
@@ -253,14 +248,14 @@ public class GroupListActivity extends AppCompatActivity  {
             case R.id.validateBillAction:
                 Intent intent = new Intent(this, ConfirmPaymentIntentService.class);
                 intent.putParcelableArrayListExtra(getString(R.string.friendList), mAdapter.getContactList());
-                intent.putExtra(getString(R.string.selected_group), mGroup);
+                //intent.putExtra(getString(R.string.selected_group), mGroup);
                 intent.putExtra(getString(R.string.paymentReceiver), mPaymentReceiver);
                 intent.putExtra(getString(R.string.totalAmount), mTotalAmount);
                 startService(intent);
                 return true;
             case R.id.viewGroupAction:
                 Intent recordIntent = new Intent(this, GroupRecordActivity.class);
-                recordIntent.putExtra(getString(R.string.selected_group), mGroup);
+                //recordIntent.putExtra(getString(R.string.selected_group), mGroup);
                 startActivity(recordIntent);
                 return true;
             default:

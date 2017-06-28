@@ -95,8 +95,8 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if(id == LOADER_ID){
-            return new CursorLoader(getActivity(), YourTurnContract.GroupEntry.CONTENT_URI,
-                    null, null, null, YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE + " DESC");
+            return new CursorLoader(getActivity(), YourTurnContract.EventEntry.CONTENT_URI,
+                    null, null, null, YourTurnContract.EventEntry.COLUMN_GROUP_UPDATED_DATE + " DESC");
         }
         return null;
     }
@@ -129,12 +129,12 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
         Group group = null;
 
         for(data.moveToFirst(); !data.isAfterLast(); data.moveToNext()){
-            groupId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_ID));
-            groupName = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME));
-            groupThumbnail = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL));
-            groupCreator = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR));
-            dateInMillis = data.getLong(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE));
-            userId = data.getString(data.getColumnIndex(YourTurnContract.GroupEntry.COLUMN_USER_KEY));
+            groupId = data.getString(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_GROUP_ID));
+            groupName = data.getString(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_GROUP_NAME));
+            groupThumbnail = data.getString(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_GROUP_THUMBNAIL));
+            groupCreator = data.getString(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_GROUP_CREATOR));
+            dateInMillis = data.getLong(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_GROUP_UPDATED_DATE));
+            userId = data.getString(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_USER_KEY));
 
             Cursor userCursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
                     YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=?", new String[]{userId}, null);
@@ -371,22 +371,22 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                 }
 
                 for(Contact contact : membersList){
-                    final Cursor groupCursor = getActivity().getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
-                            YourTurnContract.GroupEntry.COLUMN_USER_KEY + " = " +
+                    final Cursor groupCursor = getActivity().getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI, null,
+                            YourTurnContract.EventEntry.COLUMN_USER_KEY + " = " +
                                     DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()) + " AND " +
-                                    YourTurnContract.GroupEntry.COLUMN_GROUP_ID + " = " +
+                                    YourTurnContract.EventEntry.COLUMN_GROUP_ID + " = " +
                                     DatabaseUtils.sqlEscapeString(groupId), null, null);
 
                     DateTime dayTime = new DateTime();
                     if(groupCursor != null && groupCursor.getCount() <=0) {
                         ContentValues groupValues = new ContentValues();
-                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
-                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
-                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, contact.getPhoneNumber());
-                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, groupCreator);
-                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnail);
-                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
-                        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
+                        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_ID, groupId);
+                        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_NAME, groupName);
+                        groupValues.put(YourTurnContract.EventEntry.COLUMN_USER_KEY, contact.getPhoneNumber());
+                        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_CREATOR, groupCreator);
+                        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_THUMBNAIL, groupThumbnail);
+                        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
+                        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
 
                         // Insert individual contact here
                         Cursor userCursor = getActivity().getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
@@ -402,7 +402,7 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                             userCursor.close();
                         }
                         // insert individual group here
-                        getActivity().getContentResolver().insert(YourTurnContract.GroupEntry.CONTENT_URI, groupValues);
+                        getActivity().getContentResolver().insert(YourTurnContract.EventEntry.CONTENT_URI, groupValues);
                     }
                 }
                 return null;

@@ -15,7 +15,6 @@
         android:layout_width="@dimen/pic_size"
         android:layout_height="@dimen/pic_size"
         android:baselineAlignBottom="true"
-        android:onClick="snapGroupPhoto"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="@dimen/mar_16dp"

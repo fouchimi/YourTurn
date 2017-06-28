@@ -7,7 +7,7 @@
     <string name="group_name">Enter group name</string>
     <string name="group_creation_label">Provide a group name and optional group icon</string>
     <string name="participantText">Participants</string>
-    <string name="new_group_label">New Group</string>
+    <string name="new_group_label">New Event Group</string>
 
     <!-- HEROKU APP CONFIGURATION -->
     <string name="app_id">3L3nrFqVD2Ilg_6RXuMusgVba0_uARi6E</string>

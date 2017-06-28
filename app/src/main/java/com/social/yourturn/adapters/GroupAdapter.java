@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -61,8 +60,8 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
 
         String[] selectionArgs = {group.getGroupId()};
 
-        Cursor groupCursor = mContext.getContentResolver().query(YourTurnContract.GroupEntry.CONTENT_URI, null,
-                YourTurnContract.GroupEntry.COLUMN_GROUP_ID + "=?", selectionArgs, null);
+        Cursor groupCursor = mContext.getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI, null,
+                YourTurnContract.EventEntry.COLUMN_GROUP_ID + "=?", selectionArgs, null);
 
         holder.groupNumber.setText(String.valueOf(groupCursor.getCount()));
 

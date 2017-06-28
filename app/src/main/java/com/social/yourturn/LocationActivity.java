@@ -49,10 +49,12 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
     private static final String BASE_PlACE_URL = "https://maps.googleapis.com/maps/api/place/details/json?";
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 0;
     private static final int REQUEST_CHECK_SETTINGS = 34;
-    private static final String CURRENT_PLACE = "current_place";
+    public static final String CURRENT_PLACE = "current_place";
+    public static final String PLACE_URL = "place_url";
     private String url = "";
     private ArrayList<Contact> mContactList;
     private  View dialogView = null;
+    private String placeUrl = null;
 
     private Location mLastLocation;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -249,7 +251,8 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
         Glide.with(this).load(place.getIcon()).into(iconView);
 
         final CircleImageView placeImageView = (CircleImageView) dialogView.findViewById(R.id.placeUrl);
-        Glide.with(this).load("https://maps.googleapis.com/maps/api/place/photo?maxwidth=2048&photoreference=" + place.getUrl() + "&key=" + getString(R.string.google_places_api_key)).into(placeImageView);
+        placeUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=2048&photoreference=" + place.getUrl() + "&key=" + getString(R.string.google_places_api_key);
+        Glide.with(this).load(placeUrl).into(placeImageView);
 
         dialogBuilder.setPositiveButton(R.string.proceed_text, new DialogInterface.OnClickListener() {
             @Override
@@ -257,6 +260,7 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
                 Intent contactIntent = new Intent(LocationActivity.this, ContactActivity.class);
                 contactIntent.putExtra(MainActivity.ALL_CONTACTS, mContactList);
                 contactIntent.putExtra(LocationActivity.CURRENT_PLACE, place);
+                contactIntent.putExtra(LocationActivity.PLACE_URL,  placeUrl);
                 startActivity(contactIntent);
             }
         });

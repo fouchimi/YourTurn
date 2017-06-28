@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.social.yourturn.data.YourTurnContract.UserEntry;
-import com.social.yourturn.data.YourTurnContract.GroupEntry;
+import com.social.yourturn.data.YourTurnContract.EventEntry;
 import com.social.yourturn.data.YourTurnContract.LedgerEntry;
 import com.social.yourturn.data.YourTurnContract.MemberEntry;
 
@@ -50,16 +50,16 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 UserEntry.COLUMN_USER_UPDATED_DATE + " INTEGER NOT NULL" +
                 ");";
 
-        final String SQL_CREATE_GROUP_TABLE = "CREATE TABLE " + GroupEntry.TABLE_NAME + " (" +
-                GroupEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                GroupEntry.COLUMN_GROUP_ID + " TEXT NOT NULL, " +
-                GroupEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
-                GroupEntry.COLUMN_GROUP_NAME + " TEXT NOT NULL, " +
-                GroupEntry.COLUMN_GROUP_THUMBNAIL + " TEXT NULL, " +
-                GroupEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
-                GroupEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
-                GroupEntry.COLUMN_GROUP_CREATOR + " TEXT, " +
-                "FOREIGN KEY (" + GroupEntry.COLUMN_USER_KEY + ") REFERENCES " +
+        final String SQL_CREATE_GROUP_TABLE = "CREATE TABLE " + EventEntry.TABLE_NAME + " (" +
+                EventEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                EventEntry.COLUMN_GROUP_ID + " TEXT NOT NULL, " +
+                EventEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
+                EventEntry.COLUMN_GROUP_NAME + " TEXT NOT NULL, " +
+                EventEntry.COLUMN_GROUP_THUMBNAIL + " TEXT NULL, " +
+                EventEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
+                EventEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
+                EventEntry.COLUMN_GROUP_CREATOR + " TEXT, " +
+                "FOREIGN KEY (" + EventEntry.COLUMN_USER_KEY + ") REFERENCES " +
                 UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE SET NULL ON UPDATE CASCADE"
                 + ");";
 
@@ -74,7 +74,7 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 "FOREIGN KEY (" + LedgerEntry.COLUMN_USER_KEY + ") REFERENCES " +
                 UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE SET NULL ON UPDATE CASCADE " +
                 "FOREIGN KEY (" + LedgerEntry.COLUMN_GROUP_KEY + ") REFERENCES " +
-                GroupEntry.TABLE_NAME + " (" + GroupEntry.COLUMN_GROUP_ID + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
+                EventEntry.TABLE_NAME + " (" + EventEntry.COLUMN_GROUP_ID + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
 
 
         db.execSQL(SQL_CREATE_MEMBER_TABLE);
@@ -87,7 +87,7 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + MemberEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + UserEntry.TABLE_NAME);
-        db.execSQL("DROP TABLE IF EXISTS " + GroupEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + EventEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + LedgerEntry.TABLE_NAME);
         onCreate(db);
     }

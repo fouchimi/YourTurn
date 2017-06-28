@@ -71,7 +71,7 @@ public class YourTurnContract {
         }
     }
 
-    public static final class GroupEntry implements BaseColumns {
+    public static final class EventEntry implements BaseColumns {
 
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_GROUP).build();
 

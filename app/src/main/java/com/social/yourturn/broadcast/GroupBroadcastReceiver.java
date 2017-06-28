@@ -8,21 +8,14 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import com.parse.GetCallback;
-import com.parse.ParseException;
-import com.parse.ParseFile;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
 import com.social.yourturn.MainActivity;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
@@ -111,15 +104,15 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
 
         DateTime dayTime = new DateTime();
         ContentValues groupValues = new ContentValues();
-        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_ID, groupId);
-        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_NAME, groupName);
-        groupValues.put(YourTurnContract.GroupEntry.COLUMN_USER_KEY, number);
-        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATOR, senderId);
-        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_THUMBNAIL, groupUrl);
-        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
-        groupValues.put(YourTurnContract.GroupEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_ID, groupId);
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_NAME, groupName);
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_USER_KEY, number);
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_CREATOR, senderId);
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_THUMBNAIL, groupUrl);
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
 
-        context.getContentResolver().insert(YourTurnContract.GroupEntry.CONTENT_URI, groupValues);
+        context.getContentResolver().insert(YourTurnContract.EventEntry.CONTENT_URI, groupValues);
     }
 
     private void createNotification(final Context context, String senderId, String groupName, String groupId, String groupUrl, String friendList){
