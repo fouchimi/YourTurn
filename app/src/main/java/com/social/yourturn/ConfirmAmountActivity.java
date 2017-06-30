@@ -100,25 +100,6 @@ public class ConfirmAmountActivity extends AppCompatActivity {
                             Intent intent1 = new Intent(ConfirmAmountActivity.this, MainActivity.class);
                             intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(intent1);
-                            ParseQuery<ParseUser> query = ParseUser.getQuery();
-                            query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
-                            query.getFirstInBackground((user, e12) -> {
-                                if(e12 == null) {
-                                    String parseScore = user.getString(ParseConstant.USER_SCORE_COLUMN);
-                                    if(parseScore == null) user.put(ParseConstant.USER_SCORE_COLUMN, bundle.getString(PushSenderBroadcastReceiver.MESSAGE));
-                                    else {
-                                        double scoredValue = Double.parseDouble(parseScore);
-                                        user.put(ParseConstant.USER_SCORE_COLUMN, scoredValue + Double.parseDouble(bundle.getString(PushSenderBroadcastReceiver.MESSAGE)));
-                                    }
-                                    user.saveInBackground(e1 -> {
-                                        if(e1 == null){
-                                            Log.d(TAG, "Score saved successfully");
-                                        }
-                                    });
-                                }else {
-                                    Log.d(TAG, "An error occured");
-                                }
-                            });
                         }else {
                             Log.d(TAG, e.getMessage());
                         }

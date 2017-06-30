@@ -72,7 +72,31 @@ public class MemberEventAdapter extends RecyclerView.Adapter<MemberEventAdapter.
                     String name = mContactList.get(i).getName().toLowerCase();
                     name = WordUtils.capitalize(name, null);
                     if(name.equals(txt.getText().toString())){
-                        mContactList.get(i).setShare(s.toString());
+                        mContactList.get(i).setRequested(s.toString());
+                    }
+                }
+            }
+        });
+
+        viewHolder.paidEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                TextView txt = viewHolder.nameTextView;
+                for(int i=0; i < mContactList.size(); i++){
+                    String name = mContactList.get(i).getName().toLowerCase();
+                    name = WordUtils.capitalize(name, null);
+                    if(name.equals(txt.getText().toString())){
+                        mContactList.get(i).setPaid(s.toString());
                     }
                 }
             }
@@ -95,9 +119,10 @@ public class MemberEventAdapter extends RecyclerView.Adapter<MemberEventAdapter.
             holder.regularLayout.setVisibility(View.VISIBLE);
             holder.swipeLayout.setVisibility(View.GONE);
             holder.nameTextView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
-            if(contact.getShare() != null && contact.getShare().length() > 0){
-                holder.requestedEditText.setText(contact.getShare());
-                holder.paidEditText.setText(contact.getShare());
+            if(contact.getRequested() != null && contact.getRequested().length() > 0 &&
+                    contact.getPaid() != null && contact.getPaid().length() > 0){
+                holder.requestedEditText.setText(contact.getRequested());
+                holder.paidEditText.setText(contact.getPaid());
             }
             else {
                 holder.requestedEditText.setText(R.string.zero_default_values);

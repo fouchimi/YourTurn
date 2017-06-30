@@ -31,4 +31,6 @@ public class ParseConstant {
     public static final String COLUMN_NAME = "name";
     public static final String USER_SCORE_COLUMN = "score";
 
+    public static final String SCORE_TABLE = "Score";
+
 }

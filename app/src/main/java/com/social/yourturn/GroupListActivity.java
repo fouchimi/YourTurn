@@ -206,26 +206,30 @@ public class GroupListActivity extends AppCompatActivity  {
             case R.id.validateButton :
                 // Kick off push notification here
                 HashMap<String, Object> payload = new HashMap<>();
-                double totalValue = 0.00;
+                double totalPaidValue = 0.00;
+                double totalRequestedValue = 0.00;
                 mAdapter.notifyDataSetChanged();
-                if(mAdapter.getContactList().size() == 1){
+                if(mAdapter.getContactList().size() < 2){
                     Toast.makeText(GroupListActivity.this, "You need at least two contacts to proceed", Toast.LENGTH_LONG).show();
                     return true;
                 }
                 recipientList = "";
                 shareValueList = "";
                 for(int pos = 0; pos < mAdapter.getContactList().size(); pos++){
-                    String value = mAdapter.getContactList().get(pos).getShare();
+                    String requestedValue = mAdapter.getContactList().get(pos).getRequested();
+                    String paidValue = mAdapter.getContactList().get(pos).getPaid();
                     String friend = mAdapter.getContactList().get(pos).getPhoneNumber();
                     //matches positive decimal points.
-                    if(value.matches("\\d*\\.?\\d+")){
-                        double dValue = Double.parseDouble(value);
-                        totalValue += dValue;
+                    if(requestedValue.matches("\\d*\\.?\\d+")){
+                        double rValue = Double.parseDouble(requestedValue);
+                        double pValue = Double.parseDouble(paidValue);
+                        totalRequestedValue += rValue;
+                        totalPaidValue += pValue;
                         if(!friend.equals(getUsername())){
                             recipientList += friend +",";
-                            shareValueList += value + ",";
+                            shareValueList += paidValue + ",";
                         }else {
-                            currentUserValue = value;
+                            currentUserValue = mAdapter.getContactList().get(pos).getPaid();
                         }
 
                     }else {
@@ -233,14 +237,16 @@ public class GroupListActivity extends AppCompatActivity  {
                     }
                 }
 
-                totalValue = Math.ceil(totalValue);
+                totalPaidValue = Math.ceil(totalPaidValue);
+                totalRequestedValue = Math.ceil(totalRequestedValue);
                 double mTotalParsedAmount = Double.parseDouble(mTotalAmount);
-                double diff = Math.abs(mTotalParsedAmount - totalValue);
+                double diffPaidValue = Math.abs(mTotalParsedAmount - totalPaidValue);
+                double diffReqValue = Math.abs(mTotalParsedAmount - totalRequestedValue);
                 if(recipientList.length() > 0 && shareValueList.length() > 0){
                     recipientList = recipientList.substring(0, recipientList.length()-1);
                     shareValueList = shareValueList.substring(0, shareValueList.length()-1);
                 }
-                if(diff <= 1){
+                if(diffPaidValue <= 1 && diffReqValue <= 1){
                     checkFriendAndValidate(false).onSuccess(new Continuation<List<ParseUser>, Void>() {
                         public Void then(Task<List<ParseUser>> results) throws Exception {
                             payload.put("senderId", getUsername());
@@ -317,7 +323,7 @@ public class GroupListActivity extends AppCompatActivity  {
 
         ArrayList<Task<ParseUser>> tasks = new ArrayList<>();
 
-        for(Contact contact : mContactList) {
+        for(Contact contact : mAdapter.getContactList()) {
             ParseQuery<ParseUser> query = ParseUser.getQuery();
             query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
 
@@ -349,9 +355,9 @@ public class GroupListActivity extends AppCompatActivity  {
                     }else {
                         Log.d(TAG, "" + floatValue);
                         for(Contact contact : mContactList){
-
                             mSharedAmount = df.format((floatValue / mContactList.size()));
-                            contact.setShare(mSharedAmount);
+                            contact.setPaid(mSharedAmount);
+                            contact.setRequested(mSharedAmount);
                         }
                         mAdapter.notifyDataSetChanged();
                         isVisible = true;

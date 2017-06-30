@@ -13,9 +13,13 @@ import android.util.Log;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.parse.FindCallback;
+import com.parse.GetCallback;
+import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.parse.SaveCallback;
 import com.social.yourturn.adapters.EventRecordAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
@@ -62,8 +66,6 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
                 recordAdapter = new EventRecordAdapter(this, contactList);
                 mListView.setAdapter(recordAdapter);
 
-                //contactList.removeIf(contact -> contact.getPhoneNumber().equals(getUsername()));
-
                 savedAllInBackground(mEvent, contactList, totalAmount);
             }
         }
@@ -96,27 +98,42 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
         return tcs.getTask();
     }
 
-    public Task<ParseUser> savedScoreAsync(ParseQuery<ParseUser> query, final String score) {
-        final TaskCompletionSource<ParseUser> tcs = new TaskCompletionSource<>();
-        query.getFirstInBackground((user, e) -> {
-            if(e == null) {
-                String parseScore = user.getString(ParseConstant.USER_SCORE_COLUMN);
-                if(parseScore == null) user.put(ParseConstant.USER_SCORE_COLUMN, score);
-                else {
-                    double scoredValue = Double.parseDouble(parseScore);
-                    user.put(ParseConstant.USER_SCORE_COLUMN, scoredValue + Double.parseDouble(score));
+    private Task<ParseObject> savedScoreAsync(ParseQuery<ParseObject> query, final String score, final String phoneNumber) {
+        final TaskCompletionSource<ParseObject> tcs = new TaskCompletionSource<>();
+        query.getFirstInBackground((row, e) -> {
+            if(e == null){
+                tcs.setResult(row);
+                String parsedScore = row.getString(ParseConstant.USER_SCORE_COLUMN);
+                if(parsedScore == null) {
+                    row.put(ParseConstant.USERNAME_COLUMN, phoneNumber);
+                    row.put(ParseConstant.USER_SCORE_COLUMN, score);
                 }
-                tcs.setResult(user);
-                user.saveInBackground(e1 -> {
-                    if(e1 == null) {
-                        Log.d(TAG, "Successfully saved");
+                else{
+                    double scoredValue = Double.parseDouble(parsedScore);
+                    row.put(ParseConstant.USER_SCORE_COLUMN, scoredValue + score);
+                    row.put(ParseConstant.USERNAME_COLUMN, phoneNumber);
+                }
+                row.saveInBackground(ex -> {
+                    if(ex == null){
+                        Log.d(TAG, "Score saved successfully");
                     }else {
-                        Log.d(TAG, "An error occured");
-                        Toast.makeText(EventRecordActivity.this, "Couldn't saved records to database", Toast.LENGTH_LONG).show();
+                        Log.d(TAG, "Error occur!");
                     }
                 });
             }else {
-                tcs.setError(e);
+                tcs.setError(null);
+                // will create score table if not existing
+                ParseObject scoreTable = new ParseObject(ParseConstant.SCORE_TABLE);
+                scoreTable.put(ParseConstant.USERNAME_COLUMN, phoneNumber);
+                scoreTable.put(ParseConstant.USER_SCORE_COLUMN, score);
+
+                scoreTable.saveInBackground(e1 -> {
+                    if(e1 == null){
+                        Log.d(TAG, "Score saved successfully");
+                    }else {
+                        Log.d(TAG, e1.getMessage());
+                    }
+                });
             }
         });
         return tcs.getTask();
@@ -155,16 +172,22 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
         }).onSuccessTask(task -> {
 
             // Create a trivial completed task as a base case.
-            ArrayList<Task<ParseUser>> tasks = new ArrayList<>();
+            ArrayList<Task<ParseObject>> tasks = new ArrayList<>();
 
             for(Contact contact : contactList){
-                final ParseQuery<ParseUser> query = ParseUser.getQuery();
+                final ParseQuery<ParseObject> query = new ParseQuery<ParseObject>(ParseConstant.SCORE_TABLE);
                 query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
-                tasks.add(savedScoreAsync(query, contact.getShare()));
+
+                double paidValue = Double.parseDouble(contact.getPaid());
+                double requestedValue = Double.parseDouble(contact.getRequested());
+                if(paidValue > requestedValue) contact.setShare(String.valueOf(paidValue-requestedValue));
+                else if(paidValue < requestedValue) contact.setShare(String.valueOf(paidValue-requestedValue));
+                else contact.setShare(getString(R.string.zero_default_values));
+                tasks.add(savedScoreAsync(query, contact.getShare(), contact.getPhoneNumber()));
             }
             return Task.whenAllResult(tasks);
-        }).continueWith(new Continuation<List<ParseUser>, Void>() {
-            public Void then(Task<List<ParseUser>> task) throws Exception {
+        }).continueWith(new Continuation<List<ParseObject>, Void>() {
+            public Void then(Task<List<ParseObject>> task) throws Exception {
                 // Every user score saved
                 if(task.isFaulted()){
                     Toast.makeText(EventRecordActivity.this, "Couldn't save data successfully", Toast.LENGTH_LONG).show();

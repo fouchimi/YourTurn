@@ -73,7 +73,7 @@ public class ConfirmPaymentIntentService extends IntentService {
             ContentValues ledgerValues = new ContentValues();
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_EVENT_KEY, eventId);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_KEY, contact.getPhoneNumber());
-            ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_SHARE, contact.getShare());
+            ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_SHARE, contact.getPaid());
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_TOTAL_AMOUNT, totalAmount);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());

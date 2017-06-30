@@ -16,8 +16,8 @@ public class Contact implements Parcelable, Serializable {
     private String phoneNumber;
     private boolean selected;
     private String share;
-    private boolean isOwner;
-    private boolean isMember;
+    private String requested;
+    private String paid;
 
     public Contact() {
 
@@ -45,10 +45,6 @@ public class Contact implements Parcelable, Serializable {
         return name;
     }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
     public String getPhoneNumber() {
         return phoneNumber;
     }
@@ -57,24 +53,24 @@ public class Contact implements Parcelable, Serializable {
         return share;
     }
 
+    public void setPaid(String paid) {
+        this.paid = paid;
+    }
+
+    public String getPaid() {
+        return paid;
+    }
+
+    public void setRequested(String requested) {
+        this.requested = requested;
+    }
+
+    public String getRequested() {
+        return requested;
+    }
+
     public void setShare(String share) {
         this.share = share;
-    }
-
-    public boolean isOwner() {
-        return isOwner;
-    }
-
-    public void setOwner(boolean owner) {
-        isOwner = owner;
-    }
-
-    public boolean isMember() {
-        return isMember;
-    }
-
-    public void setMember(boolean member) {
-        isMember = member;
     }
 
     public void setThumbnailUrl(String thumbnailUrl) {
@@ -104,8 +100,8 @@ public class Contact implements Parcelable, Serializable {
         thumbnailUrl = in.readString();
         phoneNumber  = in.readString();
         share = in.readString();
-        isOwner = in.readByte() != 0;
-        isMember = in.readByte() != 0;
+        requested = in.readString();
+        paid = in.readString();
         selected = in.readByte() != 0;
     }
 
@@ -116,8 +112,8 @@ public class Contact implements Parcelable, Serializable {
         dest.writeString(thumbnailUrl);
         dest.writeString(phoneNumber);
         dest.writeString(share);
-        dest.writeByte((byte) (isOwner ? 1 : 0));
-        dest.writeByte((byte) (isMember ? 1 : 0));
+        dest.writeString(requested);
+        dest.writeString(paid);
         dest.writeByte((byte) (selected ? 1 : 0));
 
     }
