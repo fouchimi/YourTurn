@@ -28,15 +28,15 @@ import java.util.Iterator;
  * Created by ousma on 6/5/2017.
  */
 
-public class GroupBroadcastReceiver extends BroadcastReceiver {
+public class EventBroadcastReceiver extends BroadcastReceiver {
 
-    private static final String TAG = GroupBroadcastReceiver.class.getSimpleName();
+    private static final String TAG = EventBroadcastReceiver.class.getSimpleName();
     public static final String intentAction = "com.parse.push.intent.RECEIVE";
 
     @Override
     public void onReceive(Context context, Intent intent) {
         if(intent == null) {
-            Log.d(TAG, "Group Broadcast Receiver intent null");
+            Log.d(TAG, "Event Broadcast Receiver intent null");
         }else {
             processPush(context, intent);
         }
@@ -104,13 +104,13 @@ public class GroupBroadcastReceiver extends BroadcastReceiver {
 
         DateTime dayTime = new DateTime();
         ContentValues groupValues = new ContentValues();
-        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_ID, groupId);
-        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_NAME, groupName);
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_ID, groupId);
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_NAME, groupName);
         groupValues.put(YourTurnContract.EventEntry.COLUMN_USER_KEY, number);
-        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_CREATOR, senderId);
-        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_THUMBNAIL, groupUrl);
-        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
-        groupValues.put(YourTurnContract.EventEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR, senderId);
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_THUMBNAIL, groupUrl);
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATED_DATE, dayTime.getMillis());
+        groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE, dayTime.getMillis());
 
         context.getContentResolver().insert(YourTurnContract.EventEntry.CONTENT_URI, groupValues);
     }

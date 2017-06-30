@@ -9,8 +9,8 @@ import java.util.ArrayList;
  * Created by ousma on 4/22/2017.
  */
 
-public class Group implements Parcelable{
-    private String groupId;
+public class Event implements Parcelable{
+    private String eventId;
     private String name;
     private String thumbnail;
     private long dateInMillis;
@@ -19,16 +19,16 @@ public class Group implements Parcelable{
     private ArrayList<Contact> contactList = new ArrayList<>();
     private int size;
 
-    public Group(){
+    public Event(){
 
     }
 
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
     }
 
-    public String getGroupId() {
-        return groupId;
+    public String getEventId() {
+        return eventId;
     }
 
     public String getName() {
@@ -64,8 +64,8 @@ public class Group implements Parcelable{
         return 0;
     }
 
-    private Group(Parcel in){
-        groupId = in.readString();
+    private Event(Parcel in){
+        eventId = in.readString();
         name = in.readString();
         thumbnail = in.readString();
         dateInMillis = in.readLong();
@@ -77,7 +77,7 @@ public class Group implements Parcelable{
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(groupId);
+        dest.writeString(eventId);
         dest.writeString(name);
         dest.writeString(thumbnail);
         dest.writeLong(dateInMillis);
@@ -87,16 +87,16 @@ public class Group implements Parcelable{
         dest.writeInt(size);
     }
 
-    public static Creator<Group> CREATOR = new Creator<Group>() {
+    public static Creator<Event> CREATOR = new Creator<Event>() {
 
         @Override
-        public Group createFromParcel(Parcel source) {
-            return new Group(source);
+        public Event createFromParcel(Parcel source) {
+            return new Event(source);
         }
 
         @Override
-        public Group[] newArray(int size) {
-            return new Group[size];
+        public Event[] newArray(int size) {
+            return new Event[size];
         }
 
     };

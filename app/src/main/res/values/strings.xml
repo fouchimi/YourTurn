@@ -4,8 +4,8 @@
     <string name="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
     <string name="search_hint">Find Contacts</string>
     <string name="menu_search">Search Contacts </string>
-    <string name="group_name">Enter group name</string>
-    <string name="group_creation_label">Provide a group name and optional group icon</string>
+    <string name="group_name">Enter event name</string>
+    <string name="group_creation_label">Provide a event name and optional event icon</string>
     <string name="participantText">Participants</string>
     <string name="new_group_label">New Event Group</string>
 
@@ -13,7 +13,7 @@
     <string name="app_id">sMVHq9lgSmQUtNxyEdsBJaUvZUkqB7eKg</string>
     <string name="master_key">3L3nrFqVD2Ilg_6RXuMusgVba0_uARi6E</string>
     <string name="server">https://yourturnapp.herokuapp.com/parse/</string>
-    <string name="required_group_name">Please enter group name, only alphanumeric allowed</string>
+    <string name="required_group_name">Please enter event name, only alphanumeric allowed</string>
     <string name="preference_file_key">login_credentials</string>
     <string name="groups">Groups</string>
     <string name="activities">Latest Activities</string>
@@ -21,8 +21,8 @@
     <string name="pick_image_intent_text">Group icon</string>
 
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="group_fragment_label">No Group(s)</string>
-    <string name="lat_update_label">No Activities</string>
+    <string name="group_fragment_label">No Event(s)</string>
+    <string name="lat_update_label">No Transaction(s)</string>
 
     <string name="content_authority">com.social.yourturn</string>
     <string name="createdOn">created on</string>
@@ -34,10 +34,10 @@
     <string name="positive_error_validation">Please enter positive value only</string>
     <string name="currency">$</string>
     <string name="zero_default_values">0.00</string>
-    <string name="duplicate_group_name_error">Duplicate group name</string>
-    <string name="new_group_creation">Your new group have been created !</string>
-    <string name="duplicate_group_name_err">Duplicate group name</string>
-    <string name="prompt_group_name">Please type group name first</string>
+    <string name="duplicate_group_name_error">Duplicate event name</string>
+    <string name="new_group_creation">Your new event have been created !</string>
+    <string name="duplicate_group_name_err">Duplicate event name</string>
+    <string name="prompt_group_name">Please type event name first</string>
     <string name="edit_profile">Edit profile</string>
     <string name="profile_text">Profile</string>
     <string name="username">Fouchimi Ousmane</string>
@@ -64,16 +64,17 @@
     <string name="validate_bill_text">Validate bill</string>
     <string name="friendList">friendList</string>
     <string name="sharedAmount">sharedAmount</string>
-    <string name="groupId">groupId</string>
+    <string name="eventId">eventId</string>
     <string name="paymentReceiver">paymentReceiver</string>
     <string name="result_value">resultValue</string>
     <string name="payment_successful_msg">Payment was saved successfully</string>
     <string name="totalAmount">totalAmount</string>
-    <string name="exit_group">Exit Group</string>
-    <string name="view_group_record">View group records</string>
+    <string name="delete_friend">Delete All Invalid Users</string>
+    <string name="view_group_record">View event records</string>
     <string name="send_message">Send message</string>
     <string name="title_activity_confirm_payment">Group Records</string>
-    <string name="selected_group">selected_group</string>
+    <string name="selected_event">selected_event</string>
+    <string name="selected_event_id">selected_event_id</string>
     <string name="profileDataReceiver">profileDataReceiver</string>
 
     <string name="clear_cache_menu">Clear Caches</string>
@@ -90,5 +91,8 @@
     <string name="add_new_contact">Add New Contact</string>
     <string name="paid_text">paid</string>
     <string name="requestedValueText">requested</string>
+    <string name="YesBtn">Yes</string>
+    <string name="NoBtn">No</string>
+    <string name="undo_text">Undo</string>
 
 </resources>

@@ -52,13 +52,13 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
 
         final String SQL_CREATE_GROUP_TABLE = "CREATE TABLE " + EventEntry.TABLE_NAME + " (" +
                 EventEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                EventEntry.COLUMN_GROUP_ID + " TEXT NOT NULL, " +
+                EventEntry.COLUMN_EVENT_ID + " TEXT NOT NULL, " +
                 EventEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
-                EventEntry.COLUMN_GROUP_NAME + " TEXT NOT NULL, " +
-                EventEntry.COLUMN_GROUP_THUMBNAIL + " TEXT NULL, " +
-                EventEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
-                EventEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
-                EventEntry.COLUMN_GROUP_CREATOR + " TEXT, " +
+                EventEntry.COLUMN_EVENT_NAME + " TEXT NOT NULL, " +
+                EventEntry.COLUMN_EVENT_THUMBNAIL + " TEXT NULL, " +
+                EventEntry.COLUMN_EVENT_CREATED_DATE + " INTEGER NOT NULL, " +
+                EventEntry.COLUMN_EVENT_UPDATED_DATE + " INTEGER NOT NULL, " +
+                EventEntry.COLUMN_EVENT_CREATOR + " TEXT, " +
                 "FOREIGN KEY (" + EventEntry.COLUMN_USER_KEY + ") REFERENCES " +
                 UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE SET NULL ON UPDATE CASCADE"
                 + ");";
@@ -66,15 +66,15 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
         final String SQL_CREATE_LEDGER_TABLE = "CREATE TABLE " + YourTurnContract.LedgerEntry.TABLE_NAME + " (" +
                 LedgerEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 LedgerEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
-                LedgerEntry.COLUMN_GROUP_KEY + " TEXT NOT NULL, " +
+                LedgerEntry.COLUMN_EVENT_KEY + " TEXT NOT NULL, " +
                 LedgerEntry.COLUMN_USER_SHARE + " TEXT, " +
                 LedgerEntry.COLUMN_TOTAL_AMOUNT + " TEXT NOT NULL," +
                 LedgerEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
                 LedgerEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
                 "FOREIGN KEY (" + LedgerEntry.COLUMN_USER_KEY + ") REFERENCES " +
                 UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE SET NULL ON UPDATE CASCADE " +
-                "FOREIGN KEY (" + LedgerEntry.COLUMN_GROUP_KEY + ") REFERENCES " +
-                EventEntry.TABLE_NAME + " (" + EventEntry.COLUMN_GROUP_ID + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
+                "FOREIGN KEY (" + LedgerEntry.COLUMN_EVENT_KEY + ") REFERENCES " +
+                EventEntry.TABLE_NAME + " (" + EventEntry.COLUMN_EVENT_ID + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
 
 
         db.execSQL(SQL_CREATE_MEMBER_TABLE);

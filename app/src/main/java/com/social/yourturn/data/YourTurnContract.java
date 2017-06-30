@@ -33,7 +33,6 @@ public class YourTurnContract {
 
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_MEMBER).build();
         public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MEMBER;
-        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MEMBER;
 
         public static final String TABLE_NAME = "members";
         public static final String COLUMN_MEMBER_NAME = "display_name";
@@ -54,7 +53,6 @@ public class YourTurnContract {
 
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_USER).build();
         public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_USER;
-        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_USER;
 
         public static final String TABLE_NAME = "users";
         public static final String COLUMN_USER_NAME = "username";
@@ -76,17 +74,16 @@ public class YourTurnContract {
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_GROUP).build();
 
         public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_GROUP;
-        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_GROUP;
 
         public static final String TABLE_NAME = "groups";
 
-        public static final String COLUMN_GROUP_ID = "group_id";
+        public static final String COLUMN_EVENT_ID = "group_id";
         public static final String COLUMN_USER_KEY = "usr_contact_id";
-        public static final String COLUMN_GROUP_NAME = "group_name";
-        public static final String COLUMN_GROUP_THUMBNAIL = "group_thumbnail";
-        public static final String COLUMN_GROUP_CREATED_DATE = "created_date";
-        public static final String COLUMN_GROUP_UPDATED_DATE = "updated_date";
-        public static final String COLUMN_GROUP_CREATOR = "group_creator";
+        public static final String COLUMN_EVENT_NAME = "group_name";
+        public static final String COLUMN_EVENT_THUMBNAIL = "group_thumbnail";
+        public static final String COLUMN_EVENT_CREATED_DATE = "created_date";
+        public static final String COLUMN_EVENT_UPDATED_DATE = "updated_date";
+        public static final String COLUMN_EVENT_CREATOR = "group_creator";
 
         public static Uri buildGroupUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);
@@ -98,11 +95,10 @@ public class YourTurnContract {
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_LEDGER).build();
 
         public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_LEDGER;
-        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_LEDGER;
 
         public static final String TABLE_NAME = "ledger";
 
-        public static final String COLUMN_GROUP_KEY = "group_id";
+        public static final String COLUMN_EVENT_KEY = "group_id";
         public static final String COLUMN_USER_KEY = "usr_contact_id";
         public static final String COLUMN_USER_SHARE = "usr_share";
         public static final String COLUMN_TOTAL_AMOUNT = "total_amount";

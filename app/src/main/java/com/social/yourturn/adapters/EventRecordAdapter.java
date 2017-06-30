@@ -22,13 +22,13 @@ import de.hdodenhof.circleimageview.CircleImageView;
  * Created by ousma on 6/10/2017.
  */
 
-public class GroupRecordAdapter extends BaseAdapter {
+public class EventRecordAdapter extends BaseAdapter {
 
     private Context mContext;
     private ArrayList<Contact> mList;
     private ImageLoader imageLoader;
 
-    public GroupRecordAdapter(Context context, ArrayList<Contact> list){
+    public EventRecordAdapter(Context context, ArrayList<Contact> list){
         mContext = context;
         mList = list;
         imageLoader = new ImageLoader(mContext);

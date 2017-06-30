@@ -14,8 +14,8 @@ import android.widget.TextView;
 import com.social.yourturn.GroupListActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
-import com.social.yourturn.fragments.GroupFragment;
-import com.social.yourturn.models.Group;
+import com.social.yourturn.fragments.EventFragment;
+import com.social.yourturn.models.Event;
 import com.social.yourturn.utils.ImageLoader;
 import com.social.yourturn.utils.ParseConstant;
 
@@ -28,18 +28,18 @@ import de.hdodenhof.circleimageview.CircleImageView;
  * Created by ousma on 4/21/2017.
  */
 
-public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHolder> {
+public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHolder> {
 
-    private final static String TAG = GroupAdapter.class.getSimpleName();
+    private final static String TAG = EventAdapter.class.getSimpleName();
     private Context mContext;
-    private ArrayList<Group> mGroupList;
+    private ArrayList<Event> mEventList;
     private final View.OnClickListener mOnClickListener = new MyOnClickListener();
     private RecyclerView mRecyclerView;
     ImageLoader imageLoader;
 
-    public GroupAdapter(Context context, ArrayList<Group> groupList, RecyclerView rv){
+    public EventAdapter(Context context, ArrayList<Event> eventList, RecyclerView rv){
         mContext = context;
-        mGroupList = groupList;
+        mEventList = eventList;
         mRecyclerView = rv;
         imageLoader = new ImageLoader(mContext);
     }
@@ -54,31 +54,31 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
 
     @Override
     public void onBindViewHolder(final GroupViewHolder holder, int position) {
-        Group group = mGroupList.get(position);
-        Log.d(TAG, group.getName());
-        holder.groupName.setText(group.getName());
+        Event event = mEventList.get(position);
+        Log.d(TAG, event.getName());
+        holder.groupName.setText(event.getName());
 
-        String[] selectionArgs = {group.getGroupId()};
+        String[] selectionArgs = {event.getEventId()};
 
         Cursor groupCursor = mContext.getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI, null,
-                YourTurnContract.EventEntry.COLUMN_GROUP_ID + "=?", selectionArgs, null);
+                YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", selectionArgs, null);
 
         holder.groupNumber.setText(String.valueOf(groupCursor.getCount()));
 
         groupCursor.close();
 
-        if(group.getThumbnail() != null && group.getThumbnail().length() > 0) imageLoader.DisplayImage(group.getThumbnail(), holder.groupThumbnail);
+        if(event.getThumbnail() != null && event.getThumbnail().length() > 0) imageLoader.DisplayImage(event.getThumbnail(), holder.groupThumbnail);
         else holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
 
     }
 
-    public Group getGroup(int position){
-        return mGroupList.get(position);
+    public Event getGroup(int position){
+        return mEventList.get(position);
     }
 
     @Override
     public int getItemCount() {
-        return mGroupList.size();
+        return mEventList.size();
     }
 
     public static class GroupViewHolder extends RecyclerView.ViewHolder {
@@ -100,8 +100,8 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
         public void onClick(View v) {
             Intent intent = new Intent(mContext, GroupListActivity.class);
             int itemPosition = mRecyclerView.getChildLayoutPosition(v);
-            Group group = getGroup(itemPosition);
-            intent.putExtra(GroupFragment.GROUP_KEY, group);
+            Event event = getGroup(itemPosition);
+            intent.putExtra(EventFragment.GROUP_KEY, event);
 
             intent.putExtra(ParseConstant.USERNAME_COLUMN, getUsername());
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);

@@ -27,16 +27,11 @@
 
 
     <item
-        android:id="@+id/exitAction"
+        android:id="@+id/deleteAction"
         android:orderInCategory="101"
         android:title="@string/exit_group"
         app:showAsAction="never" />
 
-    <item
-        android:id="@+id/viewGroupAction"
-        android:orderInCategory="101"
-        android:title="@string/view_group_record"
-        app:showAsAction="never" />
 
     <item
         android:id="@+id/sendMessageAction"

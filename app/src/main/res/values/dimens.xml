@@ -38,6 +38,7 @@
     <dimen name="txt_15sp">15dp</dimen>
     <dimen name="txt_20sp">20sp</dimen>
     <dimen name="w_12dp">12dp</dimen>
+    <dimen name="ic_clear_margin">56dp</dimen>
     <dimen name="profile_pic_size">180dp</dimen>
 
     <dimen name="design_fab_size_mini">40dp</dimen>

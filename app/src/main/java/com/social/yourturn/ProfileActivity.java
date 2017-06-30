@@ -11,7 +11,6 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
@@ -35,7 +34,6 @@ import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.social.yourturn.broadcast.UserThumbnailBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
-import com.social.yourturn.services.ProfileDataReceiver;
 import com.social.yourturn.utils.ImagePicker;
 import com.social.yourturn.utils.ParseConstant;
 
@@ -282,7 +280,7 @@ public class ProfileActivity extends AppCompatActivity {
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 mBitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
                 byte[] groupImageByteData = stream.toByteArray();
-                pFile = new ParseFile(ParseConstant.GROUP_THUMBNAIL_EXTENSION, groupImageByteData);
+                pFile = new ParseFile(ParseConstant.EVENT_THUMBNAIL_EXTENSION, groupImageByteData);
                 out.flush();
                 out.close();
             } catch (Exception e) {

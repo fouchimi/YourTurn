@@ -32,9 +32,9 @@ import java.util.ArrayList;
 import de.hdodenhof.circleimageview.CircleImageView;
 
 
-public class GroupActivity extends AppCompatActivity {
+public class EventActivity extends AppCompatActivity {
 
-    private final static String TAG = GroupActivity.class.getSimpleName();
+    private final static String TAG = EventActivity.class.getSimpleName();
     private static final int NUM_COLUMNS = 5;
     private static final int REQUEST_SEND_SMS_PERMISSION =0 ;
     private ArrayList<Contact> mContactList = null;
@@ -65,7 +65,7 @@ public class GroupActivity extends AppCompatActivity {
         RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.selected_rv);
 
         if (ContextCompat.checkSelfPermission(getApplicationContext(), SEND_SMS_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(GroupActivity.this, new String[]{SEND_SMS_PERMISSION}, REQUEST_SEND_SMS_PERMISSION);
+            ActivityCompat.requestPermissions(EventActivity.this, new String[]{SEND_SMS_PERMISSION}, REQUEST_SEND_SMS_PERMISSION);
         }
 
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, NUM_COLUMNS));
@@ -95,29 +95,29 @@ public class GroupActivity extends AppCompatActivity {
                 String eventName = WordUtils.capitalize(mGroupTextView.getText().toString(), null);
                 if(eventName.length() > 0){
                     Cursor c = getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI,
-                            new String[]{YourTurnContract.EventEntry.COLUMN_GROUP_NAME},
-                            YourTurnContract.EventEntry.COLUMN_GROUP_NAME + "=?",
+                            new String[]{YourTurnContract.EventEntry.COLUMN_EVENT_NAME},
+                            YourTurnContract.EventEntry.COLUMN_EVENT_NAME + "=?",
                             new String[]{eventName},
                             null);
 
                     if(c != null && c.getCount() > 0){
-                        Toast.makeText(GroupActivity.this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
+                        Toast.makeText(EventActivity.this, R.string.duplicate_group_name_err, Toast.LENGTH_LONG).show();
                         return;
                     } else {
-                        Intent intent = new Intent(GroupActivity.this, GroupListActivity.class);
+                        Intent intent = new Intent(EventActivity.this, GroupListActivity.class);
                         intent.putExtra(ContactActivity.SELECTED_CONTACT, mContactList);
-                        intent.putExtra(GroupActivity.EVENT_NAME, eventName);
+                        intent.putExtra(EventActivity.EVENT_NAME, eventName);
                         intent.putExtra(LocationActivity.CURRENT_PLACE, mPlace);
                         intent.putExtra(LocationActivity.PLACE_URL, locationUrl);
                         startActivity(intent);
                     }
                     if(c != null ) c.close();
                 }else {
-                    Toast.makeText(GroupActivity.this, "Group name can't be empty", Toast.LENGTH_LONG).show();
+                    Toast.makeText(EventActivity.this, "Event name can't be empty", Toast.LENGTH_LONG).show();
                 }
             }else {
-                Toast.makeText(GroupActivity.this, "Accept this permission to invite unregistered members", Toast.LENGTH_LONG).show();
-                ActivityCompat.requestPermissions(GroupActivity.this, new String[]{SEND_SMS_PERMISSION}, REQUEST_SEND_SMS_PERMISSION);
+                Toast.makeText(EventActivity.this, "Accept this permission to invite unregistered members", Toast.LENGTH_LONG).show();
+                ActivityCompat.requestPermissions(EventActivity.this, new String[]{SEND_SMS_PERMISSION}, REQUEST_SEND_SMS_PERMISSION);
             }
         }
     }

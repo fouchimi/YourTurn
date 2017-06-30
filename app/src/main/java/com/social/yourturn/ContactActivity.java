@@ -94,7 +94,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
             @Override
             public void onClick(View v) {
                 if(mSelectedContactList.size() > 0){
-                    Intent intent = new Intent(ContactActivity.this, GroupActivity.class);
+                    Intent intent = new Intent(ContactActivity.this, EventActivity.class);
                     intent.putParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT, mSelectedContactList);
                     intent.putExtra(ParseConstant.USERNAME_COLUMN, ParseUser.getCurrentUser().getUsername());
                     intent.putExtra(ContactActivity.TOTAL_COUNT, oldList.size());

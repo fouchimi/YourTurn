@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.social.yourturn">
 
     <uses-permission android:name="android.permission.READ_CONTACTS" />
@@ -57,25 +58,29 @@
                 android:value=".ContactActivity" />
         </activity>
         <activity
-            android:name=".GroupActivity"
+            android:name=".EventActivity"
             android:label="@string/new_group_label"
             android:parentActivityName=".ContactActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme"
+            tools:targetApi="jelly_bean" />
         <activity
             android:name=".GroupListActivity"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme"
+            tools:targetApi="jelly_bean" />
         <activity
             android:name=".ProfileActivity"
             android:parentActivityName=".MainActivity"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            tools:targetApi="jelly_bean" />
         <activity
             android:name=".EditProfileNameActivity"
             android:parentActivityName=".ProfileActivity"
             android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize"
+            tools:targetApi="jelly_bean" />
 
         <provider
             android:name=".data.YourTurnProvider"
@@ -105,7 +110,7 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".broadcast.GroupBroadcastReceiver"
+            android:name=".broadcast.EventBroadcastReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.parse.push.intent.RECEIVE" />
@@ -149,10 +154,11 @@
             android:name=".ConfirmAmountActivity"
             android:exported="true"
             android:parentActivityName=".MainActivity"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            tools:targetApi="jelly_bean" />
 
         <activity
-            android:name=".GroupRecordActivity"
+            android:name=".EventRecordActivity"
             android:label="@string/title_activity_confirm_payment"
             android:theme="@style/AppTheme" />
 

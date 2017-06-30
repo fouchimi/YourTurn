@@ -2,7 +2,6 @@ package com.social.yourturn;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -47,10 +46,9 @@ import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.parse.SignUpCallback;
 import com.social.yourturn.data.YourTurnContract;
-import com.social.yourturn.fragments.GroupFragment;
-import com.social.yourturn.fragments.LatestUpdateFragment;
+import com.social.yourturn.fragments.EventFragment;
+import com.social.yourturn.fragments.TransactionFragment;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.services.UpdateNameService;
 import com.social.yourturn.utils.ParseConstant;
 import com.social.yourturn.utils.Utils;
 
@@ -368,9 +366,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         public Fragment getItem(int position) {
             switch (position){
                 case 0:
-                    return new GroupFragment();
+                    return new EventFragment();
                 case 1:
-                    return new LatestUpdateFragment();
+                    return new TransactionFragment();
             }
             return null;
         }

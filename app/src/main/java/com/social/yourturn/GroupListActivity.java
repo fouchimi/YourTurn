@@ -7,9 +7,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.graphics.Color;
 import android.os.Handler;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -18,6 +18,8 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
+import android.telephony.SmsManager;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,19 +30,25 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.parse.FunctionCallback;
+import com.parse.GetCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
-import com.social.yourturn.adapters.MemberGroupAdapter;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
+import com.social.yourturn.adapters.MemberEventAdapter;
 import com.social.yourturn.broadcast.LedgerBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.models.Group;
 import com.social.yourturn.broadcast.PushSenderBroadcastReceiver;
+import com.social.yourturn.models.Event;
 import com.social.yourturn.services.ConfirmPaymentIntentService;
 import com.social.yourturn.services.ConfirmPaymentReceiver;
 import com.social.yourturn.utils.ParseConstant;
+import com.social.yourturn.utils.SwipeUtil;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,12 +58,17 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+
+import bolts.Continuation;
+import bolts.Task;
+import bolts.TaskCompletionSource;
 
 public class GroupListActivity extends AppCompatActivity  {
 
     private static final String TAG = GroupListActivity.class.getSimpleName();
     private RecyclerView mRecyclerView;
-    private MemberGroupAdapter mAdapter;
+    private MemberEventAdapter mAdapter;
     private ArrayList<Contact> mContactList = new ArrayList<>();
     private boolean isVisible = false, isValidateVisible = false;
     private BroadcastReceiver mPushSenderBroadcastReceiver;
@@ -65,6 +78,7 @@ public class GroupListActivity extends AppCompatActivity  {
     private PushReplyBroadcastReceiver pReplyBroadcastReceiver = new PushReplyBroadcastReceiver();
     private ConfirmPaymentReceiver mPaymentReceiver;
     private String shareValueList = "", recipientList= "", currentUserValue="";
+    private String eventName, eventUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,19 +100,15 @@ public class GroupListActivity extends AppCompatActivity  {
         Intent intent = getIntent();
         if(intent != null) {
             mContactList = intent.getParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT);
-            String eventName = intent.getExtras().getString(GroupActivity.EVENT_NAME);
+            eventName = intent.getExtras().getString(EventActivity.EVENT_NAME);
+            eventUrl = intent.getExtras().getString(LocationActivity.PLACE_URL);
             getSupportActionBar().setTitle(eventName);
             Contact currentUser = new Contact("0", "You", getUsername());
             mContactList.add(currentUser);
 
-            Collections.sort(mContactList, new Comparator<Contact>() {
-                @Override
-                public int compare(Contact lhs, Contact rhs) {
-                    return lhs.getName().compareTo(rhs.getName());
-                }
-            });
+            Collections.sort(mContactList, (lhs, rhs) -> lhs.getName().compareTo(rhs.getName()));
 
-            mAdapter = new MemberGroupAdapter(this, mContactList);
+            mAdapter = new MemberEventAdapter(this, mContactList);
             LinearLayoutManager mLinearLayout = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
             mRecyclerView.setLayoutManager(mLinearLayout);
             mRecyclerView.setAdapter(mAdapter);
@@ -119,39 +129,41 @@ public class GroupListActivity extends AppCompatActivity  {
             };
         }
 
+        setSwipeForRecyclerView();
         setupPaymentReceiver();
     }
 
 
     private void setupPaymentReceiver(){
-        mPaymentReceiver.setReceiver(new ConfirmPaymentReceiver.Receiver() {
-            @Override
-            public void onReceivedResult(int resultCode, Bundle resultData) {
-                if(resultCode == RESULT_OK){
-                    String resultValue = resultData.getString(getString(R.string.result_value));
-                    final Group group = resultData.getParcelable(getString(R.string.selected_group));
-                    Toast.makeText(GroupListActivity.this, resultValue, Toast.LENGTH_LONG).show();
-                    HashMap<String, Object> payload = new HashMap<>();
-                    shareValueList += "," + currentUserValue;
-                    payload.put("groupId", group.getGroupId());
-                    payload.put("totalAmount", mTotalAmount);
-                    payload.put("sharedValueList", shareValueList);
-                    payload.put("friendIds", recipientList);
-                    payload.put("sender", getUsername());
-                    ParseCloud.callFunctionInBackground("ledgerChannel", payload, new FunctionCallback<Object>() {
-                        @Override
-                        public void done(Object object, ParseException e) {
-                            if(e == null) {
-                                Log.d(TAG, "Successfully sent");
-                                Intent confirmPaymentIntent = new Intent(GroupListActivity.this, GroupRecordActivity.class);
-                                confirmPaymentIntent.putExtra(getString(R.string.selected_group), group);
-                                startActivity(confirmPaymentIntent);
-                            }else {
-                                Log.d(TAG, e.getMessage());
-                            }
-                        }
-                    });
-                }
+        mPaymentReceiver.setReceiver((resultCode, resultData) -> {
+            if(resultCode == RESULT_OK){
+                String resultValue = resultData.getString(getString(R.string.result_value));
+                final String eventId = resultData.getString(getString(R.string.selected_event_id));
+                Toast.makeText(GroupListActivity.this, resultValue, Toast.LENGTH_LONG).show();
+                HashMap<String, Object> payload = new HashMap<>();
+                shareValueList += "," + currentUserValue;
+                payload.put("eventId", eventId);
+                payload.put("eventName", eventName);
+                payload.put("totalAmount", mTotalAmount);
+                payload.put("sharedValue", shareValueList);
+                payload.put("eventUrl", eventUrl);
+                payload.put("targetIds", recipientList);
+                payload.put("sender", getUsername());
+                ParseCloud.callFunctionInBackground("ledgerChannel", payload, (object, e) -> {
+                    if(e == null) {
+                        Intent confirmPaymentIntent = new Intent(GroupListActivity.this, EventRecordActivity.class);
+                        Event event = new Event();
+                        event.setEventId(eventId);
+                        event.setName(eventName);
+                        event.setThumbnail(eventUrl);
+                        event.setContactList(mContactList);
+                        confirmPaymentIntent.putExtra(getString(R.string.selected_event), event);
+                        confirmPaymentIntent.putExtra(getString(R.string.totalAmount), mTotalAmount);
+                        startActivity(confirmPaymentIntent);
+                    }else {
+                        Log.d(TAG, e.getMessage());
+                    }
+                });
             }
         });
     }
@@ -195,6 +207,8 @@ public class GroupListActivity extends AppCompatActivity  {
                 HashMap<String, Object> payload = new HashMap<>();
                 double totalValue = 0.00;
                 mAdapter.notifyDataSetChanged();
+                recipientList = "";
+                shareValueList = "";
                 for(int pos = 0; pos < mAdapter.getContactList().size(); pos++){
                     String value = mAdapter.getContactList().get(pos).getShare();
                     String friend = mAdapter.getContactList().get(pos).getPhoneNumber();
@@ -217,23 +231,24 @@ public class GroupListActivity extends AppCompatActivity  {
                 totalValue = Math.ceil(totalValue);
                 double mTotalParsedAmount = Double.parseDouble(mTotalAmount);
                 double diff = Math.abs(mTotalParsedAmount - totalValue);
-               // Toast.makeText(this, df.format(totalValue), Toast.LENGTH_LONG).show();
                 recipientList = recipientList.substring(0, recipientList.length()-1);
                 shareValueList = shareValueList.substring(0, shareValueList.length()-1);
                 if(diff <= 1){
-                    payload.put("senderId", getUsername());
-                    payload.put("sharedValueList", shareValueList);
-                    payload.put("recipientList", recipientList);
+                    checkFriendAndValidate().onSuccess(new Continuation<List<ParseUser>, Void>() {
+                        public Void then(Task<List<ParseUser>> results) throws Exception {
+                            payload.put("senderId", getUsername());
+                            payload.put("sharedValueList", shareValueList);
+                            payload.put("recipientList", recipientList);
 
-                    ParseCloud.callFunctionInBackground("senderChannel", payload, new FunctionCallback<Object>() {
-                        @Override
-                        public void done(Object object, ParseException e) {
-                            if(e == null) {
-                                Log.d(TAG, "Successfully sent");
-                                findContactInList(getUsername());
-                            }else {
-                                Log.d(TAG, e.getMessage());
-                            }
+                            ParseCloud.callFunctionInBackground("senderChannel", payload, (object, e) -> {
+                                if(e == null) {
+                                    Log.d(TAG, "Successfully sent");
+                                    findContactInList(getUsername());
+                                }else {
+                                    Log.d(TAG, e.getMessage());
+                                }
+                            });
+                            return null;
                         }
                     });
                 }else {
@@ -241,22 +256,58 @@ public class GroupListActivity extends AppCompatActivity  {
                 }
                 return true;
             case R.id.validateBillAction:
-                Intent intent = new Intent(this, ConfirmPaymentIntentService.class);
+                Intent intent = new Intent(GroupListActivity.this, ConfirmPaymentIntentService.class);
                 intent.putParcelableArrayListExtra(getString(R.string.friendList), mAdapter.getContactList());
-                //intent.putExtra(getString(R.string.selected_group), mGroup);
                 intent.putExtra(getString(R.string.paymentReceiver), mPaymentReceiver);
+                intent.putExtra(getString(R.string.selected_event), eventName);
                 intent.putExtra(getString(R.string.totalAmount), mTotalAmount);
                 startService(intent);
                 return true;
-            case R.id.viewGroupAction:
-                Intent recordIntent = new Intent(this, GroupRecordActivity.class);
-                //recordIntent.putExtra(getString(R.string.selected_group), mGroup);
-                startActivity(recordIntent);
+
+            case R.id.deleteAction:
+                
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
 
+    }
+
+    private Task<ParseUser> fetchContactAsync(ParseQuery<ParseUser> query, final String name, final String phoneNumber){
+        final TaskCompletionSource<ParseUser> tcs = new TaskCompletionSource<>();
+        query.getFirstInBackground((user, e) -> {
+            if(e == null) {
+                tcs.setResult(user);
+            }else {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                        .setTitle("User not registered")
+                        .setMessage(WordUtils.capitalize(name, null) + " is not a valid yourturn user. Would you like to invite her by sms ?")
+                        .setPositiveButton(R.string.YesBtn, (dialog, which) -> {
+                            SmsManager smsManager = SmsManager.getDefault();
+                            smsManager.sendTextMessage(phoneNumber, null, "I would like you to install yourturnapp", null, null);
+                        })
+                        .setNegativeButton(R.string.NoBtn, (dialog, which) -> Toast.makeText(GroupListActivity.this, "You won't be able to save the transaction with invalid user(s)", Toast.LENGTH_LONG).show())
+                        .setOnDismissListener(dialog -> Toast.makeText(GroupListActivity.this, "You won't be able to save the transaction with invalid user(s)", Toast.LENGTH_LONG).show());
+                builder.create().show();
+                tcs.setError(e);
+            }
+        });
+
+        return tcs.getTask();
+    }
+
+    private Task<List<ParseUser>> checkFriendAndValidate(){
+
+        ArrayList<Task<ParseUser>> tasks = new ArrayList<>();
+
+        for(Contact contact : mContactList) {
+            ParseQuery<ParseUser> query = ParseUser.getQuery();
+            query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
+
+            tasks.add(fetchContactAsync(query, contact.getName(), contact.getPhoneNumber()));
+        }
+
+        return Task.whenAllResult(tasks);
     }
 
     private void showDialogBox(){
@@ -269,36 +320,32 @@ public class GroupListActivity extends AppCompatActivity  {
         edt.setInputType(InputType.TYPE_CLASS_NUMBER);
 
         dialogBuilder.setTitle(R.string.dialog_custom_title);
-        dialogBuilder.setPositiveButton(R.string.done, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                String value = edt.getText().toString();
-                if(value.length() > 0) {
-                    if(StringUtils.isNumeric(value)){
-                        DecimalFormat df = new DecimalFormat("#.00");
-                        float floatValue = Float.parseFloat(value);
-                        mTotalAmount = df.format(floatValue);
-                        if(floatValue <= 0) {
-                            Toast.makeText(getApplicationContext(), R.string.positive_error_validation, Toast.LENGTH_LONG).show();
-                        }else {
-                            Log.d(TAG, "" + floatValue);
-                            for(Contact contact : mContactList){
-
-                                mSharedAmount = df.format((floatValue / mContactList.size()));
-                                contact.setShare(mSharedAmount);
-                            }
-                            mAdapter.notifyDataSetChanged();
-                            isVisible = true;
-                            invalidateOptionsMenu();
-                        }
+        dialogBuilder.setPositiveButton(R.string.done, (dialog, whichButton) -> {
+            String value = edt.getText().toString();
+            if(value.length() > 0) {
+                if(StringUtils.isNumeric(value)){
+                    DecimalFormat df = new DecimalFormat("#.00");
+                    float floatValue = Float.parseFloat(value);
+                    mTotalAmount = df.format(floatValue);
+                    if(floatValue <= 0) {
+                        Toast.makeText(getApplicationContext(), R.string.positive_error_validation, Toast.LENGTH_LONG).show();
                     }else {
-                        Toast.makeText(getApplicationContext(), R.string.custom_dialog_error_validation, Toast.LENGTH_LONG).show();
+                        Log.d(TAG, "" + floatValue);
+                        for(Contact contact : mContactList){
+
+                            mSharedAmount = df.format((floatValue / mContactList.size()));
+                            contact.setShare(mSharedAmount);
+                        }
+                        mAdapter.notifyDataSetChanged();
+                        isVisible = true;
+                        invalidateOptionsMenu();
                     }
+                }else {
+                    Toast.makeText(getApplicationContext(), R.string.custom_dialog_error_validation, Toast.LENGTH_LONG).show();
                 }
             }
         });
-        dialogBuilder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-            }
+        dialogBuilder.setNegativeButton(R.string.cancel, (dialog, whichButton) -> {
         });
         AlertDialog b = dialogBuilder.create();
         b.show();
@@ -309,7 +356,7 @@ public class GroupListActivity extends AppCompatActivity  {
         for(Contact contact : mAdapter.getContactList()) {
             if(contact.getPhoneNumber().equals(userPhoneId)){
                 View view = mRecyclerView.getChildAt(position);
-                MemberGroupAdapter.MemberViewHolder mViewHolder = (MemberGroupAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
+                MemberEventAdapter.MemberViewHolder mViewHolder = (MemberEventAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
                 if(mViewHolder != null){
                     mViewHolder.getCheckedIcon().setVisibility(View.VISIBLE);
                 }
@@ -380,7 +427,7 @@ public class GroupListActivity extends AppCompatActivity  {
 
                 for(int i = 0; i < mContactList.size(); i++) {
                     View view = mRecyclerView.getChildAt(i);
-                    MemberGroupAdapter.MemberViewHolder mViewHolder = (MemberGroupAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
+                    MemberEventAdapter.MemberViewHolder mViewHolder = (MemberEventAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
                     if( mViewHolder.getCheckedIcon().getVisibility() == View.VISIBLE) {
                         totalCount++;
                     }
@@ -394,7 +441,7 @@ public class GroupListActivity extends AppCompatActivity  {
 
                     for(int i = 0; i < mContactList.size(); i++) {
                         View view = mRecyclerView.getChildAt(i);
-                        MemberGroupAdapter.MemberViewHolder mViewHolder = (MemberGroupAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
+                        MemberEventAdapter.MemberViewHolder mViewHolder = (MemberEventAdapter.MemberViewHolder) mRecyclerView.getChildViewHolder(view);
                         mViewHolder.getRequestedEditText().setEnabled(false);
                         mViewHolder.getRequestedEditText().setFocusable(false);
                         mViewHolder.getRequestedEditText().setBackgroundColor(Color.LTGRAY);
@@ -405,6 +452,35 @@ public class GroupListActivity extends AppCompatActivity  {
                 }
             }
         }
+
+    }
+
+    private void setSwipeForRecyclerView() {
+
+        SwipeUtil swipeHelper = new SwipeUtil(0, ItemTouchHelper.LEFT, this) {
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+                int swipedPosition = viewHolder.getAdapterPosition();
+                mAdapter.pendingRemoval(swipedPosition);
+            }
+
+            @Override
+            public int getSwipeDirs(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
+                int position = viewHolder.getAdapterPosition();
+                if (mAdapter.isPendingRemoval(position)) {
+                    return 0;
+                }
+                return super.getSwipeDirs(recyclerView, viewHolder);
+            }
+        };
+
+        ItemTouchHelper mItemTouchHelper = new ItemTouchHelper(swipeHelper);
+        mItemTouchHelper.attachToRecyclerView(mRecyclerView);
+
+        //set swipe label
+        swipeHelper.setLeftSwipeLable("Archive");
+        //set swipe background-Color
+        swipeHelper.setLeftcolorCode(ContextCompat.getColor(this, R.color.deep_red));
 
     }
 }
