@@ -96,8 +96,8 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
         return tcs.getTask();
     }
 
-    public Task<Void> savedScoreAsync(ParseQuery<ParseUser> query, final String score) {
-        final TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
+    public Task<ParseUser> savedScoreAsync(ParseQuery<ParseUser> query, final String score) {
+        final TaskCompletionSource<ParseUser> tcs = new TaskCompletionSource<>();
         query.getFirstInBackground((user, e) -> {
             if(e == null) {
                 String parseScore = user.getString(ParseConstant.USER_SCORE_COLUMN);
@@ -106,11 +106,13 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
                     double scoredValue = Double.parseDouble(parseScore);
                     user.put(ParseConstant.USER_SCORE_COLUMN, scoredValue + Double.parseDouble(score));
                 }
+                tcs.setResult(user);
                 user.saveInBackground(e1 -> {
                     if(e1 == null) {
-                        tcs.setResult(null);
+                        Log.d(TAG, "Successfully saved");
                     }else {
-                        tcs.setError(e1);
+                        Log.d(TAG, "An error occured");
+                        Toast.makeText(EventRecordActivity.this, "Couldn't saved records to database", Toast.LENGTH_LONG).show();
                     }
                 });
             }else {
@@ -153,16 +155,16 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
         }).onSuccessTask(task -> {
 
             // Create a trivial completed task as a base case.
-            Task<Void> baseTask = Task.forResult(null);
+            ArrayList<Task<ParseUser>> tasks = new ArrayList<>();
 
             for(Contact contact : contactList){
                 final ParseQuery<ParseUser> query = ParseUser.getQuery();
                 query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
-                baseTask = baseTask.continueWithTask(task1 -> savedScoreAsync(query, contact.getShare()));
+                tasks.add(savedScoreAsync(query, contact.getShare()));
             }
-            return baseTask;
-        }).continueWith(new Continuation<Void, Void>() {
-            public Void then(Task<Void> task) throws Exception {
+            return Task.whenAllResult(tasks);
+        }).continueWith(new Continuation<List<ParseUser>, Void>() {
+            public Void then(Task<List<ParseUser>> task) throws Exception {
                 // Every user score saved
                 if(task.isFaulted()){
                     Toast.makeText(EventRecordActivity.this, "Couldn't save data successfully", Toast.LENGTH_LONG).show();

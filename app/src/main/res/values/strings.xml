@@ -69,7 +69,7 @@
     <string name="result_value">resultValue</string>
     <string name="payment_successful_msg">Payment was saved successfully</string>
     <string name="totalAmount">totalAmount</string>
-    <string name="delete_friend">Delete All Invalid Users</string>
+    <string name="delete_invalid_users">Delete All Invalid Users</string>
     <string name="view_group_record">View event records</string>
     <string name="send_message">Send message</string>
     <string name="title_activity_confirm_payment">Group Records</string>

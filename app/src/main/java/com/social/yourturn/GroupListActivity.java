@@ -59,6 +59,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Predicate;
 
 import bolts.Continuation;
 import bolts.Task;
@@ -207,6 +208,10 @@ public class GroupListActivity extends AppCompatActivity  {
                 HashMap<String, Object> payload = new HashMap<>();
                 double totalValue = 0.00;
                 mAdapter.notifyDataSetChanged();
+                if(mAdapter.getContactList().size() == 1){
+                    Toast.makeText(GroupListActivity.this, "You need at least two contacts to proceed", Toast.LENGTH_LONG).show();
+                    return true;
+                }
                 recipientList = "";
                 shareValueList = "";
                 for(int pos = 0; pos < mAdapter.getContactList().size(); pos++){
@@ -231,10 +236,12 @@ public class GroupListActivity extends AppCompatActivity  {
                 totalValue = Math.ceil(totalValue);
                 double mTotalParsedAmount = Double.parseDouble(mTotalAmount);
                 double diff = Math.abs(mTotalParsedAmount - totalValue);
-                recipientList = recipientList.substring(0, recipientList.length()-1);
-                shareValueList = shareValueList.substring(0, shareValueList.length()-1);
+                if(recipientList.length() > 0 && shareValueList.length() > 0){
+                    recipientList = recipientList.substring(0, recipientList.length()-1);
+                    shareValueList = shareValueList.substring(0, shareValueList.length()-1);
+                }
                 if(diff <= 1){
-                    checkFriendAndValidate().onSuccess(new Continuation<List<ParseUser>, Void>() {
+                    checkFriendAndValidate(false).onSuccess(new Continuation<List<ParseUser>, Void>() {
                         public Void then(Task<List<ParseUser>> results) throws Exception {
                             payload.put("senderId", getUsername());
                             payload.put("sharedValueList", shareValueList);
@@ -252,7 +259,7 @@ public class GroupListActivity extends AppCompatActivity  {
                         }
                     });
                 }else {
-                    Toast.makeText(this, "Make sure edited value adds up to previous total", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Make sure edited value adds up to " + mTotalAmount, Toast.LENGTH_LONG).show();
                 }
                 return true;
             case R.id.validateBillAction:
@@ -265,7 +272,12 @@ public class GroupListActivity extends AppCompatActivity  {
                 return true;
 
             case R.id.deleteAction:
-                
+                checkFriendAndValidate(true).onSuccess(new Continuation<List<ParseUser>, Void>() {
+                    public Void then(Task<List<ParseUser>> ignored) throws Exception {
+                        Toast.makeText(GroupListActivity.this, "All invalid users were deleted", Toast.LENGTH_LONG).show();
+                        return null;
+                    }
+                });
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -273,22 +285,27 @@ public class GroupListActivity extends AppCompatActivity  {
 
     }
 
-    private Task<ParseUser> fetchContactAsync(ParseQuery<ParseUser> query, final String name, final String phoneNumber){
+    private Task<ParseUser> fetchContactAsync(ParseQuery<ParseUser> query, final String name, final String phoneNumber, final boolean deleteAction){
         final TaskCompletionSource<ParseUser> tcs = new TaskCompletionSource<>();
         query.getFirstInBackground((user, e) -> {
             if(e == null) {
                 tcs.setResult(user);
             }else {
-                AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                        .setTitle("User not registered")
-                        .setMessage(WordUtils.capitalize(name, null) + " is not a valid yourturn user. Would you like to invite her by sms ?")
-                        .setPositiveButton(R.string.YesBtn, (dialog, which) -> {
-                            SmsManager smsManager = SmsManager.getDefault();
-                            smsManager.sendTextMessage(phoneNumber, null, "I would like you to install yourturnapp", null, null);
-                        })
-                        .setNegativeButton(R.string.NoBtn, (dialog, which) -> Toast.makeText(GroupListActivity.this, "You won't be able to save the transaction with invalid user(s)", Toast.LENGTH_LONG).show())
-                        .setOnDismissListener(dialog -> Toast.makeText(GroupListActivity.this, "You won't be able to save the transaction with invalid user(s)", Toast.LENGTH_LONG).show());
-                builder.create().show();
+                if(deleteAction){
+                    mAdapter.getContactList().removeIf(contact -> contact.getPhoneNumber().equals(phoneNumber));
+                    mAdapter.notifyDataSetChanged();
+                }else {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                            .setTitle("User not registered")
+                            .setMessage(WordUtils.capitalize(name, null) + " is not a valid yourturn user. Would you like to invite her by sms ?")
+                            .setPositiveButton(R.string.YesBtn, (dialog, which) -> {
+                                SmsManager smsManager = SmsManager.getDefault();
+                                smsManager.sendTextMessage(phoneNumber, null, "I would like you to install yourturnapp", null, null);
+                            })
+                            .setNegativeButton(R.string.NoBtn, (dialog, which) -> Toast.makeText(GroupListActivity.this, "You won't be able to save the transaction with invalid user(s)", Toast.LENGTH_LONG).show())
+                            .setOnDismissListener(dialog -> Toast.makeText(GroupListActivity.this, "You won't be able to save the transaction with invalid user(s)", Toast.LENGTH_LONG).show());
+                    builder.create().show();
+                }
                 tcs.setError(e);
             }
         });
@@ -296,7 +313,7 @@ public class GroupListActivity extends AppCompatActivity  {
         return tcs.getTask();
     }
 
-    private Task<List<ParseUser>> checkFriendAndValidate(){
+    private Task<List<ParseUser>> checkFriendAndValidate(boolean flag){
 
         ArrayList<Task<ParseUser>> tasks = new ArrayList<>();
 
@@ -304,7 +321,7 @@ public class GroupListActivity extends AppCompatActivity  {
             ParseQuery<ParseUser> query = ParseUser.getQuery();
             query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
 
-            tasks.add(fetchContactAsync(query, contact.getName(), contact.getPhoneNumber()));
+            tasks.add(fetchContactAsync(query, contact.getName(), contact.getPhoneNumber(), flag));
         }
 
         return Task.whenAllResult(tasks);

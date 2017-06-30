@@ -29,14 +29,14 @@
     <item
         android:id="@+id/deleteAction"
         android:orderInCategory="101"
-        android:title="@string/exit_group"
+        android:title="@string/delete_invalid_users"
         app:showAsAction="never" />
 
 
-    <item
+    <!-- <item
         android:id="@+id/sendMessageAction"
         android:orderInCategory="101"
         android:title="@string/send_message"
-        app:showAsAction="never" />
+        app:showAsAction="never" /> -->
 
 </menu>

@@ -16,8 +16,12 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.parse.FunctionCallback;
+import com.parse.GetCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
+import com.parse.SaveCallback;
 import com.social.yourturn.broadcast.PushSenderBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.utils.ParseConstant;
@@ -84,36 +88,48 @@ public class ConfirmAmountActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(senderName + " wants you to confirm the amount below")
                 .setMessage("You have been requested to confirm an amount of $ " + bundle.getString(PushSenderBroadcastReceiver.MESSAGE))
-                .setPositiveButton(R.string.ok_text, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
+                .setPositiveButton(R.string.ok_text, (dialog, id) -> {
 
-                        HashMap<String, Object> payload = new HashMap<>();
-                        payload.put("targetId", bundle.getString(PushSenderBroadcastReceiver.SENDER_ID));
-                        payload.put("recipientId", getUsername());
-                        ParseCloud.callFunctionInBackground("receiverChannel", payload, new FunctionCallback<Object>() {
-                            @Override
-                            public void done(Object object, ParseException e) {
-                                if(e == null) {
-                                    Log.d(TAG, "Reply confirmation push sent successfully !");
-                                    Toast.makeText(ConfirmAmountActivity.this, R.string.accepted_payment_message, Toast.LENGTH_LONG).show();
-                                    Intent intent = new Intent(ConfirmAmountActivity.this, MainActivity.class);
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                    startActivity(intent);
+                    HashMap<String, Object> payload = new HashMap<>();
+                    payload.put("targetId", bundle.getString(PushSenderBroadcastReceiver.SENDER_ID));
+                    payload.put("recipientId", getUsername());
+                    ParseCloud.callFunctionInBackground("receiverChannel", payload, (object, e) -> {
+                        if(e == null) {
+                            Log.d(TAG, "Reply confirmation push sent successfully !");
+                            Toast.makeText(ConfirmAmountActivity.this, R.string.accepted_payment_message, Toast.LENGTH_LONG).show();
+                            Intent intent1 = new Intent(ConfirmAmountActivity.this, MainActivity.class);
+                            intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(intent1);
+                            ParseQuery<ParseUser> query = ParseUser.getQuery();
+                            query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
+                            query.getFirstInBackground((user, e12) -> {
+                                if(e12 == null) {
+                                    String parseScore = user.getString(ParseConstant.USER_SCORE_COLUMN);
+                                    if(parseScore == null) user.put(ParseConstant.USER_SCORE_COLUMN, bundle.getString(PushSenderBroadcastReceiver.MESSAGE));
+                                    else {
+                                        double scoredValue = Double.parseDouble(parseScore);
+                                        user.put(ParseConstant.USER_SCORE_COLUMN, scoredValue + Double.parseDouble(bundle.getString(PushSenderBroadcastReceiver.MESSAGE)));
+                                    }
+                                    user.saveInBackground(e1 -> {
+                                        if(e1 == null){
+                                            Log.d(TAG, "Score saved successfully");
+                                        }
+                                    });
                                 }else {
-                                    Log.d(TAG, e.getMessage());
+                                    Log.d(TAG, "An error occured");
                                 }
-                            }
-                        });
-                    }
+                            });
+                        }else {
+                            Log.d(TAG, e.getMessage());
+                        }
+                    });
                 })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
+                .setNegativeButton(R.string.cancel, (dialog, id) -> {
 
-                        Toast.makeText(ConfirmAmountActivity.this, R.string.refused_payment_message, Toast.LENGTH_LONG).show();
-                        Intent intent = new Intent(ConfirmAmountActivity.this, MainActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        startActivity(intent);
-                    }
+                    Toast.makeText(ConfirmAmountActivity.this, R.string.refused_payment_message, Toast.LENGTH_LONG).show();
+                    Intent intent12 = new Intent(ConfirmAmountActivity.this, MainActivity.class);
+                    intent12.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent12);
                 });
         builder.create().show();
     }
