@@ -80,10 +80,11 @@ public class YourTurnContract {
         public static final String COLUMN_EVENT_ID = "group_id";
         public static final String COLUMN_USER_KEY = "usr_contact_id";
         public static final String COLUMN_EVENT_NAME = "group_name";
-        public static final String COLUMN_EVENT_THUMBNAIL = "group_thumbnail";
+        public static final String COLUMN_EVENT_URL = "group_thumbnail";
         public static final String COLUMN_EVENT_CREATED_DATE = "created_date";
         public static final String COLUMN_EVENT_UPDATED_DATE = "updated_date";
         public static final String COLUMN_EVENT_CREATOR = "group_creator";
+        public static final String COLUMN_EVENT_FLAG = "flag_latest";
 
         public static Uri buildGroupUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);

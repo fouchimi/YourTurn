@@ -55,10 +55,11 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 EventEntry.COLUMN_EVENT_ID + " TEXT NOT NULL, " +
                 EventEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
                 EventEntry.COLUMN_EVENT_NAME + " TEXT NOT NULL, " +
-                EventEntry.COLUMN_EVENT_THUMBNAIL + " TEXT NULL, " +
+                EventEntry.COLUMN_EVENT_URL + " TEXT NULL, " +
                 EventEntry.COLUMN_EVENT_CREATED_DATE + " INTEGER NOT NULL, " +
                 EventEntry.COLUMN_EVENT_UPDATED_DATE + " INTEGER NOT NULL, " +
                 EventEntry.COLUMN_EVENT_CREATOR + " TEXT, " +
+                EventEntry.COLUMN_EVENT_FLAG + " TEXT, " +
                 "FOREIGN KEY (" + EventEntry.COLUMN_USER_KEY + ") REFERENCES " +
                 UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE SET NULL ON UPDATE CASCADE"
                 + ");";

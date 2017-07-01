@@ -113,14 +113,6 @@ public class Event implements Parcelable{
         this.eventUrl = eventUrl;
     }
 
-    public void setDateInMillis(long dateInMillis) {
-        this.dateInMillis = dateInMillis;
-    }
-
-    public long getDateInMillis() {
-        return dateInMillis;
-    }
-
     public void setGroupUserRef(String groupUserRef) {
         this.groupUserRef = groupUserRef;
     }

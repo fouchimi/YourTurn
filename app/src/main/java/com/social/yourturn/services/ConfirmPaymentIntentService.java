@@ -5,13 +5,10 @@ import android.app.IntentService;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.os.ResultReceiver;
-import android.util.Log;
 
-import com.parse.ParseException;
-import com.parse.ParseObject;
-import com.parse.SaveCallback;
 import com.social.yourturn.LocationActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
@@ -22,7 +19,6 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -52,6 +48,23 @@ public class ConfirmPaymentIntentService extends IntentService {
         final Bundle bundle = new Bundle();
         final String eventId = UUID.randomUUID().toString();
 
+        // update latest event entry flag with "0" string because it will allow me to fetch recent added event in EventFragment
+        Cursor cursor = getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI,
+                new String[]{YourTurnContract.EventEntry.COLUMN_EVENT_ID},
+                YourTurnContract.EventEntry.COLUMN_EVENT_FLAG + "=?", new String[]{"1"}, null);
+        if(cursor != null && cursor.getCount() > 0){
+            cursor.moveToFirst();
+            String evtId = cursor.getString(cursor.getColumnIndex(YourTurnContract.EventEntry.COLUMN_EVENT_ID));
+            ContentValues values  = new ContentValues();
+            values.put(YourTurnContract.EventEntry.COLUMN_EVENT_FLAG, "0");
+            getContentResolver().update(YourTurnContract.EventEntry.CONTENT_URI,
+                    values,
+                    YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", new String[]{evtId});
+        }
+
+        cursor.close();
+
+
         DateTime dayTime = new DateTime();
 
         // save event group locally here
@@ -60,8 +73,9 @@ public class ConfirmPaymentIntentService extends IntentService {
             eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_ID, eventId);
             eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_NAME, WordUtils.capitalize(eventName, null));
             eventValues.put(YourTurnContract.EventEntry.COLUMN_USER_KEY, contact.getPhoneNumber());
-            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_THUMBNAIL, placeUrl);
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_URL, placeUrl);
             eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR, getUsername());
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_FLAG, "1");
             eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATED_DATE, dayTime.getMillis());
             eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE, dayTime.getMillis());
 

@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.social.yourturn.data.YourTurnContract;
-import com.social.yourturn.models.Contact;
 
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
@@ -101,7 +100,7 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
             eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_ID, eventId);
             eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_NAME, WordUtils.capitalize(eventName, null));
             eventValues.put(YourTurnContract.EventEntry.COLUMN_USER_KEY, recipient);
-            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_THUMBNAIL, eventUrl);
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_URL, eventUrl);
             eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR, sender);
             eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATED_DATE, dayTime.getMillis());
             eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE, dayTime.getMillis());

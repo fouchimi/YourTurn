@@ -11,12 +11,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.social.yourturn.GroupListActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.EventFragment;
 import com.social.yourturn.models.Event;
-import com.social.yourturn.utils.ImageLoader;
 import com.social.yourturn.utils.ParseConstant;
 
 import java.util.ArrayList;
@@ -35,13 +35,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
     private ArrayList<Event> mEventList;
     private final View.OnClickListener mOnClickListener = new MyOnClickListener();
     private RecyclerView mRecyclerView;
-    ImageLoader imageLoader;
 
     public EventAdapter(Context context, ArrayList<Event> eventList, RecyclerView rv){
         mContext = context;
         mEventList = eventList;
         mRecyclerView = rv;
-        imageLoader = new ImageLoader(mContext);
     }
 
     @Override
@@ -56,19 +54,19 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
     public void onBindViewHolder(final GroupViewHolder holder, int position) {
         Event event = mEventList.get(position);
         Log.d(TAG, event.getName());
-        holder.groupName.setText(event.getName());
+        holder.eventName.setText(event.getName());
 
         String[] selectionArgs = {event.getEventId()};
 
-        Cursor groupCursor = mContext.getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI, null,
+        Cursor eventCursor = mContext.getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI, null,
                 YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", selectionArgs, null);
 
-        holder.groupNumber.setText(String.valueOf(groupCursor.getCount()));
+        holder.eventNumber.setText(String.valueOf(eventCursor.getCount()));
 
-        groupCursor.close();
+        eventCursor.close();
 
-        if(event.getEventUrl() != null && event.getEventUrl().length() > 0) imageLoader.DisplayImage(event.getEventUrl(), holder.groupThumbnail);
-        else holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
+        if(event.getEventUrl() != null && event.getEventUrl().length() > 0) Glide.with(mContext).load(event.getEventUrl()).into(holder.eventUrlView);
+        else holder.eventUrlView.setImageResource(R.drawable.ic_group_black_36dp);
 
     }
 
@@ -82,15 +80,15 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
     }
 
     public static class GroupViewHolder extends RecyclerView.ViewHolder {
-        public CircleImageView groupThumbnail;
-        public TextView groupName;
-        public TextView groupNumber;
+        public CircleImageView eventUrlView;
+        public TextView eventName;
+        public TextView eventNumber;
 
         public GroupViewHolder(View itemView) {
             super(itemView);
-            this.groupName = (TextView) itemView.findViewById(R.id.group_name);
-            this.groupNumber = (TextView) itemView.findViewById(R.id.group_number);
-            this.groupThumbnail = (CircleImageView) itemView.findViewById(R.id.group_thumbnail);
+            this.eventName = (TextView) itemView.findViewById(R.id.group_name);
+            this.eventNumber = (TextView) itemView.findViewById(R.id.group_number);
+            this.eventUrlView = (CircleImageView) itemView.findViewById(R.id.group_thumbnail);
         }
     }
 
@@ -103,9 +101,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
             Event event = getGroup(itemPosition);
             intent.putExtra(EventFragment.GROUP_KEY, event);
 
-            intent.putExtra(ParseConstant.USERNAME_COLUMN, getUsername());
+            /*intent.putExtra(ParseConstant.USERNAME_COLUMN, getUsername());
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            mContext.startActivity(intent);
+            mContext.startActivity(intent);*/
         }
     }
 

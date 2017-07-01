@@ -274,6 +274,7 @@ public class GroupListActivity extends AppCompatActivity  {
                 intent.putExtra(getString(R.string.paymentReceiver), mPaymentReceiver);
                 intent.putExtra(getString(R.string.selected_event), eventName);
                 intent.putExtra(getString(R.string.totalAmount), mTotalAmount);
+                intent.putExtra(LocationActivity.PLACE_URL, eventUrl);
                 startService(intent);
                 return true;
 

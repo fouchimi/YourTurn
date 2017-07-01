@@ -15,7 +15,6 @@ import android.util.Log;
 
 import com.social.yourturn.MainActivity;
 import com.social.yourturn.data.YourTurnContract;
-import com.social.yourturn.models.Contact;
 
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
@@ -87,19 +86,36 @@ public class EventBroadcastReceiver extends BroadcastReceiver {
 
     private void insertEventEntry(Context context, String eventId, String eventName, String senderId, String eventUrl, String targetIds){
 
+        // update latest event entry flag with "0" string because it will allow me to fetch recent added event in EventFragment
+        Cursor cursor = context.getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI,
+                new String[]{YourTurnContract.EventEntry.COLUMN_EVENT_ID},
+                YourTurnContract.EventEntry.COLUMN_EVENT_FLAG + "=?", new String[]{"1"}, null);
+        if(cursor != null && cursor.getCount() > 0){
+            cursor.moveToFirst();
+            String evtId = cursor.getString(cursor.getColumnIndex(YourTurnContract.EventEntry.COLUMN_EVENT_ID));
+            ContentValues values  = new ContentValues();
+            values.put(YourTurnContract.EventEntry.COLUMN_EVENT_FLAG, "0");
+            context.getContentResolver().update(YourTurnContract.EventEntry.CONTENT_URI,
+                    values,
+                    YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", new String[]{evtId});
+        }
+
+        cursor.close();
+
         String[] ids = targetIds.split(",");
         for(String id: ids){
             DateTime dayTime = new DateTime();
-            ContentValues groupValues = new ContentValues();
-            groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_ID, eventId);
-            groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_NAME, eventName);
-            groupValues.put(YourTurnContract.EventEntry.COLUMN_USER_KEY, id);
-            groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR, senderId);
-            groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_THUMBNAIL, eventUrl);
-            groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATED_DATE, dayTime.getMillis());
-            groupValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE, dayTime.getMillis());
+            ContentValues eventValues = new ContentValues();
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_ID, eventId);
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_NAME, eventName);
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_USER_KEY, id);
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR, senderId);
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_URL, eventUrl);
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_FLAG, "1");
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATED_DATE, dayTime.getMillis());
+            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE, dayTime.getMillis());
 
-            context.getContentResolver().insert(YourTurnContract.EventEntry.CONTENT_URI, groupValues);
+            context.getContentResolver().insert(YourTurnContract.EventEntry.CONTENT_URI, eventValues);
         }
     }
 
@@ -137,7 +153,7 @@ public class EventBroadcastReceiver extends BroadcastReceiver {
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(NOTIFICATION_ID, notification.build());
 
-        insertEventEntry(context, eventId, eventName, senderId, eventUrl, targetIds);
+        insertEventEntry(context, eventId, eventName, senderId, eventUrl, targetIds + "," + senderId);
 
     }
 }

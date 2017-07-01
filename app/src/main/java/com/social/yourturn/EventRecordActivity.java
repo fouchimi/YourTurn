@@ -241,6 +241,7 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
     public void onBackPressed() {
         super.onBackPressed();
         Intent mainIntent = new Intent(this, MainActivity.class);
+        mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(mainIntent);
     }
 

@@ -1,12 +1,9 @@
 package com.social.yourturn.fragments;
 
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -22,29 +19,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.parse.FindCallback;
-import com.parse.GetCallback;
-import com.parse.ParseException;
-import com.parse.ParseFile;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
-import com.parse.ParseUser;
 import com.social.yourturn.R;
 import com.social.yourturn.adapters.EventAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Event;
-import com.social.yourturn.services.UpdateNameService;
 import com.social.yourturn.utils.ParseConstant;
 
-import org.joda.time.DateTime;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import bolts.Continuation;
-import bolts.Task;
-import bolts.TaskCompletionSource;
 
 
 /**
@@ -95,8 +78,15 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if(id == LOADER_ID){
+            if(mEventList.isEmpty())
             return new CursorLoader(getActivity(), YourTurnContract.EventEntry.CONTENT_URI,
                     null, null, null, YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE + " DESC");
+            else {
+                // Fetch latest group event with flag of 1
+                return new CursorLoader(getActivity(), YourTurnContract.EventEntry.CONTENT_URI,
+                        null, YourTurnContract.EventEntry.COLUMN_EVENT_FLAG + "=?", new String[]{"1"},
+                        YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE + " DESC");
+            }
         }
         return null;
     }
@@ -122,6 +112,59 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
 
     private void loadData(Cursor data) {
         ArrayList<Contact> contactList = new ArrayList<>();
+        String eventId, eventName, eventUrl, eventCreator, userId, lastEventId="";
+
+        Event event = null;
+
+        for(data.moveToFirst(); !data.isAfterLast(); data.moveToNext()) {
+            eventId = data.getString(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_EVENT_ID));
+            eventName = data.getString(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_EVENT_NAME));
+            eventUrl = data.getString(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_EVENT_URL));
+            eventCreator = data.getString(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR));
+            userId = data.getString(data.getColumnIndex(YourTurnContract.EventEntry.COLUMN_USER_KEY));
+
+            Cursor userCursor = getActivity().getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null,
+                    YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{userId}, null);
+
+            if(userCursor != null && userCursor.getCount() > 0){
+                userCursor.moveToFirst();
+                String contactId = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.MemberEntry._ID));
+                String username = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
+                String phoneNumber = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER));
+                String thumbnail = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
+
+                if(lastEventId.isEmpty() || eventId.equals(lastEventId)) {
+                    lastEventId = eventId;
+                }else {
+                    lastEventId = eventId;
+                    contactList = new ArrayList<>();
+                }
+                addContact(contactId, username, phoneNumber, thumbnail, contactList);
+                userCursor.close();
+            }
+
+            if(mEventList.isEmpty()){
+                event = new Event();
+                event.setEventId(eventId);
+                event.setName(eventName);
+                event.setEventUrl(eventUrl);
+                event.setGroupCreator(eventCreator);
+                event.setGroupUserRef(userId);
+                event.setContactList(contactList);
+                mEventList.add(event);
+            }else if (mEventList.size() > 0 && mEventList.get(mEventList.size()-1).getEventId().equals(eventId)) continue;
+            else {
+                event = new Event();
+                event.setEventId(eventId);
+                event.setName(eventName);
+                event.setEventUrl(eventUrl);
+                event.setGroupCreator(eventCreator);
+                event.setGroupUserRef(userId);
+                event.setContactList(contactList);
+                mEventList.add(event);
+            }
+
+        }
 
         if(mEventList.size() > 0) {
             mRecyclerView.setVisibility(View.VISIBLE);
