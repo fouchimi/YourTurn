@@ -48,23 +48,6 @@ public class ConfirmPaymentIntentService extends IntentService {
         final Bundle bundle = new Bundle();
         final String eventId = UUID.randomUUID().toString();
 
-        // update latest event entry flag with "0" string because it will allow me to fetch recent added event in EventFragment
-        Cursor cursor = getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI,
-                new String[]{YourTurnContract.EventEntry.COLUMN_EVENT_ID},
-                YourTurnContract.EventEntry.COLUMN_EVENT_FLAG + "=?", new String[]{"1"}, null);
-        if(cursor != null && cursor.getCount() > 0){
-            cursor.moveToFirst();
-            String evtId = cursor.getString(cursor.getColumnIndex(YourTurnContract.EventEntry.COLUMN_EVENT_ID));
-            ContentValues values  = new ContentValues();
-            values.put(YourTurnContract.EventEntry.COLUMN_EVENT_FLAG, "0");
-            getContentResolver().update(YourTurnContract.EventEntry.CONTENT_URI,
-                    values,
-                    YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", new String[]{evtId});
-        }
-
-        cursor.close();
-
-
         DateTime dayTime = new DateTime();
 
         // save event group locally here

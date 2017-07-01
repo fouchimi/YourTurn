@@ -28,6 +28,10 @@ import com.social.yourturn.utils.ParseConstant;
 
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 
 /**
@@ -42,7 +46,6 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
     private EventAdapter mEventAdapter;
     public static final String GROUP_KEY = "Event";
     private static final int LOADER_ID = 0;
-    private String eventUrl = "";
 
     public EventFragment() {
         // Required empty public constructor
@@ -78,15 +81,8 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if(id == LOADER_ID){
-            if(mEventList.isEmpty())
-            return new CursorLoader(getActivity(), YourTurnContract.EventEntry.CONTENT_URI,
-                    null, null, null, YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE + " DESC");
-            else {
-                // Fetch latest group event with flag of 1
-                return new CursorLoader(getActivity(), YourTurnContract.EventEntry.CONTENT_URI,
-                        null, YourTurnContract.EventEntry.COLUMN_EVENT_FLAG + "=?", new String[]{"1"},
-                        YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE + " DESC");
-            }
+            return new CursorLoader(getActivity(),
+                    YourTurnContract.EventEntry.CONTENT_URI, null, null, null, YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE + " DESC");
         }
         return null;
     }
@@ -166,11 +162,18 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
 
         }
 
+        mEventList.stream().filter(distinctByKey(eventObject -> eventObject.getEventId()));
+
         if(mEventList.size() > 0) {
             mRecyclerView.setVisibility(View.VISIBLE);
             emptyTextView.setVisibility(View.GONE);
             mEventAdapter.notifyDataSetChanged();
         }
+    }
+
+    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Map<Object,Boolean> seen = new ConcurrentHashMap<>();
+        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 
     @Override
