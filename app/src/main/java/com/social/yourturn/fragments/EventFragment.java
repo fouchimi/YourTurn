@@ -59,7 +59,7 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
     private EventAdapter mEventAdapter;
     public static final String GROUP_KEY = "Event";
     private static final int LOADER_ID = 0;
-    private String groupThumbnail = "";
+    private String eventUrl = "";
 
     public EventFragment() {
         // Required empty public constructor

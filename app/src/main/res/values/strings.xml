@@ -49,7 +49,7 @@
     <string name="edit_name">Edit Name</string>
     <string name="your_yourturn_contact_name">Your YourTurn contact name</string>
     <string name="choose_profile_image">Choose profile Image</string>
-    <string name="thumbnail_updated_msg">thumbnail updated !</string>
+    <string name="thumbnail_updated_msg">eventUrl updated !</string>
     <string name="validate">Validate</string>
     <string name="current_user">You</string>
     <string name="user_credentials">credentials</string>

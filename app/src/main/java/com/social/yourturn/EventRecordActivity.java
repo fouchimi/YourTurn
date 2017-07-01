@@ -1,26 +1,27 @@
 package com.social.yourturn;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.parse.FindCallback;
-import com.parse.GetCallback;
-import com.parse.ParseException;
+import com.parse.ParseCloud;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
-import com.parse.ParseUser;
-import com.parse.SaveCallback;
 import com.social.yourturn.adapters.EventRecordAdapter;
+import com.social.yourturn.broadcast.EventBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Event;
@@ -43,6 +44,7 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
     private static final int LOADER_ID = 0;
     ArrayList<Contact> contactList = null;
     EventRecordAdapter recordAdapter = null;
+    private BroadcastReceiver eventBroadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,12 +72,19 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
             }
         }
 
+        eventBroadcastReceiver = new BroadcastReceiver(){
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG, "event broadcast invoked !");
+            }
+        };
+
         getSupportLoaderManager().initLoader(LOADER_ID, null, this);
     }
 
-    private Task<ParseObject> savedEventAsync(List<ParseObject> rows) {
+    private Task<ParseObject> savedEventAsync(List<ParseObject> list) {
         final TaskCompletionSource<ParseObject> tcs = new TaskCompletionSource<>();
-        ParseObject.saveAllInBackground(rows, e -> {
+        ParseObject.saveAllInBackground(list, e -> {
             if (e == null) {
                 tcs.setResult(null);
             } else {
@@ -106,11 +115,11 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
                 String parsedScore = row.getString(ParseConstant.USER_SCORE_COLUMN);
                 if(parsedScore == null) {
                     row.put(ParseConstant.USERNAME_COLUMN, phoneNumber);
-                    row.put(ParseConstant.USER_SCORE_COLUMN, score);
+                    row.put(ParseConstant.USER_SCORE_COLUMN, String.valueOf(Double.parseDouble(parsedScore) + Double.parseDouble(score)));
                 }
                 else{
                     double scoredValue = Double.parseDouble(parsedScore);
-                    row.put(ParseConstant.USER_SCORE_COLUMN, scoredValue + score);
+                    row.put(ParseConstant.USER_SCORE_COLUMN, String.valueOf(scoredValue + Double.parseDouble(score)));
                     row.put(ParseConstant.USERNAME_COLUMN, phoneNumber);
                 }
                 row.saveInBackground(ex -> {
@@ -146,7 +155,7 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
             final ParseObject eventTable = new ParseObject(ParseConstant.EVENT_TABLE);
 
             eventTable.put(ParseConstant.EVENT_NAME, event.getName());
-            eventTable.put(ParseConstant.EVENT_THUMBNAIL_COLUMN, event.getThumbnail());
+            eventTable.put(ParseConstant.EVENT_THUMBNAIL_COLUMN, event.getEventUrl());
             eventTable.put(ParseConstant.USER_ID_COLUMN, getUsername());
             eventTable.put(ParseConstant.FRIEND_ID, contact.getPhoneNumber());
             eventTable.put(ParseConstant.EVENT_ID, event.getEventId());
@@ -175,7 +184,7 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
             ArrayList<Task<ParseObject>> tasks = new ArrayList<>();
 
             for(Contact contact : contactList){
-                final ParseQuery<ParseObject> query = new ParseQuery<ParseObject>(ParseConstant.SCORE_TABLE);
+                final ParseQuery<ParseObject> query = new ParseQuery<>(ParseConstant.SCORE_TABLE);
                 query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
 
                 double paidValue = Double.parseDouble(contact.getPaid());
@@ -193,6 +202,33 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
                     Toast.makeText(EventRecordActivity.this, "Couldn't save data successfully", Toast.LENGTH_LONG).show();
                 }else {
                     Toast.makeText(EventRecordActivity.this, "Payment successfully saved", Toast.LENGTH_LONG).show();
+
+                    String userIds = "";
+
+                    for(Contact contact : contactList ){
+                        if(!contact.getPhoneNumber().equals(getUsername())){
+                            userIds += contact.getPhoneNumber() + ",";
+                        }
+                    }
+
+                    if(userIds != null && userIds.length() > 0){
+                        userIds = userIds.substring(0, userIds.length()-1);
+                    }
+
+                    // Send Event creation here
+                    HashMap<String, Object> payload = new HashMap<>();
+                    payload.put("senderId", getUsername());
+                    payload.put("eventId", event.getEventId());
+                    payload.put("eventName", event.getName());
+                    payload.put("eventUrl", event.getEventUrl());
+                    payload.put("targetIds", userIds);
+                    ParseCloud.callFunctionInBackground("eventChannel", payload, (object, e) -> {
+                        if(e == null) {
+                            Log.d(TAG, "Event creation was successful");
+                        }else {
+                            Log.d(TAG, e.getMessage());
+                        }
+                    });
                 }
                 return null;
             }
@@ -251,6 +287,18 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(eventBroadcastReceiver, new IntentFilter(EventBroadcastReceiver.intentAction));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(eventBroadcastReceiver);
     }
 
     private String getUsername() {

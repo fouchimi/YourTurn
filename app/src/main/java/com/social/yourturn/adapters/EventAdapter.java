@@ -67,7 +67,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
 
         groupCursor.close();
 
-        if(event.getThumbnail() != null && event.getThumbnail().length() > 0) imageLoader.DisplayImage(event.getThumbnail(), holder.groupThumbnail);
+        if(event.getEventUrl() != null && event.getEventUrl().length() > 0) imageLoader.DisplayImage(event.getEventUrl(), holder.groupThumbnail);
         else holder.groupThumbnail.setImageResource(R.drawable.ic_group_black_36dp);
 
     }

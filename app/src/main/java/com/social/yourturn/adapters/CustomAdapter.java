@@ -78,7 +78,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
             super(itemView);
             Log.d(TAG, String.valueOf(itemView.getX()));
             Log.d(TAG, String.valueOf(itemView.getY()));
-            this.thumbnailView = (CircleImageView) itemView.findViewById(R.id.thumbnail);
+            this.thumbnailView = (CircleImageView) itemView.findViewById(R.id.eventUrl);
             this.usernameView = (TextView) itemView.findViewById(R.id.username);
         }
     }

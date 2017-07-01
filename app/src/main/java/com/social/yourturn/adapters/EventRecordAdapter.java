@@ -57,7 +57,7 @@ public class EventRecordAdapter extends BaseAdapter {
         if (convertView == null) {
             convertView =  LayoutInflater.from(mContext).inflate(R.layout.record_layout, null);
             holder = new ViewHolder();
-            holder.imageView = (CircleImageView) convertView.findViewById(R.id.thumbnail);
+            holder.imageView = (CircleImageView) convertView.findViewById(R.id.eventUrl);
             holder.usernameView = (TextView) convertView.findViewById(R.id.username);
             holder.amountView = (TextView) convertView.findViewById(R.id.amount);
             convertView.setTag(holder);

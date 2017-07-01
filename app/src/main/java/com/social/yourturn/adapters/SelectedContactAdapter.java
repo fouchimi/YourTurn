@@ -85,7 +85,7 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
 
         public CustomViewHolder(View itemView) {
             super(itemView);
-            this.thumbnailView = (CircleImageView) itemView.findViewById(R.id.thumbnail);
+            this.thumbnailView = (CircleImageView) itemView.findViewById(R.id.eventUrl);
             this.usernameView = (TextView) itemView.findViewById(R.id.username);
             this.deleteIconView = (ImageView) itemView.findViewById(R.id.selected);
         }

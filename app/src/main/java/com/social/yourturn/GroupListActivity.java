@@ -2,7 +2,6 @@ package com.social.yourturn;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -29,11 +28,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.parse.FunctionCallback;
-import com.parse.GetCallback;
 import com.parse.ParseCloud;
-import com.parse.ParseException;
-import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.social.yourturn.adapters.MemberEventAdapter;
@@ -55,11 +50,9 @@ import org.json.JSONObject;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Predicate;
 
 import bolts.Continuation;
 import bolts.Task;
@@ -78,7 +71,7 @@ public class GroupListActivity extends AppCompatActivity  {
     private int totalCount = 0;
     private PushReplyBroadcastReceiver pReplyBroadcastReceiver = new PushReplyBroadcastReceiver();
     private ConfirmPaymentReceiver mPaymentReceiver;
-    private String shareValueList = "", recipientList= "", currentUserValue="";
+    private String valueList = "", targetIds = "", currentUserValue="";
     private String eventName, eventUrl;
 
     @Override
@@ -142,13 +135,13 @@ public class GroupListActivity extends AppCompatActivity  {
                 final String eventId = resultData.getString(getString(R.string.selected_event_id));
                 Toast.makeText(GroupListActivity.this, resultValue, Toast.LENGTH_LONG).show();
                 HashMap<String, Object> payload = new HashMap<>();
-                shareValueList += "," + currentUserValue;
+                valueList += "," + currentUserValue;
                 payload.put("eventId", eventId);
                 payload.put("eventName", eventName);
                 payload.put("totalAmount", mTotalAmount);
-                payload.put("sharedValue", shareValueList);
+                payload.put("sharedValue", valueList);
                 payload.put("eventUrl", eventUrl);
-                payload.put("targetIds", recipientList);
+                payload.put("targetIds", targetIds);
                 payload.put("sender", getUsername());
                 ParseCloud.callFunctionInBackground("ledgerChannel", payload, (object, e) -> {
                     if(e == null) {
@@ -156,7 +149,7 @@ public class GroupListActivity extends AppCompatActivity  {
                         Event event = new Event();
                         event.setEventId(eventId);
                         event.setName(eventName);
-                        event.setThumbnail(eventUrl);
+                        event.setEventUrl(eventUrl);
                         event.setContactList(mContactList);
                         confirmPaymentIntent.putExtra(getString(R.string.selected_event), event);
                         confirmPaymentIntent.putExtra(getString(R.string.totalAmount), mTotalAmount);
@@ -213,8 +206,9 @@ public class GroupListActivity extends AppCompatActivity  {
                     Toast.makeText(GroupListActivity.this, "You need at least two contacts to proceed", Toast.LENGTH_LONG).show();
                     return true;
                 }
-                recipientList = "";
-                shareValueList = "";
+                targetIds = "";
+                valueList = "";
+                boolean foundCurrentUser = false;
                 for(int pos = 0; pos < mAdapter.getContactList().size(); pos++){
                     String requestedValue = mAdapter.getContactList().get(pos).getRequested();
                     String paidValue = mAdapter.getContactList().get(pos).getPaid();
@@ -226,10 +220,11 @@ public class GroupListActivity extends AppCompatActivity  {
                         totalRequestedValue += rValue;
                         totalPaidValue += pValue;
                         if(!friend.equals(getUsername())){
-                            recipientList += friend +",";
-                            shareValueList += paidValue + ",";
+                            targetIds += friend +",";
+                            valueList += paidValue + ",";
                         }else {
                             currentUserValue = mAdapter.getContactList().get(pos).getPaid();
+                            foundCurrentUser = true;
                         }
 
                     }else {
@@ -237,21 +232,26 @@ public class GroupListActivity extends AppCompatActivity  {
                     }
                 }
 
+                if(!foundCurrentUser){
+                    Toast.makeText(this, "You have to add yourself in order to proceed", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+
                 totalPaidValue = Math.ceil(totalPaidValue);
                 totalRequestedValue = Math.ceil(totalRequestedValue);
                 double mTotalParsedAmount = Double.parseDouble(mTotalAmount);
                 double diffPaidValue = Math.abs(mTotalParsedAmount - totalPaidValue);
                 double diffReqValue = Math.abs(mTotalParsedAmount - totalRequestedValue);
-                if(recipientList.length() > 0 && shareValueList.length() > 0){
-                    recipientList = recipientList.substring(0, recipientList.length()-1);
-                    shareValueList = shareValueList.substring(0, shareValueList.length()-1);
+                if(targetIds.length() > 0 && valueList.length() > 0){
+                    targetIds = targetIds.substring(0, targetIds.length()-1);
+                    valueList = valueList.substring(0, valueList.length()-1);
                 }
                 if(diffPaidValue <= 1 && diffReqValue <= 1){
                     checkFriendAndValidate(false).onSuccess(new Continuation<List<ParseUser>, Void>() {
                         public Void then(Task<List<ParseUser>> results) throws Exception {
                             payload.put("senderId", getUsername());
-                            payload.put("sharedValueList", shareValueList);
-                            payload.put("recipientList", recipientList);
+                            payload.put("sharedValue", valueList);
+                            payload.put("targetIds", targetIds);
 
                             ParseCloud.callFunctionInBackground("senderChannel", payload, (object, e) -> {
                                 if(e == null) {

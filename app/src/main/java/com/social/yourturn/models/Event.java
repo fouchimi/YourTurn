@@ -12,7 +12,7 @@ import java.util.ArrayList;
 public class Event implements Parcelable{
     private String eventId;
     private String name;
-    private String thumbnail;
+    private String eventUrl;
     private long dateInMillis;
     private String groupCreator;
     private String groupUserRef;
@@ -35,8 +35,8 @@ public class Event implements Parcelable{
         return name;
     }
 
-    public String getThumbnail() {
-        return thumbnail;
+    public String getEventUrl() {
+        return eventUrl;
     }
 
     public void setGroupCreator(String groupCreator) {
@@ -67,7 +67,7 @@ public class Event implements Parcelable{
     private Event(Parcel in){
         eventId = in.readString();
         name = in.readString();
-        thumbnail = in.readString();
+        eventUrl = in.readString();
         dateInMillis = in.readLong();
         groupCreator = in.readString();
         groupUserRef = in.readString();
@@ -79,7 +79,7 @@ public class Event implements Parcelable{
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(eventId);
         dest.writeString(name);
-        dest.writeString(thumbnail);
+        dest.writeString(eventUrl);
         dest.writeLong(dateInMillis);
         dest.writeString(groupCreator);
         dest.writeString(groupUserRef);
@@ -109,8 +109,8 @@ public class Event implements Parcelable{
         this.name = name;
     }
 
-    public void setThumbnail(String thumbnail) {
-        this.thumbnail = thumbnail;
+    public void setEventUrl(String eventUrl) {
+        this.eventUrl = eventUrl;
     }
 
     public void setDateInMillis(long dateInMillis) {

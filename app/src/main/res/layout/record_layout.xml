@@ -20,7 +20,7 @@
 
             <de.hdodenhof.circleimageview.CircleImageView
                 xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/thumbnail"
+                android:id="@+id/eventUrl"
                 android:layout_width="@dimen/pic_size"
                 android:layout_height="@dimen/pic_size"
                 app:civ_border_color="@color/black"

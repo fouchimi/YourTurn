@@ -54,7 +54,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
 
         final ViewHolder holder = new ViewHolder();
         holder.username = (TextView) itemLayout.findViewById(R.id.username);
-        holder.thumbnail = (CircleImageView) itemLayout.findViewById(R.id.thumbnail);
+        holder.eventUrl = (CircleImageView) itemLayout.findViewById(R.id.eventUrl);
         holder.selected = (ImageView) itemLayout.findViewById(R.id.selected);
 
         itemLayout.setTag(holder);
@@ -94,7 +94,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
 
         thumbnailCursor.close();
 
-        imageLoader.DisplayImage(thumbnail, holder.thumbnail);
+        imageLoader.DisplayImage(thumbnail, holder.eventUrl);
         holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
         if (isSelected) {
@@ -141,7 +141,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
     public class ViewHolder {
         TextView username;
         ImageView  selected;
-        CircleImageView thumbnail;
+        CircleImageView eventUrl;
     }
 
 }
