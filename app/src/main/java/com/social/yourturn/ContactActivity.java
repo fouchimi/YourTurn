@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.PointF;
 import android.net.Uri;
@@ -90,18 +91,15 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
             placeUrl = bundle.getString(LocationActivity.PLACE_URL);
         }
 
-        fb.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(mSelectedContactList.size() > 0){
-                    Intent intent = new Intent(ContactActivity.this, EventActivity.class);
-                    intent.putParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT, mSelectedContactList);
-                    intent.putExtra(ParseConstant.USERNAME_COLUMN, ParseUser.getCurrentUser().getUsername());
-                    intent.putExtra(ContactActivity.TOTAL_COUNT, oldList.size());
-                    intent.putExtra(LocationActivity.CURRENT_PLACE, mPlace);
-                    intent.putExtra(LocationActivity.PLACE_URL, placeUrl);
-                    ContactActivity.this.startActivity(intent);
-                }
+        fb.setOnClickListener(v -> {
+            if(mSelectedContactList.size() > 0){
+                Intent intent = new Intent(ContactActivity.this, EventActivity.class);
+                intent.putParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT, mSelectedContactList);
+                intent.putExtra(ParseConstant.USERNAME_COLUMN, getUsername());
+                intent.putExtra(ContactActivity.TOTAL_COUNT, oldList.size());
+                intent.putExtra(LocationActivity.CURRENT_PLACE, mPlace);
+                intent.putExtra(LocationActivity.PLACE_URL, placeUrl);
+                ContactActivity.this.startActivity(intent);
             }
         });
 
@@ -423,6 +421,11 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         final static int DISPLAY_NAME = 1;
         final static int PHONE_NUMBER = 2;
         final static int THUMBNAIL = 3;
+    }
+
+    private String getUsername() {
+        SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
     }
 
 }

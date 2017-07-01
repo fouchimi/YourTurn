@@ -35,7 +35,8 @@
     <dimen name="txt_35dp">35dp</dimen>
     <dimen name="txt_60dp">60dp</dimen>
     <dimen name="txt_22sp">22sp</dimen>
-    <dimen name="txt_15sp">15dp</dimen>
+    <dimen name="txt_15dp">15dp</dimen>
+    <dimen name="txt_15sp">15sp</dimen>
     <dimen name="txt_20sp">20sp</dimen>
     <dimen name="w_12dp">12dp</dimen>
     <dimen name="ic_clear_margin">56dp</dimen>

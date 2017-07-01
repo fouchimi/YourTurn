@@ -34,7 +34,7 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void processPush(Context context, Intent intent) {
-        String sender="", sharedValue = "", friendIds = "", eventId = "", totalAmount="", eventName="", eventUrl="";
+        String sender="", requestValue="", sharedValue = "", targetIds = "", eventId = "", totalAmount="";
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -52,33 +52,23 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
                     }else if(key.equals("eventId")){
                         eventId = json.getString(key);
                         Log.d(TAG, "group Id: " + eventId);
-                    }else if(key.equals("eventName")){
-                        eventName = json.getString(key);
-                        Log.d(TAG, "event name: " + eventName);
-                    }else if(key.equals("eventUrl")){
-                        eventUrl = json.getString(key);
-                        Log.d(TAG, "event url: " + eventUrl);
+                    }else if(key.equals("requestValue")) {
+                        requestValue = json.getString(key);
+                        Log.d(TAG, "requestValue: " + requestValue);
                     }else if(key.equals("sharedValue")) {
                         sharedValue = json.getString(key);
                         Log.d(TAG, "sharedValue: " + sharedValue);
-                    }else if(key.equals("friendIds")) {
-                        friendIds = json.getString(key);
-                        Log.d(TAG, "targetIds: " + friendIds);
+                    }else if(key.equals("targetIds")) {
+                        targetIds = json.getString(key);
+                        Log.d(TAG, "targetIds: " + targetIds);
                     }else if(key.equals("totalAmount")){
                         totalAmount = json.getString(key);
                         Log.d(TAG, "total Amount: " + totalAmount);
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(sender.length() > 0 &&
-                        eventId.length() > 0 &&
-                        sharedValue.length() > 0 &&
-                        sharedValue.length() > 0 &&
-                        friendIds.length() > 0 &&
-                        totalAmount.length() > 0 &&
-                        eventName.length() > 0 &&
-                        eventUrl.length() > 0) {
-                    savedLedgerRecords(context, sender, eventId, sharedValue, friendIds, totalAmount, eventName, eventUrl);
+                if(sender.length() > 0 && eventId.length() > 0 && sharedValue.length() > 0 && targetIds.length() > 0 && totalAmount.length() > 0  && requestValue.length() > 0) {
+                    savedLedgerRecords(context, sender, eventId, requestValue, sharedValue, targetIds, totalAmount);
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();
@@ -88,31 +78,20 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
     }
 
 
-    private void savedLedgerRecords(Context context, String sender, String eventId, String sharedValue, String recipients, String totalAmount, String eventName, String eventUrl){
+    private void savedLedgerRecords(Context context, String sender, String eventId, String requestValue, String sharedValue, String recipients, String totalAmount){
 
         recipients +=","+ sender;
         String[] recipientList = recipients.split(",");
         String[] share = sharedValue.split(",");
+        String[] request = requestValue.split(",");
         DateTime dayTime = new DateTime();
-
-        for(String recipient: recipientList){
-            ContentValues eventValues = new ContentValues();
-            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_ID, eventId);
-            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_NAME, WordUtils.capitalize(eventName, null));
-            eventValues.put(YourTurnContract.EventEntry.COLUMN_USER_KEY, recipient);
-            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_URL, eventUrl);
-            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR, sender);
-            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_CREATED_DATE, dayTime.getMillis());
-            eventValues.put(YourTurnContract.EventEntry.COLUMN_EVENT_UPDATED_DATE, dayTime.getMillis());
-
-            context.getContentResolver().insert(YourTurnContract.EventEntry.CONTENT_URI, eventValues);
-        }
 
         for(int i=0; i < recipientList.length; i++){
             ContentValues ledgerValues = new ContentValues();
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_EVENT_KEY, eventId);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_KEY, recipientList[i]);
-            ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_SHARE, share[i]);
+            ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_REQUEST, request[i]);
+            ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_PAID, share[i]);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_TOTAL_AMOUNT, totalAmount);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());

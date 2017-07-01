@@ -94,5 +94,7 @@
     <string name="YesBtn">Yes</string>
     <string name="NoBtn">No</string>
     <string name="undo_text">Undo</string>
+    <string name="requested_text">requested $: %1$s</string>
+    <string name="paid_text_value">paid $: %1$s</string>
 
 </resources>

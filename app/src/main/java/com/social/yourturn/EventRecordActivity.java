@@ -259,7 +259,7 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
         for(int i=0; i < data.getCount(); i++){
             data.moveToNext();
             String userId = data.getString(data.getColumnIndex(YourTurnContract.LedgerEntry.COLUMN_USER_KEY));
-            String userShareAmount = data.getString(data.getColumnIndex(YourTurnContract.LedgerEntry.COLUMN_USER_SHARE));
+            String userShareAmount = data.getString(data.getColumnIndex(YourTurnContract.LedgerEntry.COLUMN_USER_PAID));
             Log.d(TAG, "user Id: " + userId + " value: " + userShareAmount);
             if(!map.containsKey(userId)) {
                 map.put(userId, Double.parseDouble(userShareAmount));

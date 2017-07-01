@@ -71,7 +71,7 @@ public class GroupListActivity extends AppCompatActivity  {
     private int totalCount = 0;
     private PushReplyBroadcastReceiver pReplyBroadcastReceiver = new PushReplyBroadcastReceiver();
     private ConfirmPaymentReceiver mPaymentReceiver;
-    private String valueList = "", targetIds = "", currentUserValue="";
+    private String requestList = "", valueList = "", targetIds = "", currentUserValue="";
     private String eventName, eventUrl;
 
     @Override
@@ -139,6 +139,7 @@ public class GroupListActivity extends AppCompatActivity  {
                 payload.put("eventId", eventId);
                 payload.put("eventName", eventName);
                 payload.put("totalAmount", mTotalAmount);
+                payload.put("requestValue", requestList);
                 payload.put("sharedValue", valueList);
                 payload.put("eventUrl", eventUrl);
                 payload.put("targetIds", targetIds);
@@ -207,6 +208,7 @@ public class GroupListActivity extends AppCompatActivity  {
                     return true;
                 }
                 targetIds = "";
+                requestList = "";
                 valueList = "";
                 boolean foundCurrentUser = false;
                 for(int pos = 0; pos < mAdapter.getContactList().size(); pos++){
@@ -222,8 +224,10 @@ public class GroupListActivity extends AppCompatActivity  {
                         if(!friend.equals(getUsername())){
                             targetIds += friend +",";
                             valueList += paidValue + ",";
+                            requestList += requestedValue + ",";
                         }else {
                             currentUserValue = mAdapter.getContactList().get(pos).getPaid();
+                            requestList += currentUserValue + ",";
                             foundCurrentUser = true;
                         }
 
@@ -245,6 +249,7 @@ public class GroupListActivity extends AppCompatActivity  {
                 if(targetIds.length() > 0 && valueList.length() > 0){
                     targetIds = targetIds.substring(0, targetIds.length()-1);
                     valueList = valueList.substring(0, valueList.length()-1);
+                    requestList = requestList.substring(0, requestList.length()-1);
                 }
                 if(diffPaidValue <= 1 && diffReqValue <= 1){
                     checkFriendAndValidate(false).onSuccess(new Continuation<List<ParseUser>, Void>() {

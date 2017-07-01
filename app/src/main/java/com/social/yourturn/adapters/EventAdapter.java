@@ -65,6 +65,28 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
 
         eventCursor.close();
 
+        Cursor ledgerCursor = mContext.getContentResolver().query(YourTurnContract.LedgerEntry.CONTENT_URI,
+                new String[]{YourTurnContract.LedgerEntry.COLUMN_USER_REQUEST, YourTurnContract.LedgerEntry.COLUMN_USER_PAID},
+                YourTurnContract.LedgerEntry.COLUMN_EVENT_KEY + "=?" + " AND " + YourTurnContract.LedgerEntry.COLUMN_USER_KEY + "=?",
+                new String[]{event.getEventId(), getUsername()}, null);
+
+        if(ledgerCursor != null && ledgerCursor.getCount() > 0) {
+            ledgerCursor.moveToFirst();
+
+            String requestValue = ledgerCursor.getString(ledgerCursor.getColumnIndex(YourTurnContract.LedgerEntry.COLUMN_USER_REQUEST));
+            String paidValue = ledgerCursor.getString(ledgerCursor.getColumnIndex(YourTurnContract.LedgerEntry.COLUMN_USER_PAID));
+
+            Log.d(TAG, "request Value: " + requestValue);
+            Log.d(TAG, "paid Value: " + paidValue);
+
+            holder.requestedText.setText(mContext.getString(R.string.requested_text, requestValue));
+            holder.paidText.setText(mContext.getString(R.string.paid_text_value, paidValue));
+        }else {
+            Log.d(TAG, "Empty ledger cursor");
+        }
+
+        ledgerCursor.close();
+
         if(event.getEventUrl() != null && event.getEventUrl().length() > 0) Glide.with(mContext).load(event.getEventUrl()).into(holder.eventUrlView);
         else holder.eventUrlView.setImageResource(R.drawable.ic_group_black_36dp);
 
@@ -83,12 +105,15 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
         public CircleImageView eventUrlView;
         public TextView eventName;
         public TextView eventNumber;
+        public TextView requestedText, paidText;
 
         public GroupViewHolder(View itemView) {
             super(itemView);
             this.eventName = (TextView) itemView.findViewById(R.id.group_name);
             this.eventNumber = (TextView) itemView.findViewById(R.id.group_number);
             this.eventUrlView = (CircleImageView) itemView.findViewById(R.id.group_thumbnail);
+            this.requestedText = (TextView) itemView.findViewById(R.id.requestText);
+            this.paidText = (TextView) itemView.findViewById(R.id.paidText);
         }
     }
 
@@ -99,7 +124,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
             Intent intent = new Intent(mContext, GroupListActivity.class);
             int itemPosition = mRecyclerView.getChildLayoutPosition(v);
             Event event = getGroup(itemPosition);
-            intent.putExtra(EventFragment.GROUP_KEY, event);
+            intent.putExtra(EventFragment.EVENT_KEY, event);
 
             /*intent.putExtra(ParseConstant.USERNAME_COLUMN, getUsername());
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);

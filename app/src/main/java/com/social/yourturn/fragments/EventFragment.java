@@ -28,10 +28,6 @@ import com.social.yourturn.utils.ParseConstant;
 
 
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 
 /**
@@ -44,7 +40,7 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
     private RecyclerView mRecyclerView;
     private ArrayList<Event> mEventList = new ArrayList<>();
     private EventAdapter mEventAdapter;
-    public static final String GROUP_KEY = "Event";
+    public static final String EVENT_KEY = "Event";
     private static final int LOADER_ID = 0;
 
     public EventFragment() {
@@ -147,7 +143,8 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
                 event.setGroupCreator(eventCreator);
                 event.setGroupUserRef(userId);
                 event.setContactList(contactList);
-                mEventList.add(event);
+                if(!mEventList.contains(event))
+                    mEventList.add(0, event);
             }else if (mEventList.size() > 0 && mEventList.get(mEventList.size()-1).getEventId().equals(eventId)) continue;
             else {
                 event = new Event();
@@ -157,12 +154,12 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
                 event.setGroupCreator(eventCreator);
                 event.setGroupUserRef(userId);
                 event.setContactList(contactList);
-                mEventList.add(event);
+                if(!mEventList.contains(event))
+                    mEventList.add(0, event);
             }
 
         }
 
-        mEventList.stream().filter(distinctByKey(eventObject -> eventObject.getEventId()));
 
         if(mEventList.size() > 0) {
             mRecyclerView.setVisibility(View.VISIBLE);
@@ -171,10 +168,6 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
         }
     }
 
-    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
-        Map<Object,Boolean> seen = new ConcurrentHashMap<>();
-        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
-    }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {

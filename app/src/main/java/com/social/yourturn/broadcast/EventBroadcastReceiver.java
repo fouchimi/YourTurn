@@ -15,6 +15,7 @@ import android.util.Log;
 
 import com.social.yourturn.MainActivity;
 import com.social.yourturn.data.YourTurnContract;
+import com.social.yourturn.models.Contact;
 
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;

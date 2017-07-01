@@ -68,7 +68,8 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 LedgerEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 LedgerEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
                 LedgerEntry.COLUMN_EVENT_KEY + " TEXT NOT NULL, " +
-                LedgerEntry.COLUMN_USER_SHARE + " TEXT, " +
+                LedgerEntry.COLUMN_USER_REQUEST + " TEXT, " +
+                LedgerEntry.COLUMN_USER_PAID + " TEXT, " +
                 LedgerEntry.COLUMN_TOTAL_AMOUNT + " TEXT NOT NULL," +
                 LedgerEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
                 LedgerEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +

@@ -43,10 +43,6 @@ public class Event implements Parcelable{
         this.groupCreator = groupCreator;
     }
 
-    public String getGroupCreator() {
-        return groupCreator;
-    }
-
     public void setSize(int size) {
         this.size = size;
     }
@@ -117,7 +113,22 @@ public class Event implements Parcelable{
         this.groupUserRef = groupUserRef;
     }
 
-    public String getGroupUserRef() {
-        return groupUserRef;
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == null) return false;
+        if (other == this) return true;
+        if (!(other instanceof Event))return false;
+        Event event = (Event) other;
+        if(this.getEventId().equals(event.getEventId())) return true;
+        else return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 31 * result + getEventId().hashCode();
+        result = 31 * result + getName().hashCode();
+        return result;
     }
 }

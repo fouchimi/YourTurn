@@ -81,19 +81,16 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        fab.setOnClickListener(v -> {
 
-                if(!hasPermissions(MainActivity.this, PERMISSIONS)){
-                    ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, PERMISSION_ALL);
-                }else {
-                    Intent intent = new Intent(getApplicationContext(), LocationActivity.class);
-                    intent.putExtra(ALL_CONTACTS, mContactList);
-                    startActivity(intent);
-                }
-
+            if(!hasPermissions(MainActivity.this, PERMISSIONS)){
+                ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, PERMISSION_ALL);
+            }else {
+                Intent intent = new Intent(getApplicationContext(), LocationActivity.class);
+                intent.putExtra(ALL_CONTACTS, mContactList);
+                startActivity(intent);
             }
+
         });
 
         ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, PERMISSION_ALL);
@@ -120,17 +117,19 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 String phoneId = sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
                 String phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
 
-                if(!phoneId.equals("") && !phoneNumber.equals("")){
-                    ParseUser.logInInBackground(phoneId, phoneNumber, new LogInCallback() {
-                        @Override
-                        public void done(ParseUser user, ParseException e) {
+                if(mCurrentUser == null) {
+                    if(!phoneId.equals("") && !phoneNumber.equals("")){
+                        ParseUser.logInInBackground(phoneId, phoneNumber, (user, e) -> {
                             if(e == null){
                                 mCurrentUser = user;
                             }else {
                                 Log.d(TAG, e.getMessage());
                             }
-                        }
-                    });
+                        });
+                    }
+                }else {
+                    Log.d(TAG, "Current user already logged in");
+                    mCurrentUser.logOut();
                 }
             }
         }else {
@@ -138,12 +137,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             AlertDialog.Builder builder = new AlertDialog.Builder(this)
                     .setTitle(R.string.connection_title_msg)
                     .setMessage(R.string.connection_msg_content)
-                    .setPositiveButton(R.string.ok_text, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            finish();
-                        }
-                    });
+                    .setPositiveButton(R.string.ok_text, (dialog, which) -> finish());
 
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -189,41 +183,38 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     Log.d(TAG, "Phone Id: " + phoneId);
                     Log.d(TAG, "Phone number: " + phoneNumber);
 
-                    mCurrentUser = new ParseUser();
-                    mCurrentUser.setUsername(phoneNumber);
-                    mCurrentUser.setPassword(phoneId);
-                    mCurrentUser.put(ParseConstant.DEVICE_ID_COLUMN, phoneId);
-                    mCurrentUser.put(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
+                    mCurrentUser = ParseUser.getCurrentUser();
+                    if(mCurrentUser == null) {
+                        mCurrentUser = new ParseUser();
+                        mCurrentUser.setUsername(phoneNumber);
+                        mCurrentUser.setPassword(phoneId);
+                        mCurrentUser.put(ParseConstant.DEVICE_ID_COLUMN, phoneId);
+                        mCurrentUser.put(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
 
-                    //Save login credentials in Shared Preferences document
-                    savedCredentials(phoneId, phoneNumber);
+                        //Save login credentials in Shared Preferences document
+                        savedCredentials(phoneId, phoneNumber);
 
-                    mCurrentUser.signUpInBackground(new SignUpCallback() {
-                        @Override
-                        public void done(ParseException e) {
+                        mCurrentUser.signUpInBackground(e -> {
                             if(e == null){
                                 Log.d(TAG, "PARSE USER TABLE CREATED !");
                                 ParseInstallation installation = ParseInstallation.getCurrentInstallation();
                                 installation.put("device_id", mCurrentUser.getUsername());
-                                installation.saveInBackground(new SaveCallback() {
-                                    @Override
-                                    public void done(ParseException e) {
-                                        if(e == null){
-                                            Log.d(TAG, "device id saved");
-                                        }else {
-                                            Log.d(TAG, e.getMessage());
-                                            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-                                        }
+                                installation.saveInBackground(e1 -> {
+                                    if(e1 == null){
+                                        Log.d(TAG, "device id saved");
+                                    }else {
+                                        Log.d(TAG, e1.getMessage());
+                                        Toast.makeText(getApplicationContext(), e1.getMessage(), Toast.LENGTH_LONG).show();
                                     }
                                 });
                             }else {
-                                //Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
                                 Log.d(TAG, e.getMessage());
                                 Log.d(TAG, "An error occur !");
                             }
-                        }
-                    });
-
+                        });
+                    }else {
+                        Log.d(TAG, "Account already exists");
+                    }
 
                 }else {
                     Toast.makeText(this, "Make sure to accept all permissions", Toast.LENGTH_SHORT).show();

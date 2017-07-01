@@ -101,7 +101,8 @@ public class YourTurnContract {
 
         public static final String COLUMN_EVENT_KEY = "group_id";
         public static final String COLUMN_USER_KEY = "usr_contact_id";
-        public static final String COLUMN_USER_SHARE = "usr_share";
+        public static final String COLUMN_USER_REQUEST = "usr_request";
+        public static final String COLUMN_USER_PAID = "usr_paid";
         public static final String COLUMN_TOTAL_AMOUNT = "total_amount";
         public static final String COLUMN_GROUP_CREATED_DATE = "created_date";
         public static final String COLUMN_GROUP_UPDATED_DATE = "updated_date";

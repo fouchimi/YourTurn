@@ -5,7 +5,6 @@ import android.app.IntentService;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.os.ResultReceiver;
 
@@ -70,7 +69,8 @@ public class ConfirmPaymentIntentService extends IntentService {
             ContentValues ledgerValues = new ContentValues();
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_EVENT_KEY, eventId);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_KEY, contact.getPhoneNumber());
-            ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_SHARE, contact.getPaid());
+            ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_PAID, contact.getPaid());
+            ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_REQUEST, contact.getRequested());
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_TOTAL_AMOUNT, totalAmount);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());
