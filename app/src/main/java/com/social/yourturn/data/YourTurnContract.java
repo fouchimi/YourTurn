@@ -41,6 +41,7 @@ public class YourTurnContract {
         public static final String COLUMN_MEMBER_THUMBNAIL = "thumbnail";
         public static final String COLUMN_MEMBER_SORT_KEY_PRIMARY = "sort_key";
         public static final String COLUMN_MEMBER_LOOKUP_KEY = "lookup";
+        public static final String COLUMN_MEMBER_SCORE = "score";
         public static final String COLUMN_MEMBER_CREATED_DATE = "created_date";
         public static final String COLUMN_MEMBER_UPDATED_DATE = "updated_date";
 

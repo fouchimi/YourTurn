@@ -81,8 +81,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
             Log.d(TAG, "request Value: " + requestValue);
             Log.d(TAG, "paid Value: " + paidValue);
 
-            holder.requestedText.setText(mContext.getString(R.string.requested_text, requestValue));
-            holder.paidText.setText(mContext.getString(R.string.paid_text_value, paidValue));
+            holder.requestedText.setText(mContext.getString(R.string.requestedText, requestValue));
+            holder.paidText.setText(mContext.getString(R.string.paidText, paidValue));
         }else {
             Log.d(TAG, "Empty ledger cursor");
         }
@@ -128,24 +128,21 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
 
             Cursor eventIdCursor = mContext.getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI,
                     new String[]{YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR},
-                    YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", new String[]{event.getEventId()}, null);
+                    YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?" + " AND " + YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR + "=?",
+                    new String[]{event.getEventId(), getUsername()}, null);
 
-            if(eventIdCursor != null && eventIdCursor.getCount() > 0) {
-                eventIdCursor.moveToFirst();
-                String eventCreator = eventIdCursor.getString(eventIdCursor.getColumnIndex(YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR));
-                if(!eventCreator.equals(getUsername())){
-                    Contact contact = new Contact();
-                    contact.setName(mContext.getString(R.string.current_user));
-                    contact.setPhoneNumber(getUsername());
-                    event.getContactList().add(contact);
-                }
-            }
-
-            for(Contact contact : event.getContactList()){
-                if(contact.getPhoneNumber().equals(getUsername())) contact.setName(mContext.getString(R.string.current_user));
+            if(eventIdCursor != null && eventIdCursor.getCount() <= 0) {
+                Contact contact = new Contact();
+                contact.setName(mContext.getString(R.string.current_user));
+                contact.setPhoneNumber(getUsername());
+                event.getContactList().add(contact);
             }
 
             eventIdCursor.close();
+
+            for(Contact contact : event.getContactList())
+                if(contact.getPhoneNumber().equals(getUsername())) contact.setName(mContext.getString(R.string.current_user));
+
             intent.putExtra(EventFragment.EVENT_KEY, event);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             mContext.startActivity(intent);

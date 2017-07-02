@@ -32,6 +32,7 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 MemberEntry.COLUMN_MEMBER_LOOKUP_KEY + " TEXT, " +
                 MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + " TEXT NOT NULL, " +
                 MemberEntry.COLUMN_MEMBER_REGISTERED + " TEXT, " +
+                MemberEntry.COLUMN_MEMBER_SCORE + " TEXT, " +
                 MemberEntry.COLUMN_MEMBER_SORT_KEY_PRIMARY + " TEXT, " +
                 MemberEntry.COLUMN_MEMBER_THUMBNAIL + " TEXT, " +
                 MemberEntry.COLUMN_MEMBER_CREATED_DATE + " INTEGER NOT NULL, " +

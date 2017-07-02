@@ -70,9 +70,9 @@ public class EventRecordAdapter extends BaseAdapter {
 
         imageLoader.DisplayImage(contact.getThumbnailUrl(), holder.imageView);
         holder.usernameView.setText(WordUtils.capitalize(contact.getName().toLowerCase(), null));
-        if(contact.getShare() != null && !contact.getShare().equals(mContext.getString(R.string.zero_default_values))){
+        if(contact.getScore() != null && !contact.getScore().equals(mContext.getString(R.string.zero_default_values))){
             DecimalFormat df = new DecimalFormat("#.00");
-            double doubleValue = Double.parseDouble(contact.getShare());
+            double doubleValue = Double.parseDouble(contact.getScore());
             holder.amountView.setText(String.valueOf(df.format(doubleValue)));
         }
 

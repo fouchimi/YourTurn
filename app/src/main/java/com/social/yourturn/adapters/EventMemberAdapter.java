@@ -65,6 +65,7 @@ public class EventMemberAdapter extends BaseAdapter {
             holder = new EventMemberViewHolder();
             holder.userUrlView = (CircleImageView) convertView.findViewById(R.id.userUrl);
             holder.username = (TextView) convertView.findViewById(R.id.username);
+            holder.score = (TextView) convertView.findViewById(R.id.score);
             holder.requestedText = (TextView) convertView.findViewById(R.id.requestText);
             holder.paidText = (TextView) convertView.findViewById(R.id.paidText);
             convertView.setTag(holder);
@@ -84,13 +85,13 @@ public class EventMemberAdapter extends BaseAdapter {
                 YourTurnContract.LedgerEntry.COLUMN_EVENT_KEY + "=?" + " AND " + YourTurnContract.LedgerEntry.COLUMN_USER_KEY + "=?",
                 new String[]{mEvent.getEventId(), contact.getPhoneNumber()}, null);
 
+        DecimalFormat df = new DecimalFormat("#.00");
+
         if(ledgerCursor != null && ledgerCursor.getCount() > 0) {
             ledgerCursor.moveToFirst();
 
             String requestValue = ledgerCursor.getString(ledgerCursor.getColumnIndex(YourTurnContract.LedgerEntry.COLUMN_USER_REQUEST));
             String paidValue = ledgerCursor.getString(ledgerCursor.getColumnIndex(YourTurnContract.LedgerEntry.COLUMN_USER_PAID));
-
-            DecimalFormat df = new DecimalFormat("#.00");
 
             holder.requestedText.setText(mContext.getString(R.string.requestedText, df.format(Double.parseDouble(requestValue))));
             holder.paidText.setText(mContext.getString(R.string.paidText, df.format(Double.parseDouble(paidValue))));
@@ -98,13 +99,15 @@ public class EventMemberAdapter extends BaseAdapter {
 
         ledgerCursor.close();
 
+        if(contact.getScore() != null) holder.score.setText(mContext.getString(R.string.scoreValue, df.format(Double.parseDouble(contact.getScore()))));
+
         return convertView;
     }
 
 
     static class EventMemberViewHolder {
         private CircleImageView userUrlView;
-        private TextView username;
+        private TextView username, score;
         private TextView requestedText, paidText;
     }
 }

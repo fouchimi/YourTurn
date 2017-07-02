@@ -160,7 +160,6 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
 
         }
 
-
         if(mEventList.size() > 0) {
             mRecyclerView.setVisibility(View.VISIBLE);
             emptyTextView.setVisibility(View.GONE);
@@ -178,10 +177,4 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
         super.onResume();
     }
 
-
-
-    private String getUsername(){
-        SharedPreferences sharedPref = getActivity().getSharedPreferences(getString(R.string.user_credentials), Context.MODE_PRIVATE);
-        return sharedPref.getString(ParseConstant.USERNAME_COLUMN, "");
-    }
 }

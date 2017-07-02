@@ -168,7 +168,7 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
             for(Contact contact : contactList){
                 final ParseObject ledger_group_table = new ParseObject(ParseConstant.LEDGER_EVENT_TABLE);
                 ledger_group_table.put(ParseConstant.LEDGER_EVENT_ID, event.getEventId());
-                ledger_group_table.put(ParseConstant.LEDGER_SHARED_AMOUNT, contact.getShare());
+                ledger_group_table.put(ParseConstant.LEDGER_SHARED_AMOUNT, contact.getScore());
                 ledger_group_table.put(ParseConstant.LEDGER_USER_ID, contact.getPhoneNumber());
                 ledger_group_table.put(ParseConstant.LEDGER_TOTAL_AMOUNT, totalAmount);
 
@@ -189,10 +189,10 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
 
                 double paidValue = Double.parseDouble(contact.getPaid());
                 double requestedValue = Double.parseDouble(contact.getRequested());
-                if(paidValue > requestedValue) contact.setShare(String.valueOf(paidValue-requestedValue));
-                else if(paidValue < requestedValue) contact.setShare(String.valueOf(paidValue-requestedValue));
-                else contact.setShare(getString(R.string.zero_default_values));
-                tasks.add(savedScoreAsync(query, contact.getShare(), contact.getPhoneNumber()));
+                if(paidValue > requestedValue) contact.setScore(String.valueOf(paidValue-requestedValue));
+                else if(paidValue < requestedValue) contact.setScore(String.valueOf(paidValue-requestedValue));
+                else contact.setScore(getString(R.string.zero_default_values));
+                tasks.add(savedScoreAsync(query, contact.getScore(), contact.getPhoneNumber()));
             }
             return Task.whenAllResult(tasks);
         }).continueWith(new Continuation<List<ParseObject>, Void>() {
@@ -275,7 +275,7 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
             Map.Entry pair = (Map.Entry)itr.next();
             for(Contact contact : contactList){
                 if(contact.getPhoneNumber().equals(pair.getKey())) {
-                    contact.setShare(String.valueOf(pair.getValue()));
+                    contact.setScore(String.valueOf(pair.getValue()));
                     break;
                 }
             }

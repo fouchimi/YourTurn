@@ -15,7 +15,7 @@ public class Contact implements Parcelable, Serializable {
     private String thumbnailUrl;
     private String phoneNumber;
     private boolean selected;
-    private String share;
+    private String score;
     private String requested;
     private String paid;
 
@@ -53,8 +53,8 @@ public class Contact implements Parcelable, Serializable {
         return phoneNumber;
     }
 
-    public String getShare() {
-        return share;
+    public String getScore() {
+        return score;
     }
 
     public void setPaid(String paid) {
@@ -73,8 +73,8 @@ public class Contact implements Parcelable, Serializable {
         return requested;
     }
 
-    public void setShare(String share) {
-        this.share = share;
+    public void setScore(String score) {
+        this.score = score;
     }
 
     public void setThumbnailUrl(String thumbnailUrl) {
@@ -103,7 +103,7 @@ public class Contact implements Parcelable, Serializable {
         name = in.readString();
         thumbnailUrl = in.readString();
         phoneNumber  = in.readString();
-        share = in.readString();
+        score = in.readString();
         requested = in.readString();
         paid = in.readString();
         selected = in.readByte() != 0;
@@ -115,7 +115,7 @@ public class Contact implements Parcelable, Serializable {
         dest.writeString(name);
         dest.writeString(thumbnailUrl);
         dest.writeString(phoneNumber);
-        dest.writeString(share);
+        dest.writeString(score);
         dest.writeString(requested);
         dest.writeString(paid);
         dest.writeByte((byte) (selected ? 1 : 0));
