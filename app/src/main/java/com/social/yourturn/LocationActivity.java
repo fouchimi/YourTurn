@@ -97,29 +97,26 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
         builder.setAlwaysShow(true);
 
         PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build());
-        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
-            @Override
-            public void onResult(@NonNull LocationSettingsResult result) {
-                final Status status = result.getStatus();
-                switch (status.getStatusCode()) {
-                    case LocationSettingsStatusCodes.SUCCESS:
-                        Log.i(TAG, "All location settings are satisfied.");
-                        getLastLocation();
-                        break;
-                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                        Log.i(TAG, "Location settings are not satisfied. Show the user a dialog to upgrade location settings ");
-                        try {
-                            // Show the dialog by calling startResolutionForResult(), and check the result
-                            // in onActivityResult().
-                            status.startResolutionForResult(LocationActivity.this, REQUEST_CHECK_SETTINGS);
-                        } catch (IntentSender.SendIntentException e) {
-                            Log.i(TAG, "PendingIntent unable to execute request.");
-                        }
-                        break;
-                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                        Log.i(TAG, "Location settings are inadequate, and cannot be fixed here. Dialog not created.");
-                        break;
-                }
+        result.setResultCallback(result1 -> {
+            final Status status = result1.getStatus();
+            switch (status.getStatusCode()) {
+                case LocationSettingsStatusCodes.SUCCESS:
+                    Log.i(TAG, "All location settings are satisfied.");
+                    getLastLocation();
+                    break;
+                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                    Log.i(TAG, "Location settings are not satisfied. Show the user a dialog to upgrade location settings ");
+                    try {
+                        // Show the dialog by calling startResolutionForResult(), and check the result
+                        // in onActivityResult().
+                        status.startResolutionForResult(LocationActivity.this, REQUEST_CHECK_SETTINGS);
+                    } catch (IntentSender.SendIntentException e) {
+                        Log.i(TAG, "PendingIntent unable to execute request.");
+                    }
+                    break;
+                case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                    Log.i(TAG, "Location settings are inadequate, and cannot be fixed here. Dialog not created.");
+                    break;
             }
         });
     }
@@ -135,23 +132,20 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
     @SuppressWarnings("MissingPermission")
     private void getLastLocation() {
         mFusedLocationClient.getLastLocation()
-                .addOnCompleteListener(this, new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        if (task.isSuccessful() && task.getResult() != null) {
-                            mLastLocation = task.getResult();
-                            StringBuilder urlBuilder = new StringBuilder(BASE_LOCATION_URL);
-                            urlBuilder.append("location=" + mLastLocation.getLatitude() + "," + mLastLocation.getLongitude());
-                            urlBuilder.append("&radius=0.2");
-                            urlBuilder.append("&key=" + getString(R.string.google_places_api_key));
-                            url = urlBuilder.toString();
-                            FetchPlaceTask placeTask = new FetchPlaceTask(LocationActivity.this);
-                            placeTask.execute(url);
-                            Log.d(TAG, url);
-                        } else {
-                            Log.w(TAG, "getLastLocation:exception", task.getException());
-                            showSnackbar(getString(R.string.no_location_detected));
-                        }
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        mLastLocation = task.getResult();
+                        StringBuilder urlBuilder = new StringBuilder(BASE_LOCATION_URL);
+                        urlBuilder.append("location=" + mLastLocation.getLatitude() + "," + mLastLocation.getLongitude());
+                        urlBuilder.append("&radius=0.2");
+                        urlBuilder.append("&key=" + getString(R.string.google_places_api_key));
+                        url = urlBuilder.toString();
+                        FetchPlaceTask placeTask = new FetchPlaceTask(LocationActivity.this);
+                        placeTask.execute(url);
+                        Log.d(TAG, url);
+                    } else {
+                        Log.w(TAG, "getLastLocation:exception", task.getException());
+                        showSnackbar(getString(R.string.no_location_detected));
                     }
                 });
     }
@@ -200,12 +194,9 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
             Log.i(TAG, "Displaying permission rationale to provide additional context.");
 
             showSnackbar(R.string.location_permission_rationale, android.R.string.ok,
-                    new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            // Request permission
-                            startLocationPermissionRequest();
-                        }
+                    view -> {
+                        // Request permission
+                        startLocationPermissionRequest();
                     });
 
         } else {
@@ -254,30 +245,17 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
         placeUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=2048&photoreference=" + place.getUrl() + "&key=" + getString(R.string.google_places_api_key);
         Glide.with(this).load(placeUrl).into(placeImageView);
 
-        dialogBuilder.setPositiveButton(R.string.proceed_text, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent contactIntent = new Intent(LocationActivity.this, ContactActivity.class);
-                contactIntent.putExtra(MainActivity.ALL_CONTACTS, mContactList);
-                contactIntent.putExtra(LocationActivity.CURRENT_PLACE, place);
-                contactIntent.putExtra(LocationActivity.PLACE_URL,  placeUrl);
-                startActivity(contactIntent);
-            }
+        dialogBuilder.setPositiveButton(R.string.proceed_text, (dialog, which) -> {
+            Intent contactIntent = new Intent(LocationActivity.this, ContactActivity.class);
+            contactIntent.putParcelableArrayListExtra(MainActivity.ALL_CONTACTS, mContactList);
+            contactIntent.putExtra(LocationActivity.CURRENT_PLACE, place);
+            contactIntent.putExtra(LocationActivity.PLACE_URL,  placeUrl);
+            startActivity(contactIntent);
         });
 
-        dialogBuilder.setNegativeButton(R.string.cancel_text, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish();
-            }
-        });
+        dialogBuilder.setNegativeButton(R.string.cancel_text, (dialog, which) -> finish());
 
-        dialogBuilder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                finish();
-            }
-        });
+        dialogBuilder.setOnDismissListener(dialog -> finish());
 
         dialogBuilder.create().show();
     }

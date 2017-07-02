@@ -71,7 +71,7 @@ public class GroupListActivity extends AppCompatActivity  {
     private int totalCount = 0;
     private PushReplyBroadcastReceiver pReplyBroadcastReceiver = new PushReplyBroadcastReceiver();
     private ConfirmPaymentReceiver mPaymentReceiver;
-    private String requestList = "", valueList = "", targetIds = "", currentUserValue="";
+    private String requestList = "", paidList = "", targetIds = "", currentUserValue="";
     private String eventName, eventUrl;
 
     @Override
@@ -135,13 +135,11 @@ public class GroupListActivity extends AppCompatActivity  {
                 final String eventId = resultData.getString(getString(R.string.selected_event_id));
                 Toast.makeText(GroupListActivity.this, resultValue, Toast.LENGTH_LONG).show();
                 HashMap<String, Object> payload = new HashMap<>();
-                valueList += "," + currentUserValue;
+                paidList += "," + currentUserValue;
                 payload.put("eventId", eventId);
-                payload.put("eventName", eventName);
                 payload.put("totalAmount", mTotalAmount);
                 payload.put("requestValue", requestList);
-                payload.put("sharedValue", valueList);
-                payload.put("eventUrl", eventUrl);
+                payload.put("paidValue", paidList);
                 payload.put("targetIds", targetIds);
                 payload.put("sender", getUsername());
                 ParseCloud.callFunctionInBackground("ledgerChannel", payload, (object, e) -> {
@@ -209,7 +207,7 @@ public class GroupListActivity extends AppCompatActivity  {
                 }
                 targetIds = "";
                 requestList = "";
-                valueList = "";
+                paidList = "";
                 boolean foundCurrentUser = false;
                 for(int pos = 0; pos < mAdapter.getContactList().size(); pos++){
                     String requestedValue = mAdapter.getContactList().get(pos).getRequested();
@@ -223,11 +221,11 @@ public class GroupListActivity extends AppCompatActivity  {
                         totalPaidValue += pValue;
                         if(!friend.equals(getUsername())){
                             targetIds += friend +",";
-                            valueList += paidValue + ",";
+                            paidList += paidValue + ",";
                             requestList += requestedValue + ",";
                         }else {
                             currentUserValue = mAdapter.getContactList().get(pos).getPaid();
-                            requestList += currentUserValue + ",";
+                            requestList += mAdapter.getContactList().get(pos).getRequested() + ",";
                             foundCurrentUser = true;
                         }
 
@@ -241,38 +239,57 @@ public class GroupListActivity extends AppCompatActivity  {
                     return true;
                 }
 
-                totalPaidValue = Math.ceil(totalPaidValue);
-                totalRequestedValue = Math.ceil(totalRequestedValue);
                 double mTotalParsedAmount = Double.parseDouble(mTotalAmount);
+                if(totalPaidValue < mTotalParsedAmount){
+                    totalPaidValue = Math.ceil(totalPaidValue);
+                }else if(totalPaidValue > mTotalParsedAmount){
+                    totalPaidValue = Math.floor(totalPaidValue);
+                }
+
+                if(totalRequestedValue < mTotalParsedAmount){
+                    totalRequestedValue = Math.ceil(totalRequestedValue);
+                }else if(totalRequestedValue > mTotalParsedAmount){
+                    totalRequestedValue = Math.floor(totalRequestedValue);
+                }
+
                 double diffPaidValue = Math.abs(mTotalParsedAmount - totalPaidValue);
                 double diffReqValue = Math.abs(mTotalParsedAmount - totalRequestedValue);
-                if(targetIds.length() > 0 && valueList.length() > 0){
+
+                if(diffPaidValue != 0){
+                    Toast.makeText(this, "Make sure paid column value adds up to " + mTotalAmount, Toast.LENGTH_LONG).show();
+                    return true;
+                }
+
+                if(diffReqValue != 0){
+                    Toast.makeText(this, "Make sure requested column value adds up to " + mTotalAmount, Toast.LENGTH_LONG).show();
+                    return true;
+                }
+
+                if(targetIds.length() > 0 && paidList.length() > 0){
                     targetIds = targetIds.substring(0, targetIds.length()-1);
-                    valueList = valueList.substring(0, valueList.length()-1);
+                    paidList = paidList.substring(0, paidList.length()-1);
                     requestList = requestList.substring(0, requestList.length()-1);
                 }
-                if(diffPaidValue <= 1 && diffReqValue <= 1){
-                    checkFriendAndValidate(false).onSuccess(new Continuation<List<ParseUser>, Void>() {
-                        public Void then(Task<List<ParseUser>> results) throws Exception {
-                            payload.put("senderId", getUsername());
-                            payload.put("sharedValue", valueList);
-                            payload.put("targetIds", targetIds);
 
-                            ParseCloud.callFunctionInBackground("senderChannel", payload, (object, e) -> {
-                                if(e == null) {
-                                    Log.d(TAG, "Successfully sent");
-                                    findContactInList(getUsername());
-                                }else {
-                                    Log.d(TAG, e.getMessage());
-                                }
-                            });
-                            return null;
-                        }
-                    });
-                }else {
-                    Toast.makeText(this, "Make sure edited value adds up to " + mTotalAmount, Toast.LENGTH_LONG).show();
-                }
+                checkFriendAndValidate(false).onSuccess(new Continuation<List<ParseUser>, Void>() {
+                    public Void then(Task<List<ParseUser>> results) throws Exception {
+                        payload.put("senderId", getUsername());
+                        payload.put("sharedValue", paidList);
+                        payload.put("targetIds", targetIds);
+
+                        ParseCloud.callFunctionInBackground("senderChannel", payload, (object, e) -> {
+                            if(e == null) {
+                                Log.d(TAG, "Successfully sent");
+                                findContactInList(getUsername());
+                            }else {
+                                Log.d(TAG, e.getMessage());
+                            }
+                        });
+                        return null;
+                    }
+                });
                 return true;
+
             case R.id.validateBillAction:
                 Intent intent = new Intent(GroupListActivity.this, ConfirmPaymentIntentService.class);
                 intent.putParcelableArrayListExtra(getString(R.string.friendList), mAdapter.getContactList());

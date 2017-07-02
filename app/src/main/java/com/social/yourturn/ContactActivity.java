@@ -96,7 +96,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
                 Intent intent = new Intent(ContactActivity.this, EventActivity.class);
                 intent.putParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT, mSelectedContactList);
                 intent.putExtra(ParseConstant.USERNAME_COLUMN, getUsername());
-                intent.putExtra(ContactActivity.TOTAL_COUNT, oldList.size());
+                if(oldList != null) intent.putExtra(ContactActivity.TOTAL_COUNT, oldList.size());
                 intent.putExtra(LocationActivity.CURRENT_PLACE, mPlace);
                 intent.putExtra(LocationActivity.PLACE_URL, placeUrl);
                 ContactActivity.this.startActivity(intent);

@@ -45,6 +45,10 @@ public class Contact implements Parcelable, Serializable {
         return name;
     }
 
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
     public String getPhoneNumber() {
         return phoneNumber;
     }

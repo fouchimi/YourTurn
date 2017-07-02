@@ -34,7 +34,7 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void processPush(Context context, Intent intent) {
-        String sender="", requestValue="", sharedValue = "", targetIds = "", eventId = "", totalAmount="";
+        String sender="", requestValue="", paidValue = "", targetIds = "", eventId = "", totalAmount="";
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -55,9 +55,9 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
                     }else if(key.equals("requestValue")) {
                         requestValue = json.getString(key);
                         Log.d(TAG, "requestValue: " + requestValue);
-                    }else if(key.equals("sharedValue")) {
-                        sharedValue = json.getString(key);
-                        Log.d(TAG, "sharedValue: " + sharedValue);
+                    }else if(key.equals("paidValue")) {
+                        paidValue = json.getString(key);
+                        Log.d(TAG, "paidValue: " + paidValue);
                     }else if(key.equals("targetIds")) {
                         targetIds = json.getString(key);
                         Log.d(TAG, "targetIds: " + targetIds);
@@ -67,8 +67,8 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(sender.length() > 0 && eventId.length() > 0 && sharedValue.length() > 0 && targetIds.length() > 0 && totalAmount.length() > 0  && requestValue.length() > 0) {
-                    savedLedgerRecords(context, sender, eventId, requestValue, sharedValue, targetIds, totalAmount);
+                if(sender.length() > 0 && eventId.length() > 0 && paidValue.length() > 0 && targetIds.length() > 0 && totalAmount.length() > 0  && requestValue.length() > 0) {
+                    savedLedgerRecords(context, sender, eventId, requestValue, paidValue, targetIds, totalAmount);
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();
@@ -78,11 +78,11 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
     }
 
 
-    private void savedLedgerRecords(Context context, String sender, String eventId, String requestValue, String sharedValue, String recipients, String totalAmount){
+    private void savedLedgerRecords(Context context, String sender, String eventId, String requestValue, String paidValue, String recipients, String totalAmount){
 
-        recipients +=","+ sender;
+        recipients += "," + sender;
         String[] recipientList = recipients.split(",");
-        String[] share = sharedValue.split(",");
+        String[] paid = paidValue.split(",");
         String[] request = requestValue.split(",");
         DateTime dayTime = new DateTime();
 
@@ -91,7 +91,7 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_EVENT_KEY, eventId);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_KEY, recipientList[i]);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_REQUEST, request[i]);
-            ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_PAID, share[i]);
+            ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_USER_PAID, paid[i]);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_TOTAL_AMOUNT, totalAmount);
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_GROUP_CREATED_DATE, dayTime.getMillis());
             ledgerValues.put(YourTurnContract.LedgerEntry.COLUMN_GROUP_UPDATED_DATE, dayTime.getMillis());

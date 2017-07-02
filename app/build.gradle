@@ -38,6 +38,7 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile files('libs/libphonenumber-7.2.1.jar')
+
     compile 'org.apache.commons:commons-lang3:3.5'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.0-alpha8'
@@ -57,6 +58,5 @@ dependencies {
     compile 'commons-io:commons-io:2.5'
     compile 'com.squareup.okhttp3:logging-interceptor:3.6.0'
     compile 'com.google.android.gms:play-services-location:11.0.1'
-
     testCompile 'junit:junit:4.12'
 }

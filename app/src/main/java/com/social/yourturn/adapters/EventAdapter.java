@@ -12,10 +12,12 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.social.yourturn.EventMemberActivity;
 import com.social.yourturn.GroupListActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.EventFragment;
+import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Event;
 import com.social.yourturn.utils.ParseConstant;
 
@@ -87,12 +89,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
 
         ledgerCursor.close();
 
-        if(event.getEventUrl() != null && event.getEventUrl().length() > 0) Glide.with(mContext).load(event.getEventUrl()).into(holder.eventUrlView);
-        else holder.eventUrlView.setImageResource(R.drawable.ic_group_black_36dp);
+        Glide.with(mContext).load(event.getEventUrl()).into(holder.eventUrlView);
 
     }
 
-    public Event getGroup(int position){
+    public Event getEvent(int position){
         return mEventList.get(position);
     }
 
@@ -121,14 +122,33 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
 
         @Override
         public void onClick(View v) {
-            Intent intent = new Intent(mContext, GroupListActivity.class);
+            Intent intent = new Intent(mContext, EventMemberActivity.class);
             int itemPosition = mRecyclerView.getChildLayoutPosition(v);
-            Event event = getGroup(itemPosition);
-            intent.putExtra(EventFragment.EVENT_KEY, event);
+            Event event = getEvent(itemPosition);
 
-            /*intent.putExtra(ParseConstant.USERNAME_COLUMN, getUsername());
+            Cursor eventIdCursor = mContext.getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI,
+                    new String[]{YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR},
+                    YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", new String[]{event.getEventId()}, null);
+
+            if(eventIdCursor != null && eventIdCursor.getCount() > 0) {
+                eventIdCursor.moveToFirst();
+                String eventCreator = eventIdCursor.getString(eventIdCursor.getColumnIndex(YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR));
+                if(!eventCreator.equals(getUsername())){
+                    Contact contact = new Contact();
+                    contact.setName(mContext.getString(R.string.current_user));
+                    contact.setPhoneNumber(getUsername());
+                    event.getContactList().add(contact);
+                }
+            }
+
+            for(Contact contact : event.getContactList()){
+                if(contact.getPhoneNumber().equals(getUsername())) contact.setName(mContext.getString(R.string.current_user));
+            }
+
+            eventIdCursor.close();
+            intent.putExtra(EventFragment.EVENT_KEY, event);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            mContext.startActivity(intent);*/
+            mContext.startActivity(intent);
         }
     }
 
