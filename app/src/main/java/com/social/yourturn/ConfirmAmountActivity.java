@@ -2,7 +2,6 @@ package com.social.yourturn;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -15,16 +14,12 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.parse.FunctionCallback;
-import com.parse.GetCallback;
 import com.parse.ParseCloud;
-import com.parse.ParseException;
-import com.parse.ParseQuery;
-import com.parse.ParseUser;
-import com.parse.SaveCallback;
 import com.social.yourturn.broadcast.PushSenderBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.utils.ParseConstant;
+
+import org.apache.commons.lang3.text.WordUtils;
 
 import java.util.HashMap;
 
@@ -88,7 +83,7 @@ public class ConfirmAmountActivity extends AppCompatActivity {
         cursor.close();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(senderName + " wants you to confirm the amount below")
+        builder.setTitle(WordUtils.capitalize(senderName.toLowerCase(), null) + " wants you to confirm the amount below")
                 .setMessage("You have been requested to confirm an amount of $ " + bundle.getString(PushSenderBroadcastReceiver.MESSAGE))
                 .setPositiveButton(R.string.ok_text, (dialog, id) -> {
 

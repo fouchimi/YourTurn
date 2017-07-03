@@ -34,7 +34,7 @@ public class UserThumbnailBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void processPush(Context context, Intent intent) {
-        String sender = "", thumbnailUrl = "";
+        String senderId = "", thumbnailUrl = null;
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -47,16 +47,16 @@ public class UserThumbnailBroadcastReceiver extends BroadcastReceiver {
                 while(itr.hasNext()){
                     String key = (String) itr.next();
                     if(key.equals("senderId")) {
-                        sender = json.getString(key);
-                        Log.d(TAG, "Title: " + sender);
+                        senderId = json.getString(key);
+                        Log.d(TAG, "Title: " + senderId);
                     }else if(key.equals("profileUrl")){
                         thumbnailUrl = json.getString(key);
                         Log.d(TAG, "Message: " + thumbnailUrl);
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(sender.length() > 0 && thumbnailUrl != null) {
-                    updateImageUrl(context, sender, thumbnailUrl);
+                if(senderId.length() > 0 && thumbnailUrl != null) {
+                    updateImageUrl(context, senderId, thumbnailUrl);
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();

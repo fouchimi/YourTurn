@@ -8,7 +8,6 @@ import android.util.Log;
 
 import com.social.yourturn.data.YourTurnContract;
 
-import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -76,7 +75,6 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
             }
         }
     }
-
 
     private void savedLedgerRecords(Context context, String senderId, String eventId, String requestValue, String paidValue, String recipients, String totalAmount){
 

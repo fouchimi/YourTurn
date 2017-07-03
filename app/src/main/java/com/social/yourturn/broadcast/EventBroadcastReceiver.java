@@ -15,7 +15,6 @@ import android.util.Log;
 
 import com.social.yourturn.MainActivity;
 import com.social.yourturn.data.YourTurnContract;
-import com.social.yourturn.models.Contact;
 
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
@@ -83,7 +82,6 @@ public class EventBroadcastReceiver extends BroadcastReceiver {
     }
 
     public static final int NOTIFICATION_ID = 475;
-
 
     private void insertEventEntry(Context context, String eventId, String eventName, String senderId, String eventUrl, String targetIds){
 

@@ -70,10 +70,6 @@ public class NameBroadcastReceiver extends BroadcastReceiver {
         ContentValues memberValue = new ContentValues();
         memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, name);
 
-        long member_id = context.getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, memberValue,
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{senderId});
-        if(member_id > 0) {
-            Log.d(TAG, "name successfully updated in members table with id: " + member_id);
-        }
+        context.getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, memberValue, YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{senderId});
     }
 }
