@@ -12,7 +12,6 @@ import com.bumptech.glide.Glide;
 import com.social.yourturn.ContactActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.ImageLoader;
 
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -42,20 +41,17 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
         final CustomViewHolder viewHolder = new CustomViewHolder(view);
 
         Log.d(TAG, "");
-        viewHolder.deleteIconView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String username = viewHolder.usernameView.getText().toString();
-                int index = -1;
-                for(int i=0; i < mContactList.size(); i++){
-                    if(mContactList.get(i).getName().toLowerCase().equals(username.toLowerCase())){
-                        index = i;
-                        break;
-                    }
+        viewHolder.deleteIconView.setOnClickListener(v -> {
+            String username = viewHolder.usernameView.getText().toString();
+            int index = -1;
+            for(int i=0; i < mContactList.size(); i++){
+                if(mContactList.get(i).getName().toLowerCase().equals(username.toLowerCase())){
+                    index = i;
+                    break;
                 }
-                if(index > -1) {
-                    mContext.onUpdateContactList(mContactList.get(index));
-                }
+            }
+            if(index > -1) {
+                mContext.onUpdateContactList(mContactList.get(index));
             }
         });
         return viewHolder;
