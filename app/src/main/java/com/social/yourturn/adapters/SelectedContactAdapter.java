@@ -64,6 +64,7 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
             holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
             if(contact.getPhoneNumber() != null &&  contact.getPhoneNumber().length() > 0) Glide.with(mContext).load(contact.getThumbnailUrl()).into(holder.thumbnailView);
+            else holder.thumbnailView.setImageResource(R.drawable.default_profile);
         }
     }
 
@@ -79,7 +80,7 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
 
         public CustomViewHolder(View itemView) {
             super(itemView);
-            this.thumbnailView = (CircleImageView) itemView.findViewById(R.id.eventUrl);
+            this.thumbnailView = (CircleImageView) itemView.findViewById(R.id.profileUrl);
             this.usernameView = (TextView) itemView.findViewById(R.id.username);
             this.deleteIconView = (ImageView) itemView.findViewById(R.id.selected);
         }

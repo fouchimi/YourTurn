@@ -56,6 +56,8 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
             thumbnailCursor.moveToNext();
             String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
             Glide.with(mContext).load(thumbnail).into(holder.thumbnailView);
+        }else {
+            holder.thumbnailView.setImageResource(R.drawable.default_profile);
         }
 
         if(displayName != null) {
@@ -76,7 +78,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
             super(itemView);
             Log.d(TAG, String.valueOf(itemView.getX()));
             Log.d(TAG, String.valueOf(itemView.getY()));
-            this.thumbnailView = (CircleImageView) itemView.findViewById(R.id.eventUrl);
+            this.thumbnailView = (CircleImageView) itemView.findViewById(R.id.profileUrl);
             this.usernameView = (TextView) itemView.findViewById(R.id.username);
         }
     }
