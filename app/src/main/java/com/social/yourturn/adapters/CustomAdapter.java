@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
@@ -32,12 +33,10 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
     private final static String TAG = CustomAdapter.class.getSimpleName();
     private Context mContext;
     private ArrayList<Contact> mContactList;
-    private ImageLoader imageLoader;
 
     public CustomAdapter(Context context, ArrayList<Contact> cursorList){
         mContext = context;
         mContactList = cursorList;
-        imageLoader = new ImageLoader(mContext);
     }
 
     @Override
@@ -54,11 +53,12 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
 
         Cursor thumbnailCursor = mContext.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
                 new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL},
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(contact.getPhoneNumber()), null, null);
-        thumbnailCursor.moveToNext();
-        String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
-
-        imageLoader.DisplayImage(thumbnail, holder.thumbnailView);
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{contact.getPhoneNumber()}, null);
+        if(thumbnailCursor != null && thumbnailCursor.getCount() > 0){
+            thumbnailCursor.moveToNext();
+            String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
+            Glide.with(mContext).load(thumbnail).into(holder.thumbnailView);
+        }
 
         if(displayName != null) {
             holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));

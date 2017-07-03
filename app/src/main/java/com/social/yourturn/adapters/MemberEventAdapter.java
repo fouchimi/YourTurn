@@ -13,9 +13,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.ImageLoader;
 
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -34,7 +34,6 @@ public class MemberEventAdapter extends RecyclerView.Adapter<MemberEventAdapter.
     private static final String TAG = MemberEventAdapter.class.getSimpleName();
     private Context mContext;
     private ArrayList<Contact> mContactList;
-    private ImageLoader imageLoader;
 
     private List<Contact> itemsPendingRemoval;
 
@@ -45,7 +44,6 @@ public class MemberEventAdapter extends RecyclerView.Adapter<MemberEventAdapter.
     public MemberEventAdapter(Context context, ArrayList<Contact> contactList){
         mContext = context;
         this.mContactList = contactList;
-        imageLoader = new ImageLoader(mContext);
         itemsPendingRemoval = new ArrayList<>();
     }
 
@@ -131,7 +129,7 @@ public class MemberEventAdapter extends RecyclerView.Adapter<MemberEventAdapter.
 
             holder.checkedIcon.setVisibility(View.INVISIBLE);
 
-            imageLoader.DisplayImage(contact.getThumbnailUrl(), holder.imageView);
+            if(contact.getThumbnailUrl() != null && contact.getThumbnailUrl().length() > 0) Glide.with(mContext).load(contact.getThumbnailUrl()).into(holder.imageView);
         }
     }
 

@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.social.yourturn.ContactActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
@@ -29,12 +30,10 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
     private ContactActivity mContext;
     private ArrayList<Contact> mContactList;
     private final static String TAG = SelectedContactAdapter.class.getSimpleName();
-    private ImageLoader imageLoader;
 
     public SelectedContactAdapter(ContactActivity context, ArrayList<Contact> contactList){
         this.mContext = context;
         this.mContactList = contactList;
-        imageLoader = new ImageLoader(mContext);
     }
 
     @Override
@@ -69,7 +68,7 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
             final String displayName = contact.getName();
             holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
-            imageLoader.DisplayImage(contact.getThumbnailUrl(), holder.thumbnailView);
+            if(contact.getPhoneNumber() != null &&  contact.getPhoneNumber().length() > 0) Glide.with(mContext).load(contact.getThumbnailUrl()).into(holder.thumbnailView);
         }
     }
 

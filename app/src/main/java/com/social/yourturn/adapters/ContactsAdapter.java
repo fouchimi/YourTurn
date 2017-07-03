@@ -2,7 +2,6 @@ package com.social.yourturn.adapters;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.graphics.Color;
 import android.support.v4.widget.CursorAdapter;
 import android.text.style.TextAppearanceSpan;
@@ -15,10 +14,10 @@ import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.social.yourturn.R;
 import com.social.yourturn.ContactActivity.MemberQuery;
 import com.social.yourturn.data.YourTurnContract;
-import com.social.yourturn.utils.ImageLoader;
 
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -36,7 +35,6 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
     private Context mContext;
     private final static String TAG = ContactsAdapter.class.getSimpleName();
     private SparseBooleanArray selectionArray = new SparseBooleanArray();
-    private ImageLoader imageLoader;
 
     public ContactsAdapter(Context context){
         super(context, null, 0);
@@ -45,7 +43,6 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         final String alphabet = context.getString(R.string.alphabet);
         mAlphabetIndexer = new AlphabetIndexer(null, MemberQuery.DISPLAY_NAME, alphabet);
         highlightTextSpan = new TextAppearanceSpan(context, R.style.searchTextHighlight);
-        imageLoader = new ImageLoader(mContext);
     }
 
     @Override
@@ -54,7 +51,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
 
         final ViewHolder holder = new ViewHolder();
         holder.username = (TextView) itemLayout.findViewById(R.id.username);
-        holder.eventUrl = (CircleImageView) itemLayout.findViewById(R.id.eventUrl);
+        holder.profileUrl = (CircleImageView) itemLayout.findViewById(R.id.profileUrl);
         holder.selected = (ImageView) itemLayout.findViewById(R.id.selected);
 
         itemLayout.setTag(holder);
@@ -88,13 +85,15 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
 
         Cursor thumbnailCursor = mContext.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
                 new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL},
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
-        thumbnailCursor.moveToNext();
-        String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{phoneNumber}, null);
 
-        thumbnailCursor.close();
+        if(thumbnailCursor != null && thumbnailCursor.getCount() > 0) {
+            thumbnailCursor.moveToNext();
+            String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
 
-        imageLoader.DisplayImage(thumbnail, holder.eventUrl);
+            if(thumbnail != null && thumbnail.length() > 0) Glide.with(mContext).load(thumbnail).into(holder.profileUrl);
+            thumbnailCursor.close();
+        }
         holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
         if (isSelected) {
@@ -141,7 +140,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
     public class ViewHolder {
         TextView username;
         ImageView  selected;
-        CircleImageView eventUrl;
+        CircleImageView profileUrl;
     }
 
 }

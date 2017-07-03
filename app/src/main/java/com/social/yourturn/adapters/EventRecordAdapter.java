@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
 
@@ -65,7 +66,7 @@ public class EventRecordAdapter extends BaseAdapter {
 
         Contact contact = getItem(position);
 
-        //imageLoader.DisplayImage(contact.getThumbnailUrl(), holder.imageView);
+        if(contact.getThumbnailUrl() != null && contact.getThumbnailUrl().length() > 0) Glide.with(mContext).load(contact.getThumbnailUrl()).into(holder.imageView);
         holder.usernameView.setText(WordUtils.capitalize(contact.getName().toLowerCase(), null));
         if(contact.getScore() != null && !contact.getScore().equals(mContext.getString(R.string.zero_default_values))){
             DecimalFormat df = new DecimalFormat("#.00");
