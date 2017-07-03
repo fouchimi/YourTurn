@@ -73,6 +73,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
 
     public void clearSelection(){
         selectionArray.clear();
+        notifyDataSetChanged();
     }
 
     @Override
@@ -82,6 +83,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         final ViewHolder holder = (ViewHolder) view.getTag();
         final String displayName = cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase();
         final String phoneNumber = cursor.getString(MemberQuery.PHONE_NUMBER);
+        String thumbnail = null;
 
         Cursor thumbnailCursor = mContext.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
                 new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL},
@@ -89,11 +91,11 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
 
         if(thumbnailCursor != null && thumbnailCursor.getCount() > 0) {
             thumbnailCursor.moveToNext();
-            String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
-
-            if(thumbnail != null && thumbnail.length() > 0) Glide.with(mContext).load(thumbnail).into(holder.profileUrl);
+            thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
             thumbnailCursor.close();
         }
+
+        if(thumbnail != null && thumbnail.length() > 0) Glide.with(mContext).load(thumbnail).into(holder.profileUrl);
         holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
         if (isSelected) {

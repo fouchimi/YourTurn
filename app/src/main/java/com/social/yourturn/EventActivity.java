@@ -1,9 +1,12 @@
 package com.social.yourturn;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -20,15 +23,29 @@ import android.widget.Toast;
 
 
 import com.bumptech.glide.Glide;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.android.Utils;
+import com.cloudinary.utils.ObjectUtils;
 import com.social.yourturn.adapters.CustomAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Place;
+import com.social.yourturn.utils.ImagePicker;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
+import java.util.UUID;
+
 import de.hdodenhof.circleimageview.CircleImageView;
 
 
@@ -43,6 +60,10 @@ public class EventActivity extends AppCompatActivity {
     public static final String EVENT_NAME = "event_name";
     private Place mPlace = null;
     private String locationUrl = "";
+    private static final int PICK_IMAGE_ID = 67;
+    private Bitmap mBitmap = null;
+    private CircleImageView mEventImageView;
+    private Cloudinary cloudinary;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,11 +78,13 @@ public class EventActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
 
+        cloudinary = new Cloudinary(Utils.cloudinaryUrlFromContext(this));
+
         FloatingActionButton fb = (FloatingActionButton) findViewById(R.id.fab);
         fb.setOnClickListener(new SaveDataOnClickListener());
         mGroupTextView = (TextView) findViewById(R.id.groupNameText);
         TextView mParticipantView = (TextView) findViewById(R.id.participantsTextView);
-        CircleImageView mEventImageView = (CircleImageView) findViewById(R.id.groupImageView);
+        mEventImageView = (CircleImageView) findViewById(R.id.groupImageView);
         RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.selected_rv);
 
         if (ContextCompat.checkSelfPermission(getApplicationContext(), SEND_SMS_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
@@ -138,4 +161,88 @@ public class EventActivity extends AppCompatActivity {
         return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
     }
 
+    public void changeEventPic(View view) {
+        Intent chooseImageIntent = ImagePicker.getPickImageIntent(this, getString(R.string.choose_profile_image));
+        startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(requestCode) {
+            case PICK_IMAGE_ID:
+                mBitmap = ImagePicker.getImageFromResult(this, resultCode, data);
+                if(mBitmap != null) {
+                    new UploadTask(this).execute();
+                }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+                break;
+        }
+    }
+
+    private class UploadTask extends AsyncTask<Void, Void, String> {
+
+        private Context mContext;
+        public UploadTask(Context context) {
+            mContext =context;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            InputStream fileInputStream = null;
+
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            String imageFileName = "IMAGE_" + timeStamp + "_";
+
+            String image_file = imageFileName + timeStamp + ".jpg";
+            File profilePicFile = new File(getCacheDir(), image_file);
+
+            final String profileId = UUID.randomUUID().toString();
+
+            try {
+                FileOutputStream out = new FileOutputStream(profilePicFile);
+                mBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+                out.flush();
+                out.close();
+
+                File cDir = mContext.getCacheDir();
+                File tempFile = new File(cDir.getPath() + "/" + image_file) ;
+                Log.d(TAG, "path: " + tempFile.getAbsolutePath());
+
+                fileInputStream = new FileInputStream(tempFile);
+                cloudinary.uploader().upload(fileInputStream, ObjectUtils.asMap("public_id", profileId));
+                String fileId = cloudinary.url().generate(profileId + ".jpg");
+
+                if(fileId != null) Log.d(TAG, fileId);
+
+                return fileId;
+            }catch (FileNotFoundException e) {
+                e.printStackTrace();
+                Log.d(TAG, e.getMessage());
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.d(TAG, e.getMessage());
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String profileId) {
+            super.onPostExecute(profileId);
+            if(profileId != null) {
+                Log.d(TAG, profileId);
+                locationUrl = profileId;
+                mEventImageView.setImageBitmap(mBitmap);
+            }
+        }
+
+    }
 }

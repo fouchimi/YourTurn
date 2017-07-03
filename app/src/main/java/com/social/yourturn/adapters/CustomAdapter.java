@@ -52,13 +52,14 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
         Cursor thumbnailCursor = mContext.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
                 new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL},
                 YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{contact.getPhoneNumber()}, null);
+        String thumbnail = null;
         if(thumbnailCursor != null && thumbnailCursor.getCount() > 0){
             thumbnailCursor.moveToNext();
-            String thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
-            Glide.with(mContext).load(thumbnail).into(holder.thumbnailView);
-        }else {
-            holder.thumbnailView.setImageResource(R.drawable.default_profile);
+            thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
+            thumbnailCursor.close();
         }
+
+        if(thumbnail != null &&  thumbnail.length() > 0) Glide.with(mContext).load(thumbnail).into(holder.thumbnailView);
 
         if(displayName != null) {
             holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));

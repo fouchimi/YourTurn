@@ -98,6 +98,10 @@ public class GroupListActivity extends AppCompatActivity  {
             eventUrl = intent.getExtras().getString(LocationActivity.PLACE_URL);
             getSupportActionBar().setTitle(eventName);
             Contact currentUser = new Contact("0", "You", getUsername());
+            if(getProfilePic() != null && getProfilePic().length() > 0) {
+                currentUser.setThumbnailUrl(getProfilePic());
+            }
+
             mContactList.add(currentUser);
 
             Collections.sort(mContactList, (lhs, rhs) -> lhs.getName().compareTo(rhs.getName()));
@@ -127,6 +131,10 @@ public class GroupListActivity extends AppCompatActivity  {
         setupPaymentReceiver();
     }
 
+    private String getProfilePic(){
+        SharedPreferences shared = getSharedPreferences(getString(R.string.profile_path), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.USER_THUMBNAIL_COLUMN, ""));
+    }
 
     private void setupPaymentReceiver(){
         mPaymentReceiver.setReceiver((resultCode, resultData) -> {

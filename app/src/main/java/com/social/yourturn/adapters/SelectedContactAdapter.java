@@ -63,8 +63,7 @@ public class SelectedContactAdapter extends RecyclerView.Adapter<SelectedContact
             final String displayName = contact.getName();
             holder.usernameView.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
-            if(contact.getPhoneNumber() != null &&  contact.getPhoneNumber().length() > 0) Glide.with(mContext).load(contact.getThumbnailUrl()).into(holder.thumbnailView);
-            else holder.thumbnailView.setImageResource(R.drawable.default_profile);
+            if(contact.getThumbnailUrl() != null &&  contact.getThumbnailUrl().length() > 0) Glide.with(mContext).load(contact.getThumbnailUrl()).into(holder.thumbnailView);
         }
     }
 
