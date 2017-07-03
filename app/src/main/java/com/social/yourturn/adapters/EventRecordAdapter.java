@@ -9,7 +9,6 @@ import android.widget.TextView;
 
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
-import com.social.yourturn.utils.ImageLoader;
 
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -26,12 +25,10 @@ public class EventRecordAdapter extends BaseAdapter {
 
     private Context mContext;
     private ArrayList<Contact> mList;
-    private ImageLoader imageLoader;
 
     public EventRecordAdapter(Context context, ArrayList<Contact> list){
         mContext = context;
         mList = list;
-        imageLoader = new ImageLoader(mContext);
     }
 
     @Override
@@ -68,7 +65,7 @@ public class EventRecordAdapter extends BaseAdapter {
 
         Contact contact = getItem(position);
 
-        imageLoader.DisplayImage(contact.getThumbnailUrl(), holder.imageView);
+        //imageLoader.DisplayImage(contact.getThumbnailUrl(), holder.imageView);
         holder.usernameView.setText(WordUtils.capitalize(contact.getName().toLowerCase(), null));
         if(contact.getScore() != null && !contact.getScore().equals(mContext.getString(R.string.zero_default_values))){
             DecimalFormat df = new DecimalFormat("#.00");

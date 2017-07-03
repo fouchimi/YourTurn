@@ -46,10 +46,10 @@ public class UserThumbnailBroadcastReceiver extends BroadcastReceiver {
                 Iterator<String> itr = json.keys();
                 while(itr.hasNext()){
                     String key = (String) itr.next();
-                    if(key.equals("sender")) {
+                    if(key.equals("senderId")) {
                         sender = json.getString(key);
                         Log.d(TAG, "Title: " + sender);
-                    }else if(key.equals("imageUrl")){
+                    }else if(key.equals("profileUrl")){
                         thumbnailUrl = json.getString(key);
                         Log.d(TAG, "Message: " + thumbnailUrl);
                     }
@@ -66,29 +66,18 @@ public class UserThumbnailBroadcastReceiver extends BroadcastReceiver {
     }
 
 
-    private void updateImageUrl(Context context, String sender, String url){
+    private void updateImageUrl(Context context, String senderId, String profileUrl){
 
         ContentValues memberValue = new ContentValues();
-        memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL, url);
+        memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL, profileUrl);
 
         long member_id = context.getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI,
                 memberValue,
                 YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
-                new String[]{sender});
+                new String[]{senderId});
         if(member_id > 0) {
             Log.d(TAG, "imageUrl successfully updated in members table with id: " + member_id);
         }
 
-        ContentValues userValue = new ContentValues();
-        userValue.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, url);
-
-        long user_id = context.getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI,
-                userValue,
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=?",
-                new String[]{sender});
-
-        if(user_id > 0) {
-            Log.d(TAG, "imageUrl successfully updated in user table with id: " + user_id);
-        }
     }
 }

@@ -65,36 +65,15 @@ public class NameBroadcastReceiver extends BroadcastReceiver {
         }
     }
 
-
     private void updateName(Context context, String senderId, String name) {
 
         ContentValues memberValue = new ContentValues();
         memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, name);
 
         long member_id = context.getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, memberValue,
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(senderId), null);
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{senderId});
         if(member_id > 0) {
             Log.d(TAG, "name successfully updated in members table with id: " + member_id);
-        }
-
-        ContentValues userValue = new ContentValues();
-        userValue.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, name);
-
-        long user_id = context.getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, userValue,
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(senderId), null);
-
-        if(user_id > 0) {
-            Log.d(TAG, "name successfully updated in user table with id: " + user_id);
-        }else {
-            memberValue.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, senderId);
-            Cursor nameCursor =  context.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(senderId), null, null);
-            if(nameCursor != null && nameCursor.getCount() > 0) {
-                nameCursor.moveToNext();
-                String contactId = nameCursor.getString(nameCursor.getColumnIndex(YourTurnContract.MemberEntry._ID));
-                userValue.put(YourTurnContract.UserEntry.COLUMN_USER_ID, contactId);
-            }
-            nameCursor.close();
-            context.getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, memberValue);
         }
     }
 }

@@ -26,14 +26,10 @@ import com.bumptech.glide.Glide;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.android.Utils;
 import com.cloudinary.utils.ObjectUtils;
-import com.parse.FunctionCallback;
-import com.parse.GetCallback;
 import com.parse.ParseCloud;
-import com.parse.ParseException;
 
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
-import com.parse.SaveCallback;
 import com.social.yourturn.broadcast.UserThumbnailBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.utils.ImagePicker;
@@ -139,66 +135,50 @@ public class ProfileActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle("Delete Action")
                 .setMessage("Are you sure you want to delete profile picture")
-                .setPositiveButton(R.string.ok_text, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mImageProfileView.setImageResource(R.drawable.ic_account_grey);
-                        delFab.hide();
-                        ParseQuery<ParseUser> query = ParseUser.getQuery();
-                        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
-                        query.getFirstInBackground(new GetCallback<ParseUser>() {
-                            @Override
-                            public void done(ParseUser user, ParseException e) {
-                                if(e == null){
-                                    if(e == null) {
-                                        user.remove(ParseConstant.USER_THUMBNAIL_COLUMN);
-                                        ContentValues profileValues = new ContentValues();
-                                        profileValues.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, "");
-
-                                        getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, profileValues,
-                                                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=?", new String[]{getUsername()});
-
-                                        ContentValues memberValues = new ContentValues();
-                                        memberValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL, "");
-
-                                        getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI,
-                                                memberValues,
-                                                YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL + "=?", new String[]{getUsername()});
-
-                                        user.saveInBackground(new SaveCallback() {
-                                            @Override
-                                            public void done(ParseException e) {
-                                                if(e == null) {
-                                                    Toast.makeText(ProfileActivity.this, "profile image deleted successfully", Toast.LENGTH_LONG).show();
-                                                    HashMap<String, Object> payload = new HashMap<>();
-                                                    payload.put("sender", getUsername());
-                                                    payload.put("friends", getFriendIds());
-                                                    payload.put("url", "");
-                                                    ParseCloud.callFunctionInBackground("thumbnailChannel", payload, new FunctionCallback<Object>() {
-                                                        @Override
-                                                        public void done(Object object, ParseException e) {
-                                                            if(e == null) {
-                                                                Log.d(TAG, "Successfully sent");
-                                                            }else {
-                                                                Log.d(TAG, e.getMessage());
-                                                            }
-                                                        }
-                                                    });
-                                                }
-                                            }
-                                        });
-                                    }
-                                }else {
-                                    Log.d(TAG, e.getMessage());
-                                }
-                            }
-                        });
-                    }
-                }).setNegativeButton(R.string.cancel_text, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
+                .setPositiveButton(R.string.ok_text, (dialog, which) -> {
+                    mImageProfileView.setImageResource(R.drawable.ic_account_grey);
+                    delFab.hide();
+                    ParseQuery<ParseUser> query = ParseUser.getQuery();
+                    query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
+                    query.getFirstInBackground((user, e) -> {
+                        if(e == null){
+                           if(!user.isAuthenticated()){
+                               user.logInInBackground(getUsername(), getPassword(), (parseUser, e1) -> {
+                                   if(e1 == null) {
+                                       parseUser.put(ParseConstant.USER_THUMBNAIL_COLUMN, "");
+                                       parseUser.saveInBackground(e11 -> {
+                                           if(e11 == null) {
+                                               Log.d(TAG, "Deleted profile url successfully");
+                                               saveOrDeleteProfile("");
+                                               Toast.makeText(ProfileActivity.this, "Profile photo deleted successfully", Toast.LENGTH_LONG).show();
+                                           }else {
+                                               Log.d(TAG, "An error occured while deleting profile photo");
+                                               Toast.makeText(ProfileActivity.this, "Couldn't delete profile photo in the server", Toast.LENGTH_LONG).show();
+                                           }
+                                       });
+                                   }else {
+                                       Log.d(TAG, "An error occur");
+                                   }
+                               });
+                           }else {
+                               user.put(ParseConstant.USER_THUMBNAIL_COLUMN, "");
+                               user.saveInBackground(e12 -> {
+                                   if(e12 == null) {
+                                       Log.d(TAG, "Deleted profile url successfully");
+                                       saveOrDeleteProfile("");
+                                       Toast.makeText(ProfileActivity.this, "Profile photo deleted successfully", Toast.LENGTH_LONG).show();
+                                   }else {
+                                       Log.d(TAG, "An error occured while deleting profile photo");
+                                       Toast.makeText(ProfileActivity.this, "Couldn't delete profile photo in the server", Toast.LENGTH_LONG).show();
+                                   }
+                               });
+                           }
+                        }else {
+                            Log.d(TAG, e.getMessage());
+                        }
+                    });
+                }).setNegativeButton(R.string.cancel_text, (dialog, which) -> {
+                    Log.d(TAG, "Cancel login");
                 });
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -265,6 +245,69 @@ public class ProfileActivity extends AppCompatActivity {
         return (shared.getString(ParseConstant.COLUMN_NAME, ""));
     }
 
+    private void saveOrDeleteProfile(String profileId){
+        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.profile_path), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(ParseConstant.USER_THUMBNAIL_COLUMN, profileId);
+        editor.apply();
+
+        if(getFriendIds().length() > 0) {
+            HashMap<String, Object> payload = new HashMap<>();
+            payload.put("senderId", getUsername());
+            payload.put("targetIds", getFriendIds());
+            payload.put("profileUrl", profileId);
+            ParseCloud.callFunctionInBackground("thumbnailChannel", payload, (object, e) -> {
+                if(e == null) {
+                    Log.d(TAG, "Successfully sent");
+                }else {
+                    Log.d(TAG, e.getMessage());
+                }
+            });
+        }
+    }
+
+    private void saveProfileInBackground(String profileId) {
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
+        query.setLimit(1);
+
+        query.getFirstInBackground((user, e) -> {
+            if(e == null) {
+                user.put(ParseConstant.USER_THUMBNAIL_COLUMN, profileId);
+                if(!user.isAuthenticated()){
+                    user.logInInBackground(getUsername(), getPassword(), (user1, e13) -> {
+                        if(e13 == null){
+                            user1.saveInBackground(e12 -> {
+                                if(e12 == null){
+                                    Log.d(TAG, "Profile saved successfully");
+                                    Toast.makeText(ProfileActivity.this, "Profile saved successfully", Toast.LENGTH_LONG).show();
+                                }else {
+                                    Log.d(TAG, "An error occured");
+                                    Log.d(TAG, e12.getMessage());
+                                }
+                            });
+                        }else {
+                            Log.d(TAG, "An error occured");
+                            Log.d(TAG, e13.getMessage());
+                        }
+                    });
+                }else {
+                    user.saveInBackground(e1 -> {
+                        if(e1 == null) {
+                            Log.d(TAG, "Profile saved successfully");
+                            Toast.makeText(ProfileActivity.this, "Profile saved successfully", Toast.LENGTH_LONG).show();
+                        }else {
+                            Log.d(TAG, "An error occured");
+                            Log.d(TAG, e1.getMessage());
+                        }
+                    });
+                }
+            }else {
+                Log.d(TAG, e.getMessage());
+            }
+        });
+    }
+
     private class UploadTask extends AsyncTask<Void, Void, String> {
 
         private  Context mContext;
@@ -323,72 +366,10 @@ public class ProfileActivity extends AppCompatActivity {
             if(profileId != null) {
                 Log.d(TAG, profileId);
                 mImageProfileView.setImageBitmap(mBitmap);
-                saveProfile(profileId);
+                saveOrDeleteProfile(profileId);
                 saveProfileInBackground(profileId);
             }
         }
 
-        private void saveProfile(String profileId){
-            SharedPreferences sharedPref = getSharedPreferences(getString(R.string.profile_path), Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString(ParseConstant.USER_THUMBNAIL_COLUMN, profileId);
-            editor.apply();
-
-            if(getFriendIds().length() > 0) {
-                HashMap<String, Object> payload = new HashMap<>();
-                payload.put("sender", getUsername());
-                payload.put("friends", getFriendIds());
-                payload.put("url", profileId);
-                ParseCloud.callFunctionInBackground("thumbnailChannel", payload, (object, e) -> {
-                    if(e == null) {
-                        Log.d(TAG, "Successfully sent");
-                    }else {
-                        Log.d(TAG, e.getMessage());
-                    }
-                });
-            }
-        }
-
-        private void saveProfileInBackground(String profileId) {
-            ParseQuery<ParseUser> query = ParseUser.getQuery();
-            query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
-            query.setLimit(1);
-
-            query.getFirstInBackground((user, e) -> {
-                if(e == null) {
-                    user.put(ParseConstant.USER_THUMBNAIL_COLUMN, profileId);
-                    if(!user.isAuthenticated()){
-                        user.logInInBackground(getUsername(), getPassword(), (user1, e13) -> {
-                            if(e13 == null){
-                                user1.saveInBackground(e12 -> {
-                                    if(e12 == null){
-                                        Log.d(TAG, "Profile saved successfully");
-                                        Toast.makeText(ProfileActivity.this, "Profile saved successfully", Toast.LENGTH_LONG).show();
-                                    }else {
-                                        Log.d(TAG, "An error occured");
-                                        Log.d(TAG, e12.getMessage());
-                                    }
-                                });
-                            }else {
-                                Log.d(TAG, "An error occured");
-                                Log.d(TAG, e13.getMessage());
-                            }
-                        });
-                    }else {
-                        user.saveInBackground(e1 -> {
-                            if(e1 == null) {
-                                Log.d(TAG, "Profile saved successfully");
-                                Toast.makeText(ProfileActivity.this, "Profile saved successfully", Toast.LENGTH_LONG).show();
-                            }else {
-                                Log.d(TAG, "An error occured");
-                                Log.d(TAG, e1.getMessage());
-                            }
-                        });
-                    }
-                }else {
-                    Log.d(TAG, e.getMessage());
-                }
-            });
-        }
     }
 }

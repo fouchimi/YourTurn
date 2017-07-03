@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -16,6 +17,7 @@ import android.util.Log;
 import com.social.yourturn.ConfirmAmountActivity;
 import com.social.yourturn.data.YourTurnContract;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,7 +45,7 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void processPush(Context context, Intent intent) {
-        String title = "", message = "";
+        String senderId = "", amount = "";
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -55,17 +57,17 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
                 Iterator<String> itr = json.keys();
                 while(itr.hasNext()){
                     String key = (String) itr.next();
-                    if(key.equals("title")) {
-                        title = json.getString(key);
-                        Log.d(TAG, "Title: " + title);
-                    }else if(key.equals("alert")){
-                        message = json.getString(key);
-                        Log.d(TAG, "Message: " + message);
+                    if(key.equals("senderId")) {
+                        senderId = json.getString(key);
+                        Log.d(TAG, "sender Id: " + senderId);
+                    }else if(key.equals("amount")){
+                        amount = json.getString(key);
+                        Log.d(TAG, "Amount: " + amount);
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(title.length() > 0 && message.length() > 0){
-                    createNotification(context, title, message);
+                if(senderId.length() > 0 && amount.length() > 0){
+                    createNotification(context, senderId, amount);
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();
@@ -76,11 +78,11 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
 
     public static final int NOTIFICATION_ID = 45;
 
-    private void createNotification(Context context, String senderPhoneNumber, String message) {
+    private void createNotification(Context context, String senderPhoneNumber, String amount) {
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.putExtra(TITLE, senderPhoneNumber);
-        intent.putExtra(MESSAGE, message);
+        intent.putExtra(MESSAGE, amount);
         intent.putExtra(SENDER_ID, senderPhoneNumber);
         intent.setClass(context, ConfirmAmountActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -100,8 +102,8 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
 
         NotificationCompat.Builder notification = new NotificationCompat.Builder(context)
                 .setSmallIcon(android.R.drawable.ic_menu_report_image)
-                .setContentTitle(senderName + " sent you a message")
-                .setContentText("You have been requested to confirm an amount of $" + message)
+                .setContentTitle(WordUtils.capitalize(senderName.toLowerCase(), null) + " sent you a message")
+                .setContentText("You have been requested to confirm an amount of $" + amount)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(senderIntent);
@@ -110,6 +112,25 @@ public class PushSenderBroadcastReceiver extends BroadcastReceiver {
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(NOTIFICATION_ID, notification.build());
+
+        registered(context, senderPhoneNumber);
+    }
+
+    private void registered(Context context, String phoneNumber){
+        Cursor memberCursor = context.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_REGISTERED},
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?" + " AND " +
+                        YourTurnContract.MemberEntry.COLUMN_MEMBER_REGISTERED + "=?",
+                new String[]{phoneNumber, "1"}, null);
+
+        if(memberCursor != null && memberCursor.getCount() > 1) return;
+        else {
+            ContentValues values = new ContentValues();
+            values.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_REGISTERED, "1");
+            context.getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, values,
+                    YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{phoneNumber});
+            return;
+        }
     }
 
 }

@@ -34,7 +34,7 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void processPush(Context context, Intent intent) {
-        String sender="", requestValue="", paidValue = "", targetIds = "", eventId = "", totalAmount="";
+        String senderId="", requestValue="", paidValue = "", targetIds = "", eventId = "", totalAmount="";
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -46,9 +46,9 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
                 Iterator<String> itr = json.keys();
                 while(itr.hasNext()){
                     String key = (String) itr.next();
-                    if(key.equals("sender")){
-                        sender = json.getString(key);
-                        Log.d(TAG, "sender: " + sender);
+                    if(key.equals("senderId")){
+                        senderId = json.getString(key);
+                        Log.d(TAG, "sender: " + senderId);
                     }else if(key.equals("eventId")){
                         eventId = json.getString(key);
                         Log.d(TAG, "group Id: " + eventId);
@@ -67,8 +67,8 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(sender.length() > 0 && eventId.length() > 0 && paidValue.length() > 0 && targetIds.length() > 0 && totalAmount.length() > 0  && requestValue.length() > 0) {
-                    savedLedgerRecords(context, sender, eventId, requestValue, paidValue, targetIds, totalAmount);
+                if(senderId.length() > 0 && eventId.length() > 0 && paidValue.length() > 0 && targetIds.length() > 0 && totalAmount.length() > 0  && requestValue.length() > 0) {
+                    savedLedgerRecords(context, senderId, eventId, requestValue, paidValue, targetIds, totalAmount);
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();

@@ -141,7 +141,7 @@ public class GroupListActivity extends AppCompatActivity  {
                 payload.put("requestValue", requestList);
                 payload.put("paidValue", paidList);
                 payload.put("targetIds", targetIds);
-                payload.put("sender", getUsername());
+                payload.put("senderId", getUsername());
                 ParseCloud.callFunctionInBackground("ledgerChannel", payload, (object, e) -> {
                     if(e == null) {
                         Intent confirmPaymentIntent = new Intent(GroupListActivity.this, EventRecordActivity.class);
@@ -416,7 +416,6 @@ public class GroupListActivity extends AppCompatActivity  {
         return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
     }
 
-
     private class PushReplyBroadcastReceiver extends BroadcastReceiver  {
         private static final String intentAction = "com.parse.push.intent.RECEIVE";
 
@@ -523,9 +522,7 @@ public class GroupListActivity extends AppCompatActivity  {
         ItemTouchHelper mItemTouchHelper = new ItemTouchHelper(swipeHelper);
         mItemTouchHelper.attachToRecyclerView(mRecyclerView);
 
-        //set swipe label
         swipeHelper.setLeftSwipeLable("Archive");
-        //set swipe background-Color
         swipeHelper.setLeftcolorCode(ContextCompat.getColor(this, R.color.deep_red));
 
     }

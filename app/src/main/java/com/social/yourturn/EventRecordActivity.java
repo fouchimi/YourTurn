@@ -1,6 +1,7 @@
 package com.social.yourturn;
 
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -113,6 +114,7 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
             if(e == null){
                 tcs.setResult(row);
                 String parsedScore = row.getString(ParseConstant.USER_SCORE_COLUMN);
+                registered(phoneNumber);
                 if(parsedScore == null) {
                     row.put(ParseConstant.USERNAME_COLUMN, phoneNumber);
                     row.put(ParseConstant.USER_SCORE_COLUMN, String.valueOf(Double.parseDouble(parsedScore) + Double.parseDouble(score)));
@@ -236,6 +238,22 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
 
     }
 
+    private void registered(String phoneNumber){
+        Cursor memberCursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_REGISTERED},
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?" + " AND " +
+                        YourTurnContract.MemberEntry.COLUMN_MEMBER_REGISTERED + "=?",
+                new String[]{phoneNumber, "1"}, null);
+
+        if(memberCursor != null && memberCursor.getCount() > 1) return;
+        else {
+            ContentValues values = new ContentValues();
+            values.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_REGISTERED, "1");
+            getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, values,
+                    YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{phoneNumber});
+            return;
+        }
+    }
 
     @Override
     public void onBackPressed() {
@@ -244,7 +262,6 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
         mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(mainIntent);
     }
-
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
