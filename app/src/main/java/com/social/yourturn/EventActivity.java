@@ -162,10 +162,9 @@ public class EventActivity extends AppCompatActivity {
     }
 
     public void changeEventPic(View view) {
-        Intent chooseImageIntent = ImagePicker.getPickImageIntent(this, getString(R.string.choose_profile_image));
+        Intent chooseImageIntent = ImagePicker.getPickImageIntent(this, getString(R.string.change_event_thumbnail));
         startActivityForResult(chooseImageIntent, PICK_IMAGE_ID);
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

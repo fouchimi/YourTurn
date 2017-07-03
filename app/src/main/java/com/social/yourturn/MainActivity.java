@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -32,22 +31,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.parse.LogInCallback;
-import com.parse.ParseException;
 import com.parse.ParseInstallation;
 import com.parse.ParseUser;
-import com.parse.SaveCallback;
-import com.parse.SignUpCallback;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.EventFragment;
-import com.social.yourturn.fragments.TransactionFragment;
+import com.social.yourturn.fragments.ChatFragment;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.utils.ParseConstant;
 import com.social.yourturn.utils.Utils;
@@ -359,7 +353,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 case 0:
                     return new EventFragment();
                 case 1:
-                    return new TransactionFragment();
+                    return new ChatFragment();
             }
             return null;
         }

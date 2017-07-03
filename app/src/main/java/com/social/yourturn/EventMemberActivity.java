@@ -2,16 +2,16 @@ package com.social.yourturn;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ListView;
+import android.widget.Toast;
 
-import com.parse.GetCallback;
-import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.social.yourturn.adapters.EventMemberAdapter;
@@ -21,7 +21,6 @@ import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Event;
 import com.social.yourturn.utils.ParseConstant;
 
-import org.apache.commons.lang3.text.WordUtils;
 
 import bolts.Continuation;
 import bolts.Task;
@@ -30,6 +29,7 @@ import bolts.TaskCompletionSource;
 public class EventMemberActivity extends AppCompatActivity {
 
     private static final String TAG = EventMemberActivity.class.getSimpleName();
+    private Event mEvent = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +41,7 @@ public class EventMemberActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         if(intent != null) {
-            Event mEvent = intent.getParcelableExtra(EventFragment.EVENT_KEY);
+            mEvent = intent.getParcelableExtra(EventFragment.EVENT_KEY);
             if(getSupportActionBar() != null) {
                 getSupportActionBar().setTitle(mEvent.getName());
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -90,5 +90,47 @@ public class EventMemberActivity extends AppCompatActivity {
             }
         });
         return tcs.getTask();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.event_members_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.deleteEventAction:
+                if(mEvent != null) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                            .setTitle("Delete Action")
+                            .setMessage("Are you sure you want to delete this event ?")
+                            .setPositiveButton(getString(R.string.yes_text), (dialog, which) -> {
+                                int deleteId = getContentResolver().delete(YourTurnContract.EventEntry.CONTENT_URI,
+                                        YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", new String[]{mEvent.getEventId()});
+                                Log.d(TAG, "delete Id: " + deleteId);
+                                if(deleteId > 0) {
+                                    Toast.makeText(this, "Event deleted successfully", Toast.LENGTH_LONG).show();
+                                    Intent intent = new Intent(this, MainActivity.class);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                    startActivity(intent);
+                                }
+                            }).setNegativeButton(getString(R.string.no_text), (dialog, which) -> {
+                                Log.d(TAG, "Deletion declined !");
+                            });
+                    builder.create().show();
+                }
+                break;
+            case R.id.changeEventPicAction:
+                Intent intent = new Intent(this, ChangeEventPicActivity.class);
+                intent.putExtra(getString(R.string.selected_event), mEvent);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                break;
+            default:
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

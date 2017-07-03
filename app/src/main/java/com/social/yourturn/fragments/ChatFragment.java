@@ -15,11 +15,11 @@ import com.social.yourturn.R;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class TransactionFragment extends Fragment {
+public class ChatFragment extends Fragment {
 
     private TextView emptyTextView;
 
-    public TransactionFragment() {
+    public ChatFragment() {
         // Required empty public constructor
     }
 

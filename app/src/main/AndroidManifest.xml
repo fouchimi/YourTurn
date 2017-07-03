@@ -32,7 +32,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <meta-data android:name="CLOUDINARY_URL" android:value="@string/cloudinary_url"/>
+        <meta-data
+            android:name="CLOUDINARY_URL"
+            android:value="@string/cloudinary_url" />
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -172,10 +175,12 @@
             android:name=".services.UpdateNameService"
             android:exported="false" />
 
-        <activity android:name=".EventMemberActivity"
+        <activity
+            android:name=".EventMemberActivity"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait"
             tools:targetApi="jelly_bean" />
+        <activity android:name=".ChangeEventPicActivity"></activity>
     </application>
 
 </manifest>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="social.com.yourturn.EventMemberActivity">
+
+    <item
+        android:id="@+id/deleteEventAction"
+        android:orderInCategory="98"
+        android:title="@string/deleteEvent"
+        app:showAsAction="never" />
+
+    <item android:id="@+id/changeEventPicAction"
+        android:orderInCategory="99"
+        android:title="@string/change_event_picture"
+        app:showAsAction="never" />
+</menu>

@@ -7,7 +7,9 @@
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/pad_4dp"
+        android:paddingBottom="@dimen/pad_8dp">
 
         <FrameLayout
             android:id="@+id/imageContainer"
@@ -123,11 +125,5 @@
         </LinearLayout>
 
     </LinearLayout>
-
-    <View
-        android:background="@color/boldGrey"
-        android:layout_width="match_parent"
-        android:layout_marginTop="@dimen/mar_9dp"
-        android:layout_height="1px" />
 
 </LinearLayout>

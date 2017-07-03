@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.social.yourturn.fragments.TransactionFragment">
+    tools:context="com.social.yourturn.fragments.ChatFragment">
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
@@ -12,7 +12,7 @@
         android:gravity="center"
         android:textColor="@color/boldGrey"
         android:textSize="45sp"
-        android:text="@string/lat_update_label" />
+        android:text="@string/chat_text" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/latest_activity_rv"

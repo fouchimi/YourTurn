@@ -28,7 +28,7 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="group_fragment_label">No Event(s)</string>
-    <string name="lat_update_label">No Transaction(s)</string>
+    <string name="chat_text">No Chat(s)</string>
 
     <string name="content_authority">com.social.yourturn</string>
     <string name="createdOn">created on</string>
@@ -106,5 +106,10 @@
     <string name="scoreText">score</string>
     <string name="profile_path">profile_path</string>
     <string name="profile_name">profile_name</string>
+    <string name="deleteEvent">Delete Event</string>
+    <string name="yes_text">Yes</string>
+    <string name="no_text">No</string>
+    <string name="change_event_picture">Change event Picture</string>
+    <string name="change_event_thumbnail">Change event thumbnail</string>
 
 </resources>

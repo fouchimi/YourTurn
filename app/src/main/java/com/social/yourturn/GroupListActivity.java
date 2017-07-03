@@ -171,7 +171,7 @@ public class GroupListActivity extends AppCompatActivity  {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.group_menu, menu);
+        getMenuInflater().inflate(R.menu.event_menu, menu);
         MenuItem item = menu.findItem(R.id.validateButton);
         item.setVisible(isVisible);
         MenuItem validateBillItem = menu.findItem(R.id.validateBillAction);

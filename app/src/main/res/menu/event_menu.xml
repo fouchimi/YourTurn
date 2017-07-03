@@ -33,10 +33,4 @@
         app:showAsAction="never" />
 
 
-    <!-- <item
-        android:id="@+id/sendMessageAction"
-        android:orderInCategory="101"
-        android:title="@string/send_message"
-        app:showAsAction="never" /> -->
-
 </menu>

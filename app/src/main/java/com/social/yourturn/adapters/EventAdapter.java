@@ -89,7 +89,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
 
         ledgerCursor.close();
 
-        Glide.with(mContext).load(event.getEventUrl()).into(holder.eventUrlView);
+        if(event.getEventUrl() != null && event.getEventUrl().length() > 0)Glide.with(mContext).load(event.getEventUrl()).into(holder.eventUrlView);
 
     }
 

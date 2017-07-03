@@ -22,6 +22,7 @@
                 android:layout_width="@dimen/pic_size"
                 android:layout_height="@dimen/pic_size"
                 app:civ_border_color="@color/black"
+                android:src="@drawable/ic_group_black_36dp"
                 android:layout_gravity="center_vertical"/>
 
         </FrameLayout>
