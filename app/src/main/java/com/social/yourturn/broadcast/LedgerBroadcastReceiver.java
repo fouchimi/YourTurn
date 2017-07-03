@@ -78,9 +78,9 @@ public class LedgerBroadcastReceiver extends BroadcastReceiver {
     }
 
 
-    private void savedLedgerRecords(Context context, String sender, String eventId, String requestValue, String paidValue, String recipients, String totalAmount){
+    private void savedLedgerRecords(Context context, String senderId, String eventId, String requestValue, String paidValue, String recipients, String totalAmount){
 
-        recipients += "," + sender;
+        recipients += "," + senderId;
         String[] recipientList = recipients.split(",");
         String[] paid = paidValue.split(",");
         String[] request = requestValue.split(",");

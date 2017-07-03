@@ -14,6 +14,7 @@
             android:id="@+id/eventUrl"
             android:layout_width="@dimen/pic_size"
             android:layout_height="@dimen/pic_size"
+            android:src="@drawable/default_profile"
             android:layout_gravity="center_vertical"/>
 
     </FrameLayout>

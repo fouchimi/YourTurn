@@ -14,7 +14,6 @@ import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
 
 import org.apache.commons.lang3.text.WordUtils;
-
 import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
