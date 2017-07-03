@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.support.design.widget.FloatingActionButton;
@@ -24,11 +23,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.android.Utils;
+import com.cloudinary.utils.ObjectUtils;
 import com.parse.FunctionCallback;
 import com.parse.GetCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
-import com.parse.ParseFile;
+
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
@@ -39,13 +41,16 @@ import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -56,9 +61,9 @@ public class ProfileActivity extends AppCompatActivity {
     private CircleImageView mImageProfileView;
     private TextView phoneNumberTextView;
     private Bitmap mBitmap = null;
-    private ParseFile pFile;
     private BroadcastReceiver mBroadcastReceiver;
     private FloatingActionButton delFab;
+    Cloudinary cloudinary;
 
     private static final  int PICK_IMAGE_ID = 2014;
 
@@ -66,7 +71,6 @@ public class ProfileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
-
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -91,6 +95,8 @@ public class ProfileActivity extends AppCompatActivity {
             }
         };
 
+        cloudinary = new Cloudinary(Utils.cloudinaryUrlFromContext(this));
+
     }
 
     @Override
@@ -98,25 +104,17 @@ public class ProfileActivity extends AppCompatActivity {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(UserThumbnailBroadcastReceiver.intentAction));
         Log.d(TAG, "On Resume");
-        phoneNumberTextView.setText(getUsername());
-        Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(getUsername()), null, null);
-        if(cursor != null && cursor.getCount() > 0) {
-            cursor.moveToNext();
-            String name = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
-            if(name != null) {
-                usernameTextView.setText(WordUtils.capitalize(name.toLowerCase(), null));
-            }
-            String thumbnail = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL));
-            if(thumbnail != null && thumbnail.length() > 0) {
-                Glide.with(this).load(thumbnail).into(mImageProfileView);
-                delFab.setVisibility(View.VISIBLE);
-            }else {
-                delFab.setVisibility(View.INVISIBLE);
-            }
-        }
 
-        cursor.close();
+        phoneNumberTextView.setText(getUsername());
+
+        if(getProfilePic().length() > 0) {
+            Glide.with(this).load(getProfilePic()).into(mImageProfileView);
+            delFab.setVisibility(View.VISIBLE);
+        }else  delFab.setVisibility(View.INVISIBLE);
+
+        if(getProfileName().length() > 0){
+            usernameTextView.setText(WordUtils.capitalize(getProfileName().toLowerCase(), null));
+        }
     }
 
     @Override
@@ -127,7 +125,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     public void launchEditActivity(View view) {
         Intent  intent = new Intent(this, EditProfileNameActivity.class);
-        intent.putExtra(ParseConstant.USER_PHONE_NUMBER_COLUMN, ParseUser.getCurrentUser().getUsername());
+        intent.putExtra(ParseConstant.USER_PHONE_NUMBER_COLUMN, getUsername());
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
     }
@@ -213,15 +211,7 @@ public class ProfileActivity extends AppCompatActivity {
                 mBitmap = ImagePicker.getImageFromResult(this, resultCode, data);
                 if(mBitmap != null) {
                     delFab.show();
-
-                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-                    String imageFileName = "IMAGE_" + timeStamp + "_";
-
-                    String userThumbnailPath = imageFileName + timeStamp + ".jpg";
-                    File profilePicFile = new File(getCacheDir(), userThumbnailPath);
-
-                    ProfileAsyncTask task = new ProfileAsyncTask(this);
-                    task.execute(profilePicFile);
+                    new UploadTask(this).execute();
                 }
                 break;
             default:
@@ -232,19 +222,19 @@ public class ProfileActivity extends AppCompatActivity {
 
     private String getFriendIds(){
         String friendIds = "";
-        Cursor userCursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, null, null, null);
-        if(userCursor != null && userCursor.getCount() > 0) {
-            while (userCursor.moveToNext()){
-                String number = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
+        Cursor registeredCursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER},
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_REGISTERED + "=?", new String[]{"1"}, null);
+        if(registeredCursor != null && registeredCursor.getCount() > 0) {
+            while (registeredCursor.moveToNext()){
+                String number = registeredCursor.getString(registeredCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER));
                 if(!number.equals(getUsername())) friendIds += number + ",";
             }
         }
 
-        if(userCursor != null) userCursor.close();
+        registeredCursor.close();
 
-        if(friendIds.length() > 0) {
-            return friendIds.substring(0, friendIds.length()-1);
-        }else return "";
+        return (friendIds.length() > 0) ? friendIds.substring(0, friendIds.length()-1) : "";
     }
 
     @Override
@@ -260,10 +250,25 @@ public class ProfileActivity extends AppCompatActivity {
         return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
     }
 
-    private class ProfileAsyncTask extends AsyncTask<File, Void, Bitmap> {
+    private String getPassword(){
+        SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.PASSWORD_COLUMN, ""));
+    }
+
+    private String getProfilePic(){
+        SharedPreferences shared = getSharedPreferences(getString(R.string.profile_path), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.USER_THUMBNAIL_COLUMN, ""));
+    }
+
+    private String getProfileName(){
+        SharedPreferences shared = getSharedPreferences(getString(R.string.profile_name), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.COLUMN_NAME, ""));
+    }
+
+    private class UploadTask extends AsyncTask<Void, Void, String> {
 
         private  Context mContext;
-        public ProfileAsyncTask(Context context) {
+        public UploadTask(Context context) {
             mContext =context;
         }
 
@@ -273,92 +278,117 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         @Override
-        protected Bitmap doInBackground(File... params) {
+        protected String doInBackground(Void... params) {
+            InputStream fileInputStream = null;
+
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            String imageFileName = "IMAGE_" + timeStamp + "_";
+
+            String image_file = imageFileName + timeStamp + ".jpg";
+            File profilePicFile = new File(getCacheDir(), image_file);
+
+            final String profileId = UUID.randomUUID().toString();
+
             try {
-                FileOutputStream out = new FileOutputStream(params[0]);
-                mBitmap.compress(Bitmap.CompressFormat.JPEG, 70, out);
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                mBitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
-                byte[] groupImageByteData = stream.toByteArray();
-                pFile = new ParseFile(ParseConstant.EVENT_THUMBNAIL_EXTENSION, groupImageByteData);
+                FileOutputStream out = new FileOutputStream(profilePicFile);
+                mBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
                 out.flush();
                 out.close();
+
+                File cDir = mContext.getCacheDir();
+                File tempFile = new File(cDir.getPath() + "/" + image_file) ;
+                Log.d(TAG, "path: " + tempFile.getAbsolutePath());
+
+                fileInputStream = new FileInputStream(tempFile);
+                cloudinary.uploader().upload(fileInputStream, ObjectUtils.asMap("public_id", profileId));
+                String fileId = cloudinary.url().generate(profileId + ".jpg");
+
+                if(fileId != null) Log.d(TAG, fileId);
+
+                return fileId;
+            }catch (FileNotFoundException e) {
+                e.printStackTrace();
+                Log.d(TAG, e.getMessage());
             } catch (Exception e) {
                 e.printStackTrace();
+                Log.d(TAG, e.getMessage());
             }
-            return mBitmap;
+
+            return null;
         }
 
         @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            super.onPostExecute(bitmap);
-            if(bitmap != null) {
-                mImageProfileView.setImageBitmap(bitmap);
+        protected void onPostExecute(String profileId) {
+            super.onPostExecute(profileId);
+            if(profileId != null) {
+                Log.d(TAG, profileId);
+                mImageProfileView.setImageBitmap(mBitmap);
+                saveProfile(profileId);
+                saveProfileInBackground(profileId);
+            }
+        }
 
-                final ParseQuery<ParseUser> query = ParseUser.getQuery();
-                query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
-                query.getFirstInBackground(new GetCallback<ParseUser>() {
-                    @Override
-                    public void done(ParseUser currentUser, ParseException e) {
-                        if(e == null) {
-                            Log.d(TAG, "Found User");
-                            currentUser.put(ParseConstant.USER_THUMBNAIL_COLUMN, pFile);
-                            currentUser.saveInBackground(new SaveCallback() {
-                                @Override
-                                public void done(ParseException e) {
-                                    if(e == null) {
-                                        query.getFirstInBackground(new GetCallback<ParseUser>() {
-                                            @Override
-                                            public void done(ParseUser currentUser, ParseException e) {
-                                                if(e == null) {
-                                                    ParseFile image = (ParseFile) currentUser.get(ParseConstant.USER_THUMBNAIL_COLUMN);
+        private void saveProfile(String profileId){
+            SharedPreferences sharedPref = getSharedPreferences(getString(R.string.profile_path), Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString(ParseConstant.USER_THUMBNAIL_COLUMN, profileId);
+            editor.apply();
 
-                                                    ContentValues memberValue = new ContentValues();
-                                                    memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL, image.getUrl());
-
-                                                    getApplicationContext().getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI,
-                                                            memberValue,
-                                                            YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
-                                                            new String[]{getUsername()});
-
-                                                    ContentValues userValue = new ContentValues();
-                                                    userValue.put(YourTurnContract.UserEntry.COLUMN_USER_THUMBNAIL, image.getUrl());
-
-                                                    getApplicationContext().getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI,
-                                                            userValue,
-                                                            YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=?",
-                                                            new String[]{getUsername()});
-
-
-                                                    HashMap<String, Object> payload = new HashMap<>();
-                                                    payload.put("sender", getUsername());
-                                                    payload.put("friends", getFriendIds());
-                                                    payload.put("url", image.getUrl());
-                                                    ParseCloud.callFunctionInBackground("thumbnailChannel", payload, new FunctionCallback<Object>() {
-                                                        @Override
-                                                        public void done(Object object, ParseException e) {
-                                                            if(e == null) {
-                                                                Log.d(TAG, "Successfully sent");
-                                                            }else {
-                                                                Log.d(TAG, e.getMessage());
-                                                            }
-                                                        }
-                                                    });
-                                                }else {
-                                                    Log.d(TAG, e.getMessage());
-                                                }
-                                            }
-                                        });
-                                    }
-                                }
-                            });
-                        }else {
-                            Log.d(TAG, "No results found !");
-                            Log.d(TAG, e.getMessage());
-                        }
+            if(getFriendIds().length() > 0) {
+                HashMap<String, Object> payload = new HashMap<>();
+                payload.put("sender", getUsername());
+                payload.put("friends", getFriendIds());
+                payload.put("url", profileId);
+                ParseCloud.callFunctionInBackground("thumbnailChannel", payload, (object, e) -> {
+                    if(e == null) {
+                        Log.d(TAG, "Successfully sent");
+                    }else {
+                        Log.d(TAG, e.getMessage());
                     }
                 });
             }
+        }
+
+        private void saveProfileInBackground(String profileId) {
+            ParseQuery<ParseUser> query = ParseUser.getQuery();
+            query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
+            query.setLimit(1);
+
+            query.getFirstInBackground((user, e) -> {
+                if(e == null) {
+                    user.put(ParseConstant.USER_THUMBNAIL_COLUMN, profileId);
+                    if(!user.isAuthenticated()){
+                        user.logInInBackground(getUsername(), getPassword(), (user1, e13) -> {
+                            if(e13 == null){
+                                user1.saveInBackground(e12 -> {
+                                    if(e12 == null){
+                                        Log.d(TAG, "Profile saved successfully");
+                                        Toast.makeText(ProfileActivity.this, "Profile saved successfully", Toast.LENGTH_LONG).show();
+                                    }else {
+                                        Log.d(TAG, "An error occured");
+                                        Log.d(TAG, e12.getMessage());
+                                    }
+                                });
+                            }else {
+                                Log.d(TAG, "An error occured");
+                                Log.d(TAG, e13.getMessage());
+                            }
+                        });
+                    }else {
+                        user.saveInBackground(e1 -> {
+                            if(e1 == null) {
+                                Log.d(TAG, "Profile saved successfully");
+                                Toast.makeText(ProfileActivity.this, "Profile saved successfully", Toast.LENGTH_LONG).show();
+                            }else {
+                                Log.d(TAG, "An error occured");
+                                Log.d(TAG, e1.getMessage());
+                            }
+                        });
+                    }
+                }else {
+                    Log.d(TAG, e.getMessage());
+                }
+            });
         }
     }
 }

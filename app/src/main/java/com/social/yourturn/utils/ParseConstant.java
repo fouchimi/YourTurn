@@ -20,7 +20,6 @@ public class ParseConstant {
     public static final String FRIEND_ID = "friend_id";
     public static final String EVENT_ID = "event_id";
     public static final String EVENT_THUMBNAIL_COLUMN = "event_thumbnail";
-    public static final String EVENT_THUMBNAIL_EXTENSION = "event_thumbnail.png";
 
     public static final String LEDGER_EVENT_TABLE = "Ledger";
     public static final String LEDGER_EVENT_ID = "ledger_event_id";

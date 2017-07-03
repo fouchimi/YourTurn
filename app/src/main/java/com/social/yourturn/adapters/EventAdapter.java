@@ -126,22 +126,23 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
             int itemPosition = mRecyclerView.getChildLayoutPosition(v);
             Event event = getEvent(itemPosition);
 
-            Cursor eventIdCursor = mContext.getContentResolver().query(YourTurnContract.EventEntry.CONTENT_URI,
-                    new String[]{YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR},
-                    YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?" + " AND " + YourTurnContract.EventEntry.COLUMN_EVENT_CREATOR + "=?",
-                    new String[]{event.getEventId(), getUsername()}, null);
-
-            if(eventIdCursor != null && eventIdCursor.getCount() <= 0) {
+            Contact creatorContact = null;
+            boolean creatorFound = false;
+            for(Contact contact : event.getContactList()){
+                if(contact.getPhoneNumber().equals(getUsername())) {
+                    creatorContact = contact;
+                    creatorFound = true;
+                    break;
+                }
+            }
+            if(!creatorFound){
                 Contact contact = new Contact();
                 contact.setName(mContext.getString(R.string.current_user));
                 contact.setPhoneNumber(getUsername());
                 event.getContactList().add(contact);
+            }else {
+                creatorContact.setName(mContext.getString(R.string.current_user));
             }
-
-            eventIdCursor.close();
-
-            for(Contact contact : event.getContactList())
-                if(contact.getPhoneNumber().equals(getUsername())) contact.setName(mContext.getString(R.string.current_user));
 
             intent.putExtra(EventFragment.EVENT_KEY, event);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);

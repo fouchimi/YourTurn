@@ -1,12 +1,11 @@
 package com.social.yourturn;
 
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -16,28 +15,21 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.parse.FunctionCallback;
-import com.parse.GetCallback;
 import com.parse.ParseCloud;
-import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
-import com.parse.SaveCallback;
 import com.social.yourturn.broadcast.NameBroadcastReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
-import org.joda.time.DateTime;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class EditProfileNameActivity extends AppCompatActivity {
 
     private final static String TAG = EditProfileNameActivity.class.getSimpleName();
     private EditText editNameText;
-    private String phoneNumber;
     private BroadcastReceiver nameBroadcastReceiver;
 
     @Override
@@ -53,15 +45,8 @@ public class EditProfileNameActivity extends AppCompatActivity {
         getSupportActionBar().setTitle(R.string.edit_name);
 
         editNameText = (EditText) findViewById(R.id.editNameField);
-        phoneNumber = ParseUser.getCurrentUser().getUsername();
-        Log.d(TAG, "Phone Number: " + phoneNumber);
-        Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
-        if(cursor.getCount() > 0){
-            cursor.moveToNext();
-            String name = cursor.getString(cursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_NAME));
-            if(name != null) editNameText.setText(WordUtils.capitalize(name.toLowerCase(), null));
-        }
+
+        if(getProfileName().length() > 0) editNameText.setText(WordUtils.capitalize(getProfileName().toLowerCase(), null));
 
         nameBroadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -83,95 +68,47 @@ public class EditProfileNameActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(nameBroadcastReceiver);
     }
 
+    private String getProfileName(){
+        SharedPreferences shared = getSharedPreferences(getString(R.string.profile_name), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.COLUMN_NAME, ""));
+    }
+
     private String getFriendIds(){
         String friendIds = "";
-        Cursor userCursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null, null, null, null);
-        if(userCursor != null && userCursor.getCount() > 0) {
-            ArrayList<String> list = new ArrayList<>();
-            while (userCursor.moveToNext()){
-                String number = userCursor.getString(userCursor.getColumnIndex(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER));
-                list.add(number);
-                if(!list.contains(number) && !number.equals(phoneNumber)){
-                    list.add(number);
-                    friendIds += number + ",";
-                }
+        Cursor registeredCursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER},
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_REGISTERED + "=?", new String[]{"1"}, null);
+        if(registeredCursor != null && registeredCursor.getCount() > 0) {
+            while (registeredCursor.moveToNext()){
+                String number = registeredCursor.getString(registeredCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER));
+                if(!number.equals(getUsername())) friendIds += number + ",";
             }
         }
 
-        if(userCursor != null) userCursor.close();
+        registeredCursor.close();
 
-        if(friendIds.length() > 0) {
-            return friendIds.substring(0, friendIds.length()-1);
-        }else return null;
+        return (friendIds.length() > 0) ? friendIds.substring(0, friendIds.length()-1) : "";
     }
 
     public void confirmChange(View view){
-        final String name = editNameText.getText().toString();
-        DateTime dayTime = new DateTime();
+        String name = editNameText.getText().toString();
         if(name.length() > 0) {
-            ContentValues userValues = new ContentValues();
-            Cursor cursor = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
-            if(cursor.getCount() <=0 ){
-                // Insert
-                Log.d(TAG, "Not available in content provider");
-                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_ID, 0);
-                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, name.toUpperCase());
-                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER, phoneNumber);
-                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, dayTime.getMillis());
-                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
-                getContentResolver().insert(YourTurnContract.UserEntry.CONTENT_URI, userValues);
-                Toast.makeText(this, "Name Inserted  !", Toast.LENGTH_LONG).show();
-            }else {
-                // Update
-                Log.d(TAG, "Updating content provider");
-                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, name.toUpperCase());
-                userValues.put(YourTurnContract.UserEntry.COLUMN_USER_UPDATED_DATE, dayTime.getMillis());
-                getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, userValues,
-                        YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(phoneNumber), null);
-                Toast.makeText(this, "Name updated !", Toast.LENGTH_SHORT).show();
-            }
 
-            HashMap<String, Object> payload = new HashMap<>();
-            payload.put("senderId", phoneNumber);
-            payload.put("targetIds", getFriendIds());
-            payload.put("name", name.toUpperCase());
-            ParseCloud.callFunctionInBackground("nameChannel", payload, new FunctionCallback<Object>() {
-                @Override
-                public void done(Object object, ParseException e) {
+            saveName(name);
+            saveNameInBackground(name);
+
+            if(getFriendIds().length() > 0) {
+                HashMap<String, Object> payload = new HashMap<>();
+                payload.put("senderId", getUsername());
+                payload.put("targetIds", getFriendIds());
+                payload.put("name", name.toUpperCase());
+                ParseCloud.callFunctionInBackground("nameChannel", payload, (object, e) -> {
                     if(e == null) {
                         Log.d(TAG, "name successfully updated");
                     }
-                }
-            });
+                });
+            }
 
-            ParseQuery<ParseUser> query = ParseUser.getQuery();
-            query.whereEqualTo(ParseConstant.USERNAME_COLUMN, phoneNumber);
-            query.getFirstInBackground(new GetCallback<ParseUser>() {
-                @Override
-                public void done(ParseUser currentUser, ParseException e) {
-                    if(e == null) {
-                        Log.d(TAG, "Found User");
-                        currentUser.put(ParseConstant.COLUMN_NAME, name);
-                        currentUser.saveInBackground(new SaveCallback() {
-                            @Override
-                            public void done(ParseException e) {
-                                if(e == null) {
-                                    Log.d(TAG, "name saved successfully !");
-                                    Intent intent = new Intent(EditProfileNameActivity.this, ProfileActivity.class);
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                    startActivity(intent);
-                                }else {
-                                    Log.d(TAG, e.getMessage());
-                                }
-                            }
-                        });
-                    }else {
-                        Log.d(TAG, "No results found !");
-                        Log.d(TAG, e.getMessage());
-                    }
-                }
-            });
         }
     }
 
@@ -179,5 +116,61 @@ public class EditProfileNameActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ProfileActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
+    }
+
+    private String getUsername() {
+        SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
+    }
+
+    private String getPassword(){
+        SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.PASSWORD_COLUMN, ""));
+    }
+
+    private void saveName(String name){
+        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.profile_name), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(ParseConstant.COLUMN_NAME, name);
+        editor.apply();
+    }
+
+    private void saveNameInBackground(String name){
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, getUsername());
+        query.getFirstInBackground((currentUser, e) -> {
+            if(e == null) {
+                Log.d(TAG, "Found User");
+                currentUser.put(ParseConstant.COLUMN_NAME, name);
+                if(!currentUser.isAuthenticated()){
+                    currentUser.logInInBackground(getUsername(), getPassword(), (user, e12) -> {
+                        if(e12 == null){
+                            Log.d(TAG, "name saved successfully !");
+                            Toast.makeText(EditProfileNameActivity.this, "Name saved successfully", Toast.LENGTH_LONG).show();
+                            Intent intent = new Intent(EditProfileNameActivity.this, ProfileActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                        }else {
+                            Log.d(TAG, e12.getMessage());
+                        }
+                    });
+                }else {
+                    currentUser.saveInBackground(e1 -> {
+                        if(e1 == null) {
+                            Log.d(TAG, "name saved successfully !");
+                            Toast.makeText(EditProfileNameActivity.this, "Name saved successfully", Toast.LENGTH_LONG).show();
+                            Intent intent = new Intent(EditProfileNameActivity.this, ProfileActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                        }else {
+                            Log.d(TAG, e1.getMessage());
+                        }
+                    });
+                }
+            }else {
+                Log.d(TAG, "No results found !");
+                Log.d(TAG, e.getMessage());
+            }
+        });
     }
 }

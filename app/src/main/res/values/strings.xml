@@ -9,6 +9,12 @@
     <string name="participantText">Participants</string>
     <string name="new_group_label">New Event Group</string>
 
+    <!-- CLOUDINARY SETTINGS -->
+    <string name="cloudinary_cloud_name">yourturncloud</string>
+    <string name="cloudinary_api_key">944682836341525</string>
+    <string name="cloudinary_api_secret">jiE8lj-7AiwS6dcP5ri_h9mBXpk</string>
+    <string name="cloudinary_url">cloudinary://944682836341525:jiE8lj-7AiwS6dcP5ri_h9mBXpk@yourturncloud</string>
+
     <!-- HEROKU APP CONFIGURATION -->
     <string name="app_id">sMVHq9lgSmQUtNxyEdsBJaUvZUkqB7eKg</string>
     <string name="master_key">3L3nrFqVD2Ilg_6RXuMusgVba0_uARi6E</string>
@@ -98,5 +104,7 @@
     <string name="paidText">paid: $%1$s</string>
     <string name="scoreValue">$%1$s</string>
     <string name="scoreText">score</string>
+    <string name="profile_path">profile_path</string>
+    <string name="profile_name">profile_name</string>
 
 </resources>

@@ -48,8 +48,10 @@ public class ConfirmAmountActivity extends AppCompatActivity {
         mActionBarToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mActionBarToolbar);
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        if(getSupportActionBar() != null){
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
 
         mActionBarToolbar.setTitle(R.string.confirm_price);
 

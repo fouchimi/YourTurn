@@ -44,6 +44,8 @@ public class EventMemberActivity extends AppCompatActivity {
             Event mEvent = intent.getParcelableExtra(EventFragment.EVENT_KEY);
             if(getSupportActionBar() != null) {
                 getSupportActionBar().setTitle(mEvent.getName());
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setDisplayShowHomeEnabled(true);
             }
             EventMemberAdapter adapter = new EventMemberAdapter(this, mEvent, mEvent.getContactList());
             ListView mListView = (ListView) findViewById(R.id.members_list_view);

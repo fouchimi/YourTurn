@@ -144,7 +144,7 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
                 event.setGroupUserRef(userId);
                 event.setContactList(contactList);
                 if(!mEventList.contains(event))
-                    mEventList.add(0, event);
+                    mEventList.add(event);
             }else if (mEventList.size() > 0 && mEventList.get(mEventList.size()-1).getEventId().equals(eventId)) continue;
             else {
                 event = new Event();
@@ -155,7 +155,7 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
                 event.setGroupUserRef(userId);
                 event.setContactList(contactList);
                 if(!mEventList.contains(event))
-                    mEventList.add(0, event);
+                    mEventList.add(event);
             }
 
         }
