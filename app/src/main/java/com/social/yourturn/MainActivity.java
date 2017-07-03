@@ -373,9 +373,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         public CharSequence getPageTitle(int position) {
             switch (position){
                 case 0:
-                    return getString(R.string.groups);
+                    return getString(R.string.events);
                 case 1:
-                    return getString(R.string.activities);
+                    return getString(R.string.chats);
             }
             return super.getPageTitle(position);
         }

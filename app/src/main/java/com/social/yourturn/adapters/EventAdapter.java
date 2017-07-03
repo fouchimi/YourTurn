@@ -139,15 +139,23 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
                 Contact contact = new Contact();
                 contact.setName(mContext.getString(R.string.current_user));
                 contact.setPhoneNumber(getUsername());
+                contact.setThumbnailUrl(getProfilePic());
                 event.getContactList().add(contact);
             }else {
                 creatorContact.setName(mContext.getString(R.string.current_user));
+                creatorContact.setThumbnailUrl(getProfilePic());
             }
 
             intent.putExtra(EventFragment.EVENT_KEY, event);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             mContext.startActivity(intent);
         }
+
+    }
+
+    private String getProfilePic(){
+        SharedPreferences shared = mContext.getSharedPreferences(mContext.getString(R.string.profile_path), Context.MODE_PRIVATE);
+        return (shared.getString(ParseConstant.USER_THUMBNAIL_COLUMN, ""));
     }
 
     private String getUsername(){

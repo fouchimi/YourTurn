@@ -21,8 +21,8 @@
     <string name="server">https://yourturnapp.herokuapp.com/parse/</string>
     <string name="required_group_name">Please enter event name, only alphanumeric allowed</string>
     <string name="preference_file_key">login_credentials</string>
-    <string name="groups">Groups</string>
-    <string name="activities">Latest Activities</string>
+    <string name="events">Events</string>
+    <string name="chats">Chats</string>
 
     <string name="pick_image_intent_text">Group icon</string>
 
