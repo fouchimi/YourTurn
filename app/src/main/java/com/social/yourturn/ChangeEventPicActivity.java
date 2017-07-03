@@ -64,7 +64,10 @@ public class ChangeEventPicActivity extends AppCompatActivity {
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
                 getSupportActionBar().setDisplayShowHomeEnabled(true);
             }
-            if(mEvent.getEventUrl() != null && mEvent.getEventUrl().length() > 0) Glide.with(this).load(mEvent.getEventUrl()).into(mEventImageView);
+            if(mEvent.getEventUrl() != null && mEvent.getEventUrl().length() > 0){
+                Glide.with(this).load(mEvent.getEventUrl()).into(mEventImageView);
+                delFab.show();
+            }
             else {
                 delFab.hide();
             }
@@ -78,9 +81,12 @@ public class ChangeEventPicActivity extends AppCompatActivity {
     }
 
     public void deleteEventPic(View view){
-       int deleted_id = getContentResolver().delete(YourTurnContract.EventEntry.CONTENT_URI, YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", new String[]{mEvent.getEventId()});
-        if(deleted_id > 0) {
+        ContentValues values = new ContentValues();
+        values.put(YourTurnContract.EventEntry.COLUMN_EVENT_URL, "");
+       int updated_id = getContentResolver().update(YourTurnContract.EventEntry.CONTENT_URI, values, YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", new String[]{mEvent.getEventId()});
+        if(updated_id > 0) {
             Toast.makeText(this, "Event url deleted !", Toast.LENGTH_LONG).show();
+            mEventImageView.setImageResource(R.drawable.ic_group_black_36dp);
             delFab.hide();
         }
     }
@@ -90,7 +96,7 @@ public class ChangeEventPicActivity extends AppCompatActivity {
         values.put(YourTurnContract.EventEntry.COLUMN_EVENT_URL, profileUrl);
         int updated_id = getContentResolver().update(YourTurnContract.EventEntry.CONTENT_URI, values, YourTurnContract.EventEntry.COLUMN_EVENT_ID + "=?", new String[]{eventId});
         if(updated_id > 0){
-            Log.d(TAG, "Group event url updated successfully");
+            Log.d(TAG, "Event url updated successfully");
             Toast.makeText(this, "Event url updated !", Toast.LENGTH_LONG).show();
         }
     }
@@ -166,6 +172,7 @@ public class ChangeEventPicActivity extends AppCompatActivity {
                 Log.d(TAG, profileId);
                 saveEventUrl(profileId, mEvent.getEventId());
                 mEventImageView.setImageBitmap(mBitmap);
+                delFab.show();
             }
         }
 
