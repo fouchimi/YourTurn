@@ -4,10 +4,11 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.social.yourturn.data.YourTurnContract.UserEntry;
+import com.social.yourturn.data.YourTurnContract.MemberEntry;
 import com.social.yourturn.data.YourTurnContract.EventEntry;
 import com.social.yourturn.data.YourTurnContract.LedgerEntry;
-import com.social.yourturn.data.YourTurnContract.MemberEntry;
+import com.social.yourturn.data.YourTurnContract.MessageEntry;
+import com.social.yourturn.data.YourTurnContract.RecentMessageEntry;
 
 /**
  * Created by ousma on 5/3/2017.
@@ -27,31 +28,20 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
     public void onCreate(SQLiteDatabase db) {
 
         final String SQL_CREATE_MEMBER_TABLE = "CREATE TABLE " + MemberEntry.TABLE_NAME + " (" +
-                MemberEntry._ID + " INTEGER PRIMARY KEY, " +
-                MemberEntry.COLUMN_MEMBER_NAME + " TEXT NULL, " +
-                MemberEntry.COLUMN_MEMBER_LOOKUP_KEY + " TEXT, " +
-                MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + " TEXT NOT NULL, " +
-                MemberEntry.COLUMN_MEMBER_REGISTERED + " TEXT, " +
-                MemberEntry.COLUMN_MEMBER_SCORE + " TEXT, " +
-                MemberEntry.COLUMN_MEMBER_SORT_KEY_PRIMARY + " TEXT, " +
-                MemberEntry.COLUMN_MEMBER_THUMBNAIL + " TEXT, " +
-                MemberEntry.COLUMN_MEMBER_CREATED_DATE + " INTEGER NOT NULL, " +
-                MemberEntry.COLUMN_MEMBER_UPDATED_DATE + " INTEGER NOT NULL " +
+                YourTurnContract.MemberEntry._ID + " INTEGER PRIMARY KEY, " +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME + " TEXT NULL, " +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_LOOKUP_KEY + " TEXT, " +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + " TEXT NOT NULL, " +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_REGISTERED + " TEXT, " +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_SCORE + " TEXT, " +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_SORT_KEY_PRIMARY + " TEXT, " +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL + " TEXT, " +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE + " INTEGER NOT NULL, " +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_UPDATED_DATE + " INTEGER NOT NULL " +
                 ");";
 
-        final String SQL_CREATE_USER_TABLE = "CREATE TABLE " + UserEntry.TABLE_NAME + " (" +
-                UserEntry._ID + " INTEGER PRIMARY KEY, " +
-                UserEntry.COLUMN_USER_NAME + " TEXT, " +
-                UserEntry.COLUMN_USER_ID + " TEXT, " +
-                UserEntry.COLUMN_USER_PASSWORD + " TEXT, " +
-                UserEntry.COLUMN_USER_DEVICE_ID + " TEXT, " +
-                UserEntry.COLUMN_USER_PHONE_NUMBER + " TEXT NOT NULL, " +
-                UserEntry.COLUMN_USER_THUMBNAIL + " TEXT, " +
-                UserEntry.COLUMN_USER_CREATED_DATE + " INTEGER NOT NULL, " +
-                UserEntry.COLUMN_USER_UPDATED_DATE + " INTEGER NOT NULL" +
-                ");";
 
-        final String SQL_CREATE_GROUP_TABLE = "CREATE TABLE " + EventEntry.TABLE_NAME + " (" +
+        final String SQL_CREATE_EVENT_TABLE = "CREATE TABLE " + EventEntry.TABLE_NAME + " (" +
                 EventEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 EventEntry.COLUMN_EVENT_ID + " TEXT NOT NULL, " +
                 EventEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
@@ -62,10 +52,10 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 EventEntry.COLUMN_EVENT_CREATOR + " TEXT, " +
                 EventEntry.COLUMN_EVENT_FLAG + " TEXT, " +
                 "FOREIGN KEY (" + EventEntry.COLUMN_USER_KEY + ") REFERENCES " +
-                UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE SET NULL ON UPDATE CASCADE"
+                YourTurnContract.MemberEntry.TABLE_NAME + " (" + MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE"
                 + ");";
 
-        final String SQL_CREATE_LEDGER_TABLE = "CREATE TABLE " + YourTurnContract.LedgerEntry.TABLE_NAME + " (" +
+        final String SQL_CREATE_LEDGER_TABLE = "CREATE TABLE " + LedgerEntry.TABLE_NAME + " (" +
                 LedgerEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 LedgerEntry.COLUMN_USER_KEY + " TEXT NOT NULL, " +
                 LedgerEntry.COLUMN_EVENT_KEY + " TEXT NOT NULL, " +
@@ -75,23 +65,45 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 LedgerEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
                 LedgerEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
                 "FOREIGN KEY (" + LedgerEntry.COLUMN_USER_KEY + ") REFERENCES " +
-                UserEntry.TABLE_NAME + " (" + UserEntry.COLUMN_USER_ID + ") ON DELETE SET NULL ON UPDATE CASCADE " +
+                YourTurnContract.MemberEntry.TABLE_NAME + " (" + MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE " +
                 "FOREIGN KEY (" + LedgerEntry.COLUMN_EVENT_KEY + ") REFERENCES " +
                 EventEntry.TABLE_NAME + " (" + EventEntry.COLUMN_EVENT_ID + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
 
+        final String SQL_CREATE_MESSAGE_TABLE = "CREATE TABLE " + MessageEntry.TABLE_NAME + " (" +
+                MessageEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                MessageEntry.COLUMN_MESSAGE_BODY + " TEXT NOT NULL, " +
+                MessageEntry.COLUMN_MESSAGE_TYPE + " TEXT NOT NULL, " +
+                MessageEntry.COLUMN_MESSAGE_USER_KEY + " TEXT NOT NULL, " +
+                MessageEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
+                MessageEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
+                "FOREIGN KEY (" + MessageEntry.COLUMN_MESSAGE_USER_KEY + ") REFERENCES " + MemberEntry.TABLE_NAME + " (" +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
+
+        final String SQL_CREATE_RECENT_MESSAGE_TABLE = "CREATE TABLE " + RecentMessageEntry.TABLE_NAME + " (" +
+                RecentMessageEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                RecentMessageEntry.COLUMN_MESSAGE_BODY + " TEXT NOT NULL, " +
+                RecentMessageEntry.COLUMN_MESSAGE_TYPE + " TEXT NOT NULL, " +
+                RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + " TEXT NOT NULL, " +
+                RecentMessageEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
+                RecentMessageEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
+                "FOREIGN KEY (" + RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + ") REFERENCES " + YourTurnContract.MemberEntry.TABLE_NAME + " (" +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
+
 
         db.execSQL(SQL_CREATE_MEMBER_TABLE);
-        db.execSQL(SQL_CREATE_USER_TABLE);
-        db.execSQL(SQL_CREATE_GROUP_TABLE);
+        db.execSQL(SQL_CREATE_EVENT_TABLE);
         db.execSQL(SQL_CREATE_LEDGER_TABLE);
+        db.execSQL(SQL_CREATE_MESSAGE_TABLE);
+        db.execSQL(SQL_CREATE_RECENT_MESSAGE_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + MemberEntry.TABLE_NAME);
-        db.execSQL("DROP TABLE IF EXISTS " + UserEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + EventEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + LedgerEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + MessageEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + RecentMessageEntry.TABLE_NAME);
         onCreate(db);
     }
 }

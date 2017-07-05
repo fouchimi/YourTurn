@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.database.MatrixCursor;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -39,7 +38,6 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.parse.ParseInstallation;
 import com.parse.ParseUser;
-import com.social.yourturn.adapters.RegisteredMemberAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.EventFragment;
 import com.social.yourturn.fragments.ChatFragment;
@@ -238,8 +236,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 Intent intent = new Intent(this, ProfileActivity.class);
                 SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
                 String phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
-                Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                        YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
+                Cursor c = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null,
+                        YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?" , new String[]{phoneNumber}, null);
                 if(c != null && c.getCount() <= 0) {
                     Log.d(TAG, "No records found !");
                     intent.putExtra(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);

@@ -16,9 +16,10 @@ import android.support.annotation.Nullable;
 public class YourTurnProvider extends ContentProvider {
 
     static final int MEMBER = 100;
-    static final int USER = 200;
-    static final int GROUP = 300;
-    static final int LEDGER = 400;
+    static final int EVENT = 200;
+    static final int LEDGER = 300;
+    static final int MESSAGE = 400;
+    static final int RECENT_MESSAGE = 500;
 
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private YourTurnDbHelper mOpenHelper;
@@ -46,19 +47,7 @@ public class YourTurnProvider extends ContentProvider {
                 );
                 break;
             }
-            case USER: {
-                retCursor = mOpenHelper.getReadableDatabase().query(
-                        YourTurnContract.UserEntry.TABLE_NAME,
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null,
-                        null,
-                        sortOrder
-                );
-                break;
-            }
-            case GROUP:{
+            case EVENT:{
                 retCursor = mOpenHelper.getReadableDatabase().query(true,
                         YourTurnContract.EventEntry.TABLE_NAME,
                         projection,
@@ -73,6 +62,30 @@ public class YourTurnProvider extends ContentProvider {
             case LEDGER:{
                 retCursor = mOpenHelper.getReadableDatabase().query(true,
                         YourTurnContract.LedgerEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder,
+                        null);
+                break;
+            }
+            case MESSAGE:{
+                retCursor = mOpenHelper.getReadableDatabase().query(true,
+                        YourTurnContract.MessageEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder,
+                        null);
+                break;
+            }
+            case RECENT_MESSAGE: {
+                retCursor = mOpenHelper.getReadableDatabase().query(true,
+                        YourTurnContract.RecentMessageEntry.TABLE_NAME,
                         projection,
                         selection,
                         selectionArgs,
@@ -98,12 +111,14 @@ public class YourTurnProvider extends ContentProvider {
         switch (match){
             case MEMBER:
                 return YourTurnContract.MemberEntry.CONTENT_TYPE;
-            case USER:
-                return YourTurnContract.UserEntry.CONTENT_TYPE;
-            case GROUP:
+            case EVENT:
                 return YourTurnContract.EventEntry.CONTENT_TYPE;
             case LEDGER:
                 return YourTurnContract.LedgerEntry.CONTENT_TYPE;
+            case MESSAGE:
+                return YourTurnContract.MemberEntry.CONTENT_TYPE;
+            case RECENT_MESSAGE:
+                return YourTurnContract.RecentMessageEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -128,17 +143,7 @@ public class YourTurnProvider extends ContentProvider {
                 }
                 break;
             }
-            case USER:{
-                normalizeDate(values);
-                long _id = db.insert(YourTurnContract.UserEntry.TABLE_NAME, null, values);
-                if(_id > 0 ){
-                    returnUri = YourTurnContract.UserEntry.buildUserUri(_id);
-                }else {
-                    throw new android.database.SQLException("Failed to insert row into " + uri);
-                }
-                break;
-            }
-            case GROUP: {
+            case EVENT: {
                 normalizeDate(values);
                 long _id = db.insert(YourTurnContract.EventEntry.TABLE_NAME, null, values);
                 if( _id > 0 ){
@@ -158,6 +163,25 @@ public class YourTurnProvider extends ContentProvider {
                 }
                 break;
             }
+            case MESSAGE:{
+                normalizeDate(values);
+                long _id = db.insert(YourTurnContract.MessageEntry.TABLE_NAME, null, values);
+                if(_id > 0){
+                    returnUri = YourTurnContract.MessageEntry.buildLedgerUri(_id);
+                }else {
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
+                break;
+            }
+            case RECENT_MESSAGE:{
+                long _id = db.insert(YourTurnContract.RecentMessageEntry.TABLE_NAME, null, values);
+                if(_id > 0){
+                    returnUri = YourTurnContract.RecentMessageEntry.buildLedgerUri(_id);
+                }else {
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -166,9 +190,9 @@ public class YourTurnProvider extends ContentProvider {
     }
 
     private void normalizeDate(ContentValues values){
-        if(values.containsKey(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE)){
-            long dateValue = values.getAsLong(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE);
-            values.put(YourTurnContract.UserEntry.COLUMN_USER_CREATED_DATE, YourTurnContract.normalizeDate(dateValue));
+        if(values.containsKey(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE)){
+            long dateValue = values.getAsLong(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE);
+            values.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE, YourTurnContract.normalizeDate(dateValue));
         }
     }
 
@@ -183,21 +207,24 @@ public class YourTurnProvider extends ContentProvider {
             case MEMBER :
                 rowsDeleted = db.delete(YourTurnContract.MemberEntry.TABLE_NAME, selection, selectionArgs);
                 break;
-            case USER :
-                rowsDeleted = db.delete(YourTurnContract.UserEntry.TABLE_NAME, selection, selectionArgs);
-                break;
-            case GROUP :
+            case EVENT:
                 rowsDeleted = db.delete(YourTurnContract.EventEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             case LEDGER :
                 rowsDeleted = db.delete(YourTurnContract.LedgerEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case MESSAGE :
+                rowsDeleted = db.delete(YourTurnContract.MessageEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case RECENT_MESSAGE :
+                rowsDeleted = db.delete(YourTurnContract.RecentMessageEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown Uri: " + uri);
         }
         // Because a null deletes all rows
         if(rowsDeleted != 0){
-            getContext().getContentResolver().notifyChange(uri, null);
+            if(getContext() != null) getContext().getContentResolver().notifyChange(uri, null);
         }
         return rowsDeleted;
     }
@@ -213,11 +240,7 @@ public class YourTurnProvider extends ContentProvider {
                 normalizeDate(values);
                 rowsUpdated = db.update(YourTurnContract.MemberEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
-            case USER :
-                normalizeDate(values);
-                rowsUpdated = db.update(YourTurnContract.UserEntry.TABLE_NAME, values, selection, selectionArgs);
-                break;
-            case GROUP :
+            case EVENT:
                 normalizeDate(values);
                 rowsUpdated = db.update(YourTurnContract.EventEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
@@ -225,12 +248,20 @@ public class YourTurnProvider extends ContentProvider {
                 normalizeDate(values);
                 rowsUpdated = db.update(YourTurnContract.LedgerEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
+            case MESSAGE:
+                normalizeDate(values);
+                rowsUpdated = db.update(YourTurnContract.MessageEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case RECENT_MESSAGE:
+                normalizeDate(values);
+                rowsUpdated = db.update(YourTurnContract.RecentMessageEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown Uri: " + uri);
         }
         // Because a null deletes all rows
         if(rowsUpdated != 0){
-            getContext().getContentResolver().notifyChange(uri, null);
+            if(getContext() != null) getContext().getContentResolver().notifyChange(uri, null);
         }
         return rowsUpdated;
     }
@@ -240,9 +271,10 @@ public class YourTurnProvider extends ContentProvider {
         final String authority = YourTurnContract.CONTENT_AUTHORITY;
 
         matcher.addURI(authority, YourTurnContract.PATH_MEMBER, MEMBER);
-        matcher.addURI(authority, YourTurnContract.PATH_USER, USER);
-        matcher.addURI(authority, YourTurnContract.PATH_GROUP, GROUP);
+        matcher.addURI(authority, YourTurnContract.PATH_EVENT, EVENT);
         matcher.addURI(authority, YourTurnContract.PATH_LEDGER, LEDGER);
+        matcher.addURI(authority, YourTurnContract.PATH_MESSAGE, MESSAGE);
+        matcher.addURI(authority, YourTurnContract.PATH_RECENT_MESSAGE, RECENT_MESSAGE);
 
         return matcher;
     }
@@ -269,28 +301,9 @@ public class YourTurnProvider extends ContentProvider {
                 }finally {
                     db.endTransaction();
                 }
-                getContext().getContentResolver().notifyChange(uri, null);
+                if(getContext() != null) getContext().getContentResolver().notifyChange(uri, null);
                 return returnCount;
-            case USER:
-                db.beginTransaction();
-                returnCount = 0;
-                try{
-                    for(ContentValues value : values){
-                        normalizeDate(value);
-                        long _id = db.insert(YourTurnContract.UserEntry.TABLE_NAME, null, value);
-                        if(_id != -1) {
-                            returnCount++;
-                        }
-                    }
-                    db.setTransactionSuccessful();
-                }catch (Exception e){
-                    e.printStackTrace();
-                }finally {
-                    db.endTransaction();
-                }
-                getContext().getContentResolver().notifyChange(uri, null);
-                return returnCount;
-            case GROUP:
+            case EVENT:
                 db.beginTransaction();
                 returnCount = 0;
                 try{
@@ -307,7 +320,7 @@ public class YourTurnProvider extends ContentProvider {
                 }finally {
                     db.endTransaction();
                 }
-                getContext().getContentResolver().notifyChange(uri, null);
+                if(getContext() != null) getContext().getContentResolver().notifyChange(uri, null);
                 return returnCount;
             case LEDGER:
                 db.beginTransaction();
@@ -326,6 +339,46 @@ public class YourTurnProvider extends ContentProvider {
                 }finally {
                     db.endTransaction();
                 }
+                if(getContext() != null ) getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
+            case MESSAGE:
+                db.beginTransaction();
+                returnCount = 0;
+                try{
+                    for(ContentValues value : values){
+                        normalizeDate(value);
+                        long _id = db.insert(YourTurnContract.MemberEntry.TABLE_NAME, null, value);
+                        if(_id != -1){
+                            returnCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }finally {
+                    db.endTransaction();
+                }
+                if(getContext() != null ) getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
+            case RECENT_MESSAGE:
+                db.beginTransaction();
+                returnCount = 0;
+                try{
+                    for(ContentValues value : values){
+                        normalizeDate(value);
+                        long _id = db.insert(YourTurnContract.RecentMessageEntry.TABLE_NAME, null, value);
+                        if(_id != -1){
+                            returnCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }finally {
+                    db.endTransaction();
+                }
+                if(getContext() != null ) getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
             default:
                 return super.bulkInsert(uri, values);
         }

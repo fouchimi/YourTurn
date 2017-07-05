@@ -117,5 +117,10 @@
 
     <string name="applozic_test_key">AIzaSyAYB1vPc4cpn_FJv68eS_ZGe1UasBNwxLI</string>
     <string name="contacts_title">Contacts</string>
+    <string name="message_hint">Type a message</string>
+    <string name="btnSend">Send</string>
+    <string name="friendDesc">Friend</string>
+    <string name="meDesc">Me</string>
+    <string name="selected_contact">selected_contact</string>
 
 </resources>

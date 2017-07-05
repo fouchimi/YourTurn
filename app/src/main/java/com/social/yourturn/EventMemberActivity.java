@@ -39,6 +39,8 @@ public class EventMemberActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        toolbar.setNavigationOnClickListener(v -> finish());
+
         Intent intent = getIntent();
         if(intent != null) {
             mEvent = intent.getParcelableExtra(EventFragment.EVENT_KEY);

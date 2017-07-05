@@ -3,12 +3,9 @@ package com.social.yourturn.services;
 import android.app.IntentService;
 import android.content.ContentValues;
 import android.content.Intent;
-import android.database.DatabaseUtils;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.parse.GetCallback;
-import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.social.yourturn.R;
@@ -37,26 +34,18 @@ public class UpdateNameService extends IntentService {
             // Update contact member name here for every contact that has the application installed
             ParseQuery<ParseUser> query = ParseUser.getQuery();
             query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
-            query.getFirstInBackground(new GetCallback<ParseUser>() {
-                @Override
-                public void done(ParseUser user, ParseException e) {
-                    if(e == null) {
-                        String name = user.getString(ParseConstant.COLUMN_NAME);
-                        String number = user.getUsername();
-                        if(name != null && name.length() > 0) {
-                            ContentValues values = new ContentValues();
-                            values.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, name);
-                            getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, values,
-                                    YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(number), null);
-
-                            values = new ContentValues();
-                            values.put(YourTurnContract.UserEntry.COLUMN_USER_NAME, name);
-                            getContentResolver().update(YourTurnContract.UserEntry.CONTENT_URI, values,
-                                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + "=" + DatabaseUtils.sqlEscapeString(number), null);
-                        }
-                    }else {
-                        Log.d(TAG, e.getMessage());
+            query.getFirstInBackground((user, e) -> {
+                if(e == null) {
+                    String name = user.getString(ParseConstant.COLUMN_NAME);
+                    String number = user.getUsername();
+                    if(name != null && name.length() > 0) {
+                        ContentValues values = new ContentValues();
+                        values.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, name);
+                        getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, values,
+                                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{number});
                     }
+                }else {
+                    Log.d(TAG, e.getMessage());
                 }
             });
         }

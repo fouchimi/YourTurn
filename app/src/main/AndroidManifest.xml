@@ -111,12 +111,16 @@
             android:parentActivityName=".EventMemberActivity"
             android:screenOrientation="portrait"
             tools:targetApi="jelly_bean" />
-
-        <activity android:name=".RegisteredMembersActivity"
-            android:screenOrientation="portrait"
+        <activity
+            android:name=".RegisteredMembersActivity"
             android:parentActivityName=".MainActivity"
+            android:screenOrientation="portrait"
             tools:targetApi="jelly_bean" />
 
+        <activity android:name=".ChatActivity"
+            android:parentActivityName=".RegisteredMembersActivity"
+            android:screenOrientation="portrait"
+            tools:targetApi="jelly_bean"/>
         <receiver
             android:name="com.parse.GcmBroadcastReceiver"
             android:permission="com.google.android.c2dm.permission.SEND">

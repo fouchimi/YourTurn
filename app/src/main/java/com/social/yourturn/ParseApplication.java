@@ -3,7 +3,9 @@ package com.social.yourturn;
 import android.app.Application;
 import com.parse.Parse;
 import com.parse.ParseInstallation;
+import com.parse.ParseObject;
 import com.parse.ParsePush;
+import com.social.yourturn.models.Message;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -21,6 +23,8 @@ public class ParseApplication extends Application {
         super.onCreate();
 
         Parse.setLogLevel(Parse.LOG_LEVEL_DEBUG);
+        ParseObject.registerSubclass(Message.class);
+
 
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();

@@ -11,6 +11,7 @@
     <dimen name="pad_4dp">4dp</dimen>
     <dimen name="pad_8dp">8dp</dimen>
     <dimen name="pad_16dp">16dp</dimen>
+    <dimen name="pad_20dp">20dp</dimen>
     <dimen name="txt_62dp">62dp</dimen>
     <dimen name="mar_2dp">2dp</dimen>
     <dimen name="mar_4dp">4dp</dimen>
@@ -23,6 +24,7 @@
     <dimen name="mar_20dp">20dp</dimen>
     <dimen name="mar_32dp">32dp</dimen>
     <dimen name="mar_60dp">60dp</dimen>
+    <dimen name="mar_64dp">64dp</dimen>
     <dimen name="mar_72dp">72dp</dimen>
     <dimen name="el_15dp">15dp</dimen>
     <dimen name="mar_24dp">24dp</dimen>
@@ -46,4 +48,5 @@
 
     <dimen name="design_fab_size_mini">40dp</dimen>
     <dimen name="h_200dp">200dp</dimen>
+    <dimen name="h_64dp">64dp</dimen>
 </resources>
