@@ -6,7 +6,9 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.View;
 import android.widget.ListView;
 
 import com.social.yourturn.adapters.RegisteredMemberAdapter;
@@ -31,6 +33,11 @@ public class RegisteredMembersActivity extends AppCompatActivity implements Load
         ListView listView = (ListView) findViewById(R.id.members_list_view);
         memberAdapter = new RegisteredMemberAdapter(this, list);
         listView.setAdapter(memberAdapter);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         if(getSupportActionBar() != null) {
             getSupportActionBar().setTitle(R.string.contacts_title);
