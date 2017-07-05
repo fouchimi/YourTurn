@@ -83,7 +83,7 @@ public class EventMemberAdapter extends BaseAdapter {
                 YourTurnContract.LedgerEntry.COLUMN_EVENT_KEY + "=?" + " AND " + YourTurnContract.LedgerEntry.COLUMN_USER_KEY + "=?",
                 new String[]{mEvent.getEventId(), contact.getPhoneNumber()}, null);
 
-        DecimalFormat df = new DecimalFormat("#.00");
+        DecimalFormat df = new DecimalFormat("0.00");
 
         if(ledgerCursor != null && ledgerCursor.getCount() > 0) {
             ledgerCursor.moveToFirst();
@@ -98,6 +98,7 @@ public class EventMemberAdapter extends BaseAdapter {
         ledgerCursor.close();
 
         if(contact.getScore() != null) holder.score.setText(mContext.getString(R.string.scoreValue, df.format(Double.parseDouble(contact.getScore()))));
+
 
         return convertView;
     }

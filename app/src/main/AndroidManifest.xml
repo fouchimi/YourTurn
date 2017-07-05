@@ -27,16 +27,14 @@
     <application
         android:name=".ParseApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher_round"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <meta-data
             android:name="CLOUDINARY_URL"
             android:value="@string/cloudinary_url" />
-
         <meta-data
             android:name="com.parse.push.gcm_sender_id"
             android:value="@string/gcm_sender_id" />
@@ -52,7 +50,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".ContactActivity"
             android:launchMode="singleTop"
@@ -66,7 +63,6 @@
                 android:resource="@xml/searchable_contacts"
                 android:value=".ContactActivity" />
         </activity>
-
         <activity
             android:name=".EventActivity"
             android:label="@string/new_group_label"
@@ -74,54 +70,52 @@
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
             tools:targetApi="jelly_bean" />
-
         <activity
             android:name=".GroupListActivity"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
             tools:targetApi="jelly_bean" />
-
         <activity
             android:name=".ProfileActivity"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait"
             tools:targetApi="jelly_bean" />
-
         <activity
             android:name=".EditProfileNameActivity"
             android:parentActivityName=".ProfileActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
             tools:targetApi="jelly_bean" />
-
         <activity
             android:name=".ConfirmAmountActivity"
             android:exported="true"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait"
             tools:targetApi="jelly_bean" />
-
         <activity
             android:name=".EventRecordActivity"
             android:label="@string/title_activity_confirm_payment"
             android:theme="@style/AppTheme" />
-
         <activity
             android:name=".LocationActivity"
             android:label="@string/event_activity"
             android:theme="@style/AppTheme" />
-
         <activity
             android:name=".EventMemberActivity"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait"
             tools:targetApi="jelly_bean" />
-
-        <activity android:name=".ChangeEventPicActivity"
+        <activity
+            android:name=".ChangeEventPicActivity"
             android:parentActivityName=".EventMemberActivity"
-            tools:targetApi="jelly_bean"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            tools:targetApi="jelly_bean" />
+
+        <activity android:name=".RegisteredMembersActivity"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".MainActivity"
+            tools:targetApi="jelly_bean" />
 
         <receiver
             android:name="com.parse.GcmBroadcastReceiver"
@@ -133,7 +127,6 @@
                 <category android:name="${packageName}" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name=".broadcast.PushSenderBroadcastReceiver"
             android:exported="false">
@@ -143,7 +136,6 @@
                 <action android:name="com.parse.push.intent.OPEN" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name=".broadcast.EventBroadcastReceiver"
             android:exported="false">
@@ -153,7 +145,6 @@
                 <action android:name="com.parse.push.intent.OPEN" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name=".broadcast.LedgerBroadcastReceiver"
             android:exported="false">
@@ -163,7 +154,6 @@
                 <action android:name="com.parse.push.intent.OPEN" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name=".broadcast.UserThumbnailBroadcastReceiver"
             android:exported="false">
@@ -173,7 +163,6 @@
                 <action android:name="com.parse.push.intent.OPEN" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name=".broadcast.NameBroadcastReceiver"
             android:exported="false">
@@ -187,11 +176,9 @@
         <service
             android:name=".services.ConfirmPaymentIntentService"
             android:exported="false" />
-
         <service
             android:name=".services.UpdateNameService"
             android:exported="false" />
-
         <service android:name="com.parse.PushService" />
 
         <provider
@@ -199,8 +186,6 @@
             android:authorities="@string/content_authority"
             android:exported="false"
             android:syncable="true" />
-
-
     </application>
 
 </manifest>

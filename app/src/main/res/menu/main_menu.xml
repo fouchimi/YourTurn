@@ -10,4 +10,9 @@
         android:title="@string/edit_profile"
         app:showAsAction="never" />
 
+    <item android:id="@+id/action_send_message"
+        android:orderInCategory="102"
+        android:title="@string/send_message"
+        app:showAsAction="never" />
+
 </menu>

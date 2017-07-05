@@ -39,6 +39,7 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.parse.ParseInstallation;
 import com.parse.ParseUser;
+import com.social.yourturn.adapters.RegisteredMemberAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.EventFragment;
 import com.social.yourturn.fragments.ChatFragment;
@@ -232,23 +233,30 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_edit_profile) {
-            Intent intent = new Intent(this, ProfileActivity.class);
-            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-            String phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
-            Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
-                    YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
-            if(c != null && c.getCount() <= 0) {
-                Log.d(TAG, "No records found !");
-                intent.putExtra(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
-            }
-            if(c != null) c.close();
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
-            return true;
+        switch (item.getItemId()){
+            case R.id.action_edit_profile:
+                Intent intent = new Intent(this, ProfileActivity.class);
+                SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+                String phoneNumber = sharedPref.getString(ParseConstant.PASSWORD_COLUMN, "");
+                Cursor c = getContentResolver().query(YourTurnContract.UserEntry.CONTENT_URI, null,
+                        YourTurnContract.UserEntry.COLUMN_USER_PHONE_NUMBER + " = " + DatabaseUtils.sqlEscapeString(phoneNumber), null, null);
+                if(c != null && c.getCount() <= 0) {
+                    Log.d(TAG, "No records found !");
+                    intent.putExtra(ParseConstant.USER_PHONE_NUMBER_COLUMN, phoneNumber);
+                }
+                if(c != null) c.close();
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+
+                return true;
+            case R.id.action_send_message:
+                Intent registerMemberIntent = new Intent(this, RegisteredMembersActivity.class);
+                registerMemberIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(registerMemberIntent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
