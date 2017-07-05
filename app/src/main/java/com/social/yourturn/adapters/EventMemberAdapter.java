@@ -1,10 +1,7 @@
 package com.social.yourturn.adapters;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +13,6 @@ import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Event;
-import com.social.yourturn.utils.ParseConstant;
 
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -31,7 +27,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class EventMemberAdapter extends BaseAdapter {
 
-    private static final String TAG = EventMemberAdapter.class.getSimpleName();
+    //private static final String TAG = EventMemberAdapter.class.getSimpleName();
     private Context mContext;
     private Event mEvent;
     private ArrayList<Contact> mEventMemberList;

@@ -12,7 +12,6 @@ import android.util.TypedValue;
 
 import com.social.yourturn.utils.ColorGenerator;
 
-import org.w3c.dom.Text;
 
 
 /**

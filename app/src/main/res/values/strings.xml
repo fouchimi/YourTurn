@@ -24,6 +24,9 @@
     <string name="events">Events</string>
     <string name="chats">Chats</string>
 
+    <!-- APPLOZIC CONFIGURATION -->
+    <string name="applozic_api_key">2366a6745edce9236ec8c81235d04b123</string>
+
     <string name="pick_image_intent_text">Group icon</string>
 
     <!-- TODO: Remove or change this placeholder text -->
@@ -111,5 +114,7 @@
     <string name="no_text">No</string>
     <string name="change_event_picture">Change event Picture</string>
     <string name="change_event_thumbnail">Change event thumbnail</string>
+
+    <string name="applozic_test_key">AIzaSyAYB1vPc4cpn_FJv68eS_ZGe1UasBNwxLI</string>
 
 </resources>

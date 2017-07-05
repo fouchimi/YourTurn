@@ -1,8 +1,6 @@
 package com.social.yourturn.fragments;
 
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -24,7 +22,6 @@ import com.social.yourturn.adapters.EventAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Event;
-import com.social.yourturn.utils.ParseConstant;
 
 
 import java.util.ArrayList;

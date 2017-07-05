@@ -4,7 +4,6 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.text.format.Time;
 
 /**
  * Created by ousma on 5/3/2017.
@@ -22,11 +21,7 @@ public class YourTurnContract {
     public static final String PATH_LEDGER = "ledger";
 
     public static long normalizeDate(long startDate) {
-        // normalize the start date to the beginning of the (UTC) day
-        Time time = new Time();
-        time.set(startDate);
-        int julianDay = Time.getJulianDay(startDate, time.gmtoff);
-        return time.setJulianDay(julianDay);
+        return startDate;
     }
 
     public static final class MemberEntry implements BaseColumns {

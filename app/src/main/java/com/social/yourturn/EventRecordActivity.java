@@ -287,9 +287,9 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
             }
         }
 
-        Iterator itr = map.entrySet().iterator();
+        Iterator<Map.Entry<String, Double>> itr = map.entrySet().iterator();
         while (itr.hasNext()){
-            Map.Entry pair = (Map.Entry)itr.next();
+            Map.Entry<String, Double> pair = (Map.Entry<String, Double>)itr.next();
             for(Contact contact : contactList){
                 if(contact.getPhoneNumber().equals(pair.getKey())) {
                     contact.setScore(String.valueOf(pair.getValue()));

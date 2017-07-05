@@ -4,8 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.util.Log;
 
 import com.social.yourturn.data.YourTurnContract;

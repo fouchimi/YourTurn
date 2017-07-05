@@ -141,11 +141,11 @@ public class EditProfileNameActivity extends AppCompatActivity {
         query.getFirstInBackground((currentUser, e) -> {
             if(e == null) {
                 Log.d(TAG, "Found User");
-                currentUser.put(ParseConstant.COLUMN_NAME, name);
                 if(!currentUser.isAuthenticated()){
-                    currentUser.logInInBackground(getUsername(), getPassword(), (user, e12) -> {
+                    ParseUser.logInInBackground(getUsername(), getPassword(), (user, e12) -> {
                         if(e12 == null){
                             Log.d(TAG, "name saved successfully !");
+                            user.put(ParseConstant.COLUMN_NAME, name);
                             Toast.makeText(EditProfileNameActivity.this, "Name saved successfully", Toast.LENGTH_LONG).show();
                             Intent intent = new Intent(EditProfileNameActivity.this, ProfileActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

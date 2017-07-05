@@ -13,7 +13,6 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.social.yourturn.EventMemberActivity;
-import com.social.yourturn.GroupListActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.EventFragment;

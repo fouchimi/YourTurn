@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     }
                 }else {
                     Log.d(TAG, "Current user already logged in");
-                    mCurrentUser.logOut();
+                    ParseUser.logOut();
                 }
             }
         }else {
@@ -312,6 +312,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     }
                 } while (cursor.moveToNext());
             }
+
+            newCursor.close();
 
             // Dump data into member table here
             if (contactVector.size() > 0 ) {

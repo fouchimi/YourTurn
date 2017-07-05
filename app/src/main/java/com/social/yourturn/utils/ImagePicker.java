@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
-import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,10 +13,8 @@ import android.net.Uri;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.widget.ImageView;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -31,8 +28,8 @@ public class ImagePicker {
 
     private static final String TAG  = ImagePicker.class.getSimpleName();
     private static final String TEMP_IMAGE_NAME ="tempImage";
-    private static final int DEFAULT_MIN_WIDTH_QUALITY = 400;
-    public static int minWidthQuality = DEFAULT_MIN_WIDTH_QUALITY;
+    //private static final int DEFAULT_MIN_WIDTH_QUALITY = 400;
+    //public static int minWidthQuality = DEFAULT_MIN_WIDTH_QUALITY;
 
 
     public static Intent getPickImageIntent(Context context, String title){
@@ -180,7 +177,7 @@ public class ImagePicker {
         return imageFile;
     }
 
-    private static Bitmap decodeBitmap(Context context, Uri theUri, int sampleSize) {
+    /*private static Bitmap decodeBitmap(Context context, Uri theUri, int sampleSize) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = sampleSize;
 
@@ -198,7 +195,7 @@ public class ImagePicker {
                 actuallyUsableBitmap.getWidth() + " " + actuallyUsableBitmap.getHeight());
 
         return actuallyUsableBitmap;
-    }
+    }*/
 
     private static Bitmap getBitmap(Context context, Uri theUri) {
 

@@ -23,7 +23,6 @@ import com.social.yourturn.utils.ImagePicker;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -41,7 +40,7 @@ public class ChangeEventPicActivity extends AppCompatActivity {
     private CircleImageView mEventImageView;
     private Bitmap mBitmap = null;
     private Cloudinary cloudinary;
-    private FloatingActionButton delFab, fab;
+    private FloatingActionButton delFab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +51,6 @@ public class ChangeEventPicActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         mEventImageView = (CircleImageView) findViewById(R.id.eventUrl);
-        fab = (FloatingActionButton) findViewById(R.id.fab);
         delFab = (FloatingActionButton) findViewById(R.id.delFab);
         cloudinary = new Cloudinary(Utils.cloudinaryUrlFromContext(this));
 

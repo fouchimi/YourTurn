@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1098418675632",
+    "firebase_url": "https://yourturn-167704.firebaseio.com",
+    "project_id": "yourturn-167704",
+    "storage_bucket": "yourturn-167704.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098418675632:android:743f9bb9b889e5e2",
+        "android_client_info": {
+          "package_name": "com.social.yourturn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1098418675632-a9rih93em1sjfe64n386u3svqla72sgh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.social.yourturn",
+            "certificate_hash": "4a35ec777e123057757a8bef197ada0e2671e45b"
+          }
+        },
+        {
+          "client_id": "1098418675632-clm7egn6tv1o80lgbppqllme4tmaa0pg.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "1098418675632-uc0ihnlpbh1goqmdhd7558rqk1cu1fo6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7NNbUefqn5lq9ilV3IBWCGdXnRbhE7Wc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

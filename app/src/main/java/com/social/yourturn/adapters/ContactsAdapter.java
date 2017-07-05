@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.support.v4.widget.CursorAdapter;
-import android.text.style.TextAppearanceSpan;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,25 +28,20 @@ import de.hdodenhof.circleimageview.CircleImageView;
  */
 
 public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
-    private LayoutInflater mInflater;
     private AlphabetIndexer mAlphabetIndexer;
-    private TextAppearanceSpan highlightTextSpan;
     private Context mContext;
-    private final static String TAG = ContactsAdapter.class.getSimpleName();
     private SparseBooleanArray selectionArray = new SparseBooleanArray();
 
     public ContactsAdapter(Context context){
         super(context, null, 0);
         mContext = context;
-        mInflater = LayoutInflater.from(context);
         final String alphabet = context.getString(R.string.alphabet);
         mAlphabetIndexer = new AlphabetIndexer(null, MemberQuery.DISPLAY_NAME, alphabet);
-        highlightTextSpan = new TextAppearanceSpan(context, R.style.searchTextHighlight);
     }
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        final View itemLayout = mInflater.from(mContext).inflate(R.layout.contact_layout, parent, false);
+        final View itemLayout = LayoutInflater.from(mContext).inflate(R.layout.contact_layout, parent, false);
 
         final ViewHolder holder = new ViewHolder();
         holder.username = (TextView) itemLayout.findViewById(R.id.username);
@@ -99,7 +93,7 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
         if (isSelected) {
-            view.setBackgroundColor(context.getResources().getColor(R.color.colorAccent));
+            view.setBackgroundColor(context.getResources().getColor(R.color.colorAccent, mContext.getTheme()));
             holder.username.setTextColor(Color.WHITE);
             holder.selected.setVisibility(View.VISIBLE);
         } else {

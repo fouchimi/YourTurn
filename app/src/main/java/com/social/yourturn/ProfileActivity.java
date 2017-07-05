@@ -141,7 +141,7 @@ public class ProfileActivity extends AppCompatActivity {
                     query.getFirstInBackground((user, e) -> {
                         if(e == null){
                            if(!user.isAuthenticated()){
-                               user.logInInBackground(getUsername(), getPassword(), (parseUser, e1) -> {
+                               ParseUser.logInInBackground(getUsername(), getPassword(), (parseUser, e1) -> {
                                    if(e1 == null) {
                                        parseUser.put(ParseConstant.USER_THUMBNAIL_COLUMN, "");
                                        parseUser.saveInBackground(e11 -> {
@@ -271,10 +271,10 @@ public class ProfileActivity extends AppCompatActivity {
 
         query.getFirstInBackground((user, e) -> {
             if(e == null) {
-                user.put(ParseConstant.USER_THUMBNAIL_COLUMN, profileId);
                 if(!user.isAuthenticated()){
-                    user.logInInBackground(getUsername(), getPassword(), (user1, e13) -> {
+                    ParseUser.logInInBackground(getUsername(), getPassword(), (user1, e13) -> {
                         if(e13 == null){
+                            user1.put(ParseConstant.USER_THUMBNAIL_COLUMN, profileId);
                             user1.saveInBackground(e12 -> {
                                 if(e12 == null){
                                     Log.d(TAG, "Profile saved successfully");

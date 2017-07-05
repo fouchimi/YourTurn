@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 public class ConfirmPaymentIntentService extends IntentService {
 
-    private static final String TAG = ConfirmPaymentIntentService.class.getSimpleName();
+    //private static final String TAG = ConfirmPaymentIntentService.class.getSimpleName();
 
     public ConfirmPaymentIntentService() {
         super("ConfirmPaymentIntentService");

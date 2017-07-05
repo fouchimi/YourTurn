@@ -31,7 +31,6 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MemberEventAdapter extends RecyclerView.Adapter<MemberEventAdapter.MemberViewHolder>{
 
-    private static final String TAG = MemberEventAdapter.class.getSimpleName();
     private Context mContext;
     private ArrayList<Contact> mContactList;
 
