@@ -17,6 +17,8 @@ import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Message;
 import com.social.yourturn.utils.ParseConstant;
 
+import org.apache.commons.lang3.text.WordUtils;
+
 import java.util.ArrayList;
 
 import bolts.Continuation;
@@ -44,10 +46,6 @@ public class ChatActivity extends AppCompatActivity {
 
         toolbar.setNavigationOnClickListener(v -> finish());
 
-        if(getSupportActionBar() != null){
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
-        }
 
         mEditText = (EditText) findViewById(R.id.etMessage);
         Button mButton = (Button) findViewById(R.id.btSend);
@@ -55,14 +53,19 @@ public class ChatActivity extends AppCompatActivity {
         rvChat = (RecyclerView) findViewById(R.id.rvChat);
         mMessages = new ArrayList<>();
         mFirstLoad = true;
-        final String userId = getUsername();
 
         Intent intent = getIntent();
 
         if(intent != null) {
             Contact contact = intent.getParcelableExtra(getString(R.string.selected_contact));
-            mAdapter = new ChatAdapter(this, userId, mMessages, contact);
+            mAdapter = new ChatAdapter(this, contact.getPhoneNumber(), mMessages, contact);
             rvChat.setAdapter(mAdapter);
+
+            if(getSupportActionBar() != null){
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setDisplayShowHomeEnabled(true);
+                getSupportActionBar().setTitle(WordUtils.capitalize(contact.getName()));
+            }
         }
 
         mButton.setOnClickListener(v -> {

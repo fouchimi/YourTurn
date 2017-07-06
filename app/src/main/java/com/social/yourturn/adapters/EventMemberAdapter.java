@@ -1,6 +1,7 @@
 package com.social.yourturn.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.social.yourturn.ChatActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
@@ -27,7 +29,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class EventMemberAdapter extends BaseAdapter {
 
-    //private static final String TAG = EventMemberAdapter.class.getSimpleName();
+    private static final String TAG = EventMemberAdapter.class.getSimpleName();
     private Context mContext;
     private Event mEvent;
     private ArrayList<Contact> mEventMemberList;
@@ -99,14 +101,31 @@ public class EventMemberAdapter extends BaseAdapter {
 
         if(contact.getScore() != null) holder.score.setText(mContext.getString(R.string.scoreValue, df.format(Double.parseDouble(contact.getScore()))));
 
+        convertView.setOnClickListener(new MyOnClickListener(contact));
 
         return convertView;
     }
-
 
     static class EventMemberViewHolder {
         private CircleImageView userUrlView;
         private TextView username, score;
         private TextView requestedText, paidText;
+    }
+
+    public class MyOnClickListener implements View.OnClickListener {
+
+        private Contact mContact;
+
+        public MyOnClickListener(Contact contact){
+            mContact = contact;
+        }
+
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent(mContext, ChatActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.putExtra(mContext.getString(R.string.selected_contact), mContact);
+            mContext.startActivity(intent);
+        }
     }
 }

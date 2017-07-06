@@ -1,6 +1,7 @@
 package com.social.yourturn.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,6 +9,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.social.yourturn.ChatActivity;
 import com.social.yourturn.R;
 import com.social.yourturn.models.Contact;
 
@@ -68,8 +70,10 @@ public class RegisteredMemberAdapter extends BaseAdapter {
         holder.username.setText(WordUtils.capitalize(contact.getName().toLowerCase(), null));
 
         DecimalFormat df = new DecimalFormat("0.00");
-        holder.score.setText(mContext.getString(R.string.scoreValue, df.format(Double.parseDouble(contact.getScore()))));
+        if(contact.getScore() != null) holder.score.setText(mContext.getString(R.string.scoreValue, df.format(Double.parseDouble(contact.getScore()))));
         holder.scoreText.setText(R.string.scoreText);
+
+        convertView.setOnClickListener(new MyOnClickListener(contact));
 
         return convertView;
     }
@@ -77,5 +81,22 @@ public class RegisteredMemberAdapter extends BaseAdapter {
     static class RegisterMemberViewHolder {
         private CircleImageView profileUrlView;
         private TextView username, score, scoreText;
+    }
+
+    public class MyOnClickListener implements View.OnClickListener {
+
+        private Contact mContact;
+
+        public MyOnClickListener(Contact contact){
+            mContact = contact;
+        }
+
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent(mContext, ChatActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.putExtra(mContext.getString(R.string.selected_contact), mContact);
+            mContext.startActivity(intent);
+        }
     }
 }

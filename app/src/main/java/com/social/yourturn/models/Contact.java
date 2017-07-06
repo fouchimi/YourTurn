@@ -9,7 +9,7 @@ import java.io.Serializable;
  * Created by ousma on 4/15/2017.
  */
 
-public class Contact implements Parcelable, Serializable {
+public class Contact implements Parcelable {
     private static final long serialVersionUID = 1L;
     private String id;
     private String name;
