@@ -3,6 +3,7 @@ package com.social.yourturn.adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -106,7 +107,7 @@ public class EventMemberAdapter extends BaseAdapter {
         return convertView;
     }
 
-    static class EventMemberViewHolder {
+    private static class EventMemberViewHolder {
         private CircleImageView userUrlView;
         private TextView username, score;
         private TextView requestedText, paidText;
@@ -125,6 +126,7 @@ public class EventMemberAdapter extends BaseAdapter {
             Intent intent = new Intent(mContext, ChatActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.putExtra(mContext.getString(R.string.selected_contact), mContact);
+            Log.d(TAG, "Contact name: " + mContact.getName());
             mContext.startActivity(intent);
         }
     }

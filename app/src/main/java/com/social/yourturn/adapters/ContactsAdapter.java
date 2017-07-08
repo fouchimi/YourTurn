@@ -3,6 +3,8 @@ package com.social.yourturn.adapters;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v4.widget.CursorAdapter;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
@@ -70,26 +72,18 @@ public class ContactsAdapter extends CursorAdapter implements SectionIndexer {
         notifyDataSetChanged();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void bindView(View view, final Context context, final Cursor cursor) {
         int position = cursor.getPosition();
         boolean isSelected = selectionArray.get(position);
         final ViewHolder holder = (ViewHolder) view.getTag();
         final String displayName = cursor.getString(MemberQuery.DISPLAY_NAME).toUpperCase();
-        final String phoneNumber = cursor.getString(MemberQuery.PHONE_NUMBER);
-        String thumbnail = null;
+        String thumbnail = cursor.getString(MemberQuery.THUMBNAIL);
 
-        Cursor thumbnailCursor = mContext.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
-                new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL},
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{phoneNumber}, null);
-
-        if(thumbnailCursor != null && thumbnailCursor.getCount() > 0) {
-            thumbnailCursor.moveToNext();
-            thumbnail = thumbnailCursor.getString(thumbnailCursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_THUMBNAIL));
-            thumbnailCursor.close();
-        }
-
+        Glide.clear(holder.profileUrl);
         if(thumbnail != null && thumbnail.length() > 0) Glide.with(mContext).load(thumbnail).into(holder.profileUrl);
+        else holder.profileUrl.setImageResource(R.drawable.default_profile);
         holder.username.setText(WordUtils.capitalize(displayName.toLowerCase(), null));
 
         if (isSelected) {

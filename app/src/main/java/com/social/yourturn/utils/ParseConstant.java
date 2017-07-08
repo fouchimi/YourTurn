@@ -32,4 +32,11 @@ public class ParseConstant {
     public static final String SCORE_TABLE = "Score";
     public static final String USER_SCORE_COLUMN = "score";
 
+    public static final String ONLINE_TABLE = "Online";
+    public static final String STATUS = "connected";
+    public static final String SENDER_ID = "senderId";
+    public static final String RECEIVER_ID = "receiverId";
+    public static final String MESSAGE_BODY = "body";
+
+    public static final String CREATED_AT = "createdAt";
 }

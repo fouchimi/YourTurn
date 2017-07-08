@@ -3,6 +3,7 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="lightBlue">#FF03A9F4</color>
     <color name="holo_blue">#33B5E5</color>
     <color name="green">#ff67bf74</color>
     <color name="darkGreen">#00695C</color>
@@ -12,4 +13,10 @@
     <color name="red">#EF5350</color>
     <color name="black">#000000</color>
     <color name="deep_red">#cc3333</color>
+    <color name="transparent">#00000000</color>
+    <color name="hint_color">#bdbdbd</color>
+    <color name="yellow">#FFFDD835</color>
+
+    <color name="activatedColor">#ff0099cc</color>
+    <color name="highlightColor">#ff0099ee</color>
 </resources>
