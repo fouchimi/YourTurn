@@ -35,14 +35,10 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     private static final int TYPE_2 = 1;
     private List<Message> mMessages;
     private Context mContext;
-    private String mUserId;
-    private Contact mFriend;
 
-    public ChatAdapter(Context context, String userId, List<Message> messages, Contact friend) {
+    public ChatAdapter(Context context,  List<Message> messages) {
         mMessages = messages;
-        this.mUserId = userId;
         mContext = context;
-        mFriend = friend;
     }
 
 

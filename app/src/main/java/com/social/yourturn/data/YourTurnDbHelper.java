@@ -73,21 +73,27 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 MessageEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 MessageEntry.COLUMN_MESSAGE_BODY + " TEXT NOT NULL, " +
                 MessageEntry.COLUMN_MESSAGE_TYPE + " TEXT NOT NULL, " +
-                MessageEntry.COLUMN_MESSAGE_USER_KEY + " TEXT NOT NULL, " +
+                MessageEntry.COLUMN_MESSAGE_SENDER_KEY + " TEXT NOT NULL, " +
+                MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + " TEXT NOT NULL, " +
                 MessageEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
                 MessageEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
-                "FOREIGN KEY (" + MessageEntry.COLUMN_MESSAGE_USER_KEY + ") REFERENCES " + MemberEntry.TABLE_NAME + " (" +
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
+                "FOREIGN KEY (" + MessageEntry.COLUMN_MESSAGE_SENDER_KEY + ") REFERENCES " + MemberEntry.TABLE_NAME + " (" +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE" +
+                " FOREIGN KEY (" + MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + ") REFERENCES " + MemberEntry.TABLE_NAME + " (" +
+                MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE " + ");";
 
         final String SQL_CREATE_RECENT_MESSAGE_TABLE = "CREATE TABLE " + RecentMessageEntry.TABLE_NAME + " (" +
                 RecentMessageEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 RecentMessageEntry.COLUMN_MESSAGE_BODY + " TEXT NOT NULL, " +
                 RecentMessageEntry.COLUMN_MESSAGE_TYPE + " TEXT NOT NULL, " +
                 RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + " TEXT NOT NULL, " +
+                RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + " TEXT NOT NULL, " +
                 RecentMessageEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
                 RecentMessageEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
                 "FOREIGN KEY (" + RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + ") REFERENCES " + YourTurnContract.MemberEntry.TABLE_NAME + " (" +
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE" + ");";
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE" + " FOREIGN KEY (" +
+                MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + ") REFERENCES " + MemberEntry.TABLE_NAME + " (" + MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") " +
+                "ON DELETE SET NULL ON UPDATE CASCADE );";
 
 
         db.execSQL(SQL_CREATE_MEMBER_TABLE);
