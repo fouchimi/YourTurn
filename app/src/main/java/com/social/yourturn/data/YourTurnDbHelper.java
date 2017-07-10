@@ -75,8 +75,8 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 MessageEntry.COLUMN_MESSAGE_TYPE + " TEXT NOT NULL, " +
                 MessageEntry.COLUMN_MESSAGE_SENDER_KEY + " TEXT NOT NULL, " +
                 MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + " TEXT NOT NULL, " +
-                MessageEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
-                MessageEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
+                MessageEntry.COLUMN_MESSAGE_CREATED_DATE + " INTEGER NOT NULL, " +
+                MessageEntry.COLUMN_MESSAGE_UPDATED_DATE + " INTEGER NOT NULL, " +
                 "FOREIGN KEY (" + MessageEntry.COLUMN_MESSAGE_SENDER_KEY + ") REFERENCES " + MemberEntry.TABLE_NAME + " (" +
                 YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE" +
                 " FOREIGN KEY (" + MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + ") REFERENCES " + MemberEntry.TABLE_NAME + " (" +
@@ -88,8 +88,8 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
                 RecentMessageEntry.COLUMN_MESSAGE_TYPE + " TEXT NOT NULL, " +
                 RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + " TEXT NOT NULL, " +
                 RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + " TEXT NOT NULL, " +
-                RecentMessageEntry.COLUMN_GROUP_CREATED_DATE + " INTEGER NOT NULL, " +
-                RecentMessageEntry.COLUMN_GROUP_UPDATED_DATE + " INTEGER NOT NULL, " +
+                RecentMessageEntry.COLUMN_MESSAGE_CREATED_DATE + " INTEGER NOT NULL, " +
+                RecentMessageEntry.COLUMN_MESSAGE_UPDATED_DATE + " INTEGER NOT NULL, " +
                 "FOREIGN KEY (" + RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + ") REFERENCES " + YourTurnContract.MemberEntry.TABLE_NAME + " (" +
                 YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") ON DELETE SET NULL ON UPDATE CASCADE" + " FOREIGN KEY (" +
                 MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + ") REFERENCES " + MemberEntry.TABLE_NAME + " (" + MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + ") " +

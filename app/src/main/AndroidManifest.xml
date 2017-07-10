@@ -177,6 +177,16 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".broadcast.OfflineChannelReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.parse.push.intent.RECEIVE" />
+                <action android:name="com.parse.push.intent.DELETE" />
+                <action android:name="com.parse.push.intent.OPEN" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".services.ConfirmPaymentIntentService"
             android:exported="false" />

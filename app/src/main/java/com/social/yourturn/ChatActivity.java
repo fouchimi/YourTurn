@@ -1,8 +1,5 @@
 package com.social.yourturn;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -11,15 +8,14 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Typeface;
-import android.media.RingtoneManager;
-import android.net.Uri;
+import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -35,6 +31,7 @@ import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.social.yourturn.adapters.ChatAdapter;
+import com.social.yourturn.broadcast.OfflineChannelReceiver;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Message;
@@ -66,6 +63,17 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
     private Contact contact = null;
     private MessageBroadcastReceiver messageBroadcastReceiver = new MessageBroadcastReceiver();
     private static final int LOADER_ID = 12;
+    private BroadcastReceiver offlineBroadcastReceiver;
+    static final int POLL_INTERVAL = 1000;
+    Handler myHandler = new Handler();
+    Runnable mRefreshMessagesRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if(contact != null && getSupportActionBar() != null) checkStatus(contact, getSupportActionBar());
+            myHandler.postDelayed(this, POLL_INTERVAL);
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,8 +84,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         setSupportActionBar(toolbar);
 
         toolbar.setNavigationOnClickListener(v -> finish());
-
-        updateLoginStatus(getUsername());
 
         mEditText = (EditText) findViewById(R.id.etMessage);
         mButton = (ImageButton) findViewById(R.id.btSend);
@@ -92,14 +98,13 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         rvChat.setHasFixedSize(true);
 
         chatList = new ArrayList<>();
+        mAdapter = new ChatAdapter(this, chatList);
+        rvChat.setAdapter(mAdapter);
 
         Intent intent = getIntent();
 
         if(intent != null) {
             contact = intent.getParcelableExtra(getString(R.string.selected_contact));
-            mAdapter = new ChatAdapter(this, chatList);
-            rvChat.setAdapter(mAdapter);
-
             getSupportLoaderManager().initLoader(LOADER_ID, null, this);
 
             if(getSupportActionBar() != null && contact != null){
@@ -107,9 +112,18 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                 getSupportActionBar().setDisplayShowHomeEnabled(true);
                 getSupportActionBar().setTitle(WordUtils.capitalize(contact.getName().toLowerCase(), null));
 
-                checkStatus(contact, getSupportActionBar());
             }
         }
+
+        offlineBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG, "On received invoked");
+                Toast.makeText(getApplicationContext(), "On Received invoked !", Toast.LENGTH_SHORT).show();
+            }
+        };
+
+        myHandler.postDelayed(mRefreshMessagesRunnable, POLL_INTERVAL);
 
         mButton.setOnClickListener(v -> {
             if(mEditText.getText().toString().length() > 0){
@@ -130,21 +144,61 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                             Toast.makeText(ChatActivity.this, "Failed to save message !", Toast.LENGTH_LONG).show();
                         }else {
                             Log.d(TAG, "Message successfully saved !");
-                            DateTime dateTime = new DateTime();
 
-                            HashMap<String, Object> payload = new HashMap<>();
-                            payload.put("senderId", message.getSenderKey());
-                            payload.put("targetId", message.getReceiverKey());
-                            payload.put("message", message.getBody());
-                            payload.put("createdAt", dateTime.getMillis());
-                            payload.put("updatedAt", dateTime.getMillis());
-                            ParseCloud.callFunctionInBackground("messageChannel", payload, (object, e) -> {
-                                if(e == null) {
-                                    Log.d(TAG, "Message successfully sent !");
-                                }else {
-                                    Log.d(TAG, e.getMessage());
+                            ParseQuery<ParseObject> query = new ParseQuery<>(ParseConstant.ONLINE_TABLE);
+                            query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
+
+                            checkFriendStatusAsync(query).continueWithTask(new Continuation<ParseObject, Task<Void>>() {
+                                @Override
+                                public Task<Void> then(Task<ParseObject> task) throws Exception {
+                                    if(task.isFaulted()){
+                                        ParseObject onlineTable = new ParseObject(ParseConstant.ONLINE_TABLE);
+                                        onlineTable.put(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
+                                        onlineTable.put(ParseConstant.STATUS, false);
+                                        onlineTable.saveInBackground(e -> {
+                                            if(e == null){
+                                                Log.d(TAG, "Online table updated successfully");
+                                            }else {
+                                                Log.d(TAG, "An error occur");
+                                            }
+                                        });
+                                    }else if(task.isCompleted()){
+
+                                        ParseObject row = task.getResult();
+                                        setFriendOnline(row.getBoolean(ParseConstant.STATUS));
+                                        if(contact != null){
+                                            DateTime dateTime = new DateTime();
+
+                                            HashMap<String, Object> payload = new HashMap<>();
+                                            payload.put("senderId", message.getSenderKey());
+                                            payload.put("targetId", message.getReceiverKey());
+                                            payload.put("message", message.getBody());
+                                            payload.put("createdAt", dateTime.getMillis());
+                                            payload.put("updatedAt", dateTime.getMillis());
+                                            if(isFriendOnline()){
+                                                ParseCloud.callFunctionInBackground("messageChannel", payload, (object, e) -> {
+                                                    if(e == null) {
+                                                        Log.d(TAG, "Message successfully sent !");
+                                                    }else {
+                                                        Log.d(TAG, e.getMessage());
+                                                    }
+                                                });
+                                            }else {
+                                                payload.put("status", isFriendOnline());
+                                                ParseCloud.callFunctionInBackground("offlineChannel", payload, (object, e) -> {
+                                                    if(e == null) {
+                                                        Log.d(TAG, "Message successfully sent !");
+                                                    }else {
+                                                        Log.d(TAG, e.getMessage());
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    }
+                                    return null;
                                 }
                             });
+
                         }
                         return null;
                     }
@@ -165,16 +219,20 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
 
     }
 
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        contact = intent.getParcelableExtra(getString(R.string.selected_contact));
-        getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
+    public boolean isFriendOnline() {
+        return isFriendOnline;
     }
+
+    public void setFriendOnline(boolean friendOnline) {
+        isFriendOnline = friendOnline;
+    }
+
 
     @Override
     protected void onResume() {
         super.onResume();
+        updateLoginStatus(getUsername());
+        LocalBroadcastManager.getInstance(this).registerReceiver(offlineBroadcastReceiver, new IntentFilter(OfflineChannelReceiver.intentAction));
         IntentFilter filter = new IntentFilter("com.parse.push.intent.RECEIVE");
         registerReceiver(messageBroadcastReceiver, filter);
         if(contact != null && getSupportActionBar() != null) checkStatus(contact, getSupportActionBar());
@@ -184,7 +242,8 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onPause() {
         super.onPause();
         unregisterReceiver(messageBroadcastReceiver);
-        if(getSupportActionBar() != null) updateStatus(getSupportActionBar());
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(offlineBroadcastReceiver);
+        updateStatus(getUsername());
     }
 
     private Task<Void> saveMessageAsync(ParseObject messageObject){
@@ -197,6 +256,20 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             }else {
                 tcs.setError(e);
                 Log.d(TAG, "Message couldn't be saved successfully");
+            }
+        });
+
+        return tcs.getTask();
+    }
+
+    private Task<ParseObject> checkFriendStatusAsync(ParseQuery<ParseObject> query){
+        final TaskCompletionSource<ParseObject> tcs = new TaskCompletionSource<>();
+
+        query.getFirstInBackground((row, e) -> {
+            if(e == null){
+                tcs.setResult(row);
+            }else {
+                tcs.setError(e);
             }
         });
 
@@ -217,7 +290,9 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                 query.getFirstInBackground((row, e) -> {
                     if(e == null){
                         isFriendOnline = row.getBoolean(ParseConstant.STATUS);
-                        if(isFriendOnline) actionBar.setSubtitle("Online");
+                        setFriendOnline(isFriendOnline);
+                        if(isFriendOnline) actionBar.setSubtitle(contact.getPhoneNumber());
+                        else actionBar.setSubtitle("");
                     }else {
                         Log.d(TAG, e.getMessage());
                         Toast.makeText(ChatActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -230,6 +305,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                 onlineTable.saveInBackground(e -> {
                     if(e == null){
                         Log.d(TAG, "Online table updated successfully");
+                        actionBar.setSubtitle("");
                     }else {
                         Log.d(TAG, "An error occur");
                     }
@@ -249,8 +325,8 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         messageValues.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY, message.getReceiverKey());
         messageValues.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_BODY, message.getBody());
         messageValues.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_TYPE, "text");
-        messageValues.put(YourTurnContract.MessageEntry.COLUMN_GROUP_CREATED_DATE, dateTime.getMillis());
-        messageValues.put(YourTurnContract.MessageEntry.COLUMN_GROUP_UPDATED_DATE, dateTime.getMillis());
+        messageValues.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_CREATED_DATE, dateTime.getMillis());
+        messageValues.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_UPDATED_DATE, dateTime.getMillis());
 
         getContentResolver().insert(YourTurnContract.MessageEntry.CONTENT_URI, messageValues);
     }
@@ -268,7 +344,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                     if(e == null){
                         Log.d(TAG, "Table created successfully");
                     }else {
-                        Log.d(TAG, "An error occured !");
+                        Log.d(TAG, "An error occur !");
                     }
                 });
             }else {
@@ -278,13 +354,12 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                         row.saveInBackground(e1 -> {
                             if(e1 == null){
                                 Log.d(TAG, "Online table updated successfully");
-                                isFriendOnline = true;
                             }else {
                                 Log.d(TAG, "Online table couldn't be updated successfully");
                             }
                         });
                     }else {
-                        Log.d(TAG, "An error occured !");
+                        Log.d(TAG, "An error occur !");
                     }
                 });
             }
@@ -294,36 +369,25 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         return;
     }
 
-    private void updateStatus(ActionBar actionBar){
+    private void updateStatus(String username){
         ParseQuery<ParseObject> query = new ParseQuery<>(ParseConstant.ONLINE_TABLE);
-        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
+        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, username);
 
-        try {
-            if(query.count() > 0){
-                query.getFirstInBackground((row, e) -> {
-                    if(e == null){
-                        row.put(ParseConstant.STATUS, false);
-                        row.saveInBackground(e1 -> {
-                            if(e1 == null){
-                                actionBar.setSubtitle("");
-                                isFriendOnline = false;
-                            }else {
-                                Log.d(TAG, "Record could not be found");
-                            }
-                        });
+        query.getFirstInBackground((row, e) -> {
+            if(e == null){
+                row.put(ParseConstant.STATUS, false);
+                row.saveInBackground(e1 -> {
+                    if(e1 == null){
+                        Log.d(TAG, "You logged out successfully");
                     }else {
-                        Log.d(TAG, e.getMessage());
-                        Toast.makeText(ChatActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-                        isFriendOnline = false;
+                        Log.d(TAG, "Record could not be found");
                     }
                 });
             }else {
-                Log.d(TAG, "Friend not found !");
-                isFriendOnline = false;
+                Log.d(TAG, e.getMessage());
+                Toast.makeText(ChatActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
             }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        });
 
         return;
     }
@@ -428,15 +492,15 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         }
 
-        private void showNotification(Context context, String senderId, String receiverId, String message, long createdAt, long updatedAt){
+        private void showNotification(Context context, String senderId, String receiverId, String message,  long createdAt, long updatedAt){
 
             ContentValues values = new ContentValues();
             values.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_SENDER_KEY, senderId);
             values.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY, receiverId);
             values.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_BODY, message);
             values.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_TYPE, "text");
-            values.put(YourTurnContract.MessageEntry.COLUMN_GROUP_CREATED_DATE, createdAt);
-            values.put(YourTurnContract.MessageEntry.COLUMN_GROUP_UPDATED_DATE, updatedAt);
+            values.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_CREATED_DATE, createdAt);
+            values.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_UPDATED_DATE, updatedAt);
 
             Message parseMessage = new Message();
             parseMessage.setBody(message);
@@ -444,41 +508,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             parseMessage.setReceiverKey(receiverId);
 
             context.getContentResolver().insert(YourTurnContract.MessageEntry.CONTENT_URI, values);
-
-            //Toast.makeText(context, "got message: " + message, Toast.LENGTH_LONG).show();
-
-            if(!isFriendOnline) {
-
-                Cursor cursor = context.getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
-                        new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME},
-                        YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
-                        new String[]{senderId},
-                        null);
-
-                if(cursor != null) cursor.moveToFirst();
-                String senderName = cursor.getString(cursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
-                cursor.close();
-
-                Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                Intent intent = new Intent(context, ChatActivity.class);
-                intent.putExtra(context.getString(R.string.selected_contact), contact);
-
-                int requestID = (int) System.currentTimeMillis();
-                int flags = PendingIntent.FLAG_CANCEL_CURRENT;
-                PendingIntent pIntent = PendingIntent.getActivity(context, requestID, intent, flags);
-
-                Notification notification = new NotificationCompat.Builder(context)
-                        .setSmallIcon(android.R.drawable.ic_menu_report_image)
-                        .setContentTitle(senderName + " sent you a message !")
-                        .setContentText(message)
-                        .setContentIntent(pIntent)
-                        .setSound(defaultSoundUri)
-                        .setAutoCancel(true)
-                        .build();
-                NotificationManager mNotificationManager =
-                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                mNotificationManager.notify(0, notification);
-            }
 
             updateView(context, senderId, receiverId);
         }
@@ -489,7 +518,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             Cursor messageCursor = context.getContentResolver().query(YourTurnContract.MessageEntry.CONTENT_URI,
                     null, YourTurnContract.MessageEntry.COLUMN_MESSAGE_SENDER_KEY + "=?" + " AND " + YourTurnContract.MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + "=?" +
             " OR " + YourTurnContract.MessageEntry.COLUMN_MESSAGE_SENDER_KEY + "=?" + " AND " + YourTurnContract.MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + "=?",
-                    new String[]{sender, receiver, receiver, sender}, YourTurnContract.MessageEntry.COLUMN_GROUP_CREATED_DATE + " DESC LIMIT 1");
+                    new String[]{sender, receiver, receiver, sender}, YourTurnContract.MessageEntry.COLUMN_MESSAGE_CREATED_DATE + " DESC LIMIT 1");
 
             if(messageCursor != null && messageCursor.getCount() > 0){
                 messageCursor.moveToFirst();
@@ -503,10 +532,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                 message.setSenderId(senderId);
                 message.setReceiverKey(receiverId);
 
-                emptyTextView.setVisibility(View.GONE);
-                chatList.add(message);
-                mAdapter.notifyItemInserted(chatList.size()-1);
-                rvChat.scrollToPosition(chatList.size()-1);
             }
 
             if(messageCursor != null ) messageCursor.close();

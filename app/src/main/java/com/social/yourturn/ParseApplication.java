@@ -42,7 +42,15 @@ public class ParseApplication extends Application {
         // Need to register GCM token
         ParseInstallation installation = ParseInstallation.getCurrentInstallation();
         installation.saveInBackground();
-        ParsePush.subscribeInBackground("pushChannel");
+        ParsePush.subscribeInBackground("senderChannel");
+        ParsePush.subscribeInBackground("receiverChannel");
+        ParsePush.subscribeInBackground("eventChannel");
+        ParsePush.subscribeInBackground("ledgerChannel");
+        ParsePush.subscribeInBackground("thumbnailChannel");
+        ParsePush.subscribeInBackground("nameChannel");
+        ParsePush.subscribeInBackground("messageChannel");
+        ParsePush.subscribeInBackground("offlineChannel");
+
     }
 
 }

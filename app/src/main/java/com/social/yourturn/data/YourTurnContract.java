@@ -100,8 +100,8 @@ public class YourTurnContract {
         public static final String COLUMN_MESSAGE_TYPE = "msg_type";
         public static final String COLUMN_MESSAGE_USER_KEY = "msg_ct_id";
         public static final String COLUMN_MESSAGE_RECEIVER_KEY = "msg_rc_id";
-        public static final String COLUMN_GROUP_CREATED_DATE = "created_date";
-        public static final String COLUMN_GROUP_UPDATED_DATE = "updated_date";
+        public static final String COLUMN_MESSAGE_CREATED_DATE = "created_date";
+        public static final String COLUMN_MESSAGE_UPDATED_DATE = "updated_date";
 
         public static Uri buildLedgerUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);
@@ -119,8 +119,8 @@ public class YourTurnContract {
         public static final String COLUMN_MESSAGE_TYPE = "msg_type";
         public static final String COLUMN_MESSAGE_SENDER_KEY = "msg_ct_id";
         public static final String COLUMN_MESSAGE_RECEIVER_KEY = "msg_rc_id";
-        public static final String COLUMN_GROUP_CREATED_DATE = "created_date";
-        public static final String COLUMN_GROUP_UPDATED_DATE = "updated_date";
+        public static final String COLUMN_MESSAGE_CREATED_DATE = "created_date";
+        public static final String COLUMN_MESSAGE_UPDATED_DATE = "updated_date";
 
         public static Uri buildLedgerUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);

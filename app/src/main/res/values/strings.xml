@@ -122,5 +122,10 @@
     <string name="friendDesc">Friend</string>
     <string name="meDesc">Me</string>
     <string name="selected_contact">selected_contact</string>
+    <string name="senderId">senderId</string>
+    <string name="receiverId">receiverId</string>
+    <string name="message">message</string>
+    <string name="createdAt">createdAt</string>
+    <string name="updatedAt">updatedAt</string>
 
 </resources>
