@@ -60,7 +60,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
     private ContactsAdapter mAdapter;
     private SelectedContactAdapter mSelectedContactAdapter;
     private String mSearchTerm = null;
-    private ArrayList<Contact> mSelectedContactList = new ArrayList<>(), oldList = null;
+    private ArrayList<Contact> mSelectedContactList = new ArrayList<>();
     private RecyclerView mRecyclerView;
     private FloatingActionButton fb;
     private static final int ITEM_WIDTH = 280;
@@ -70,6 +70,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
     private static final int REQUEST_CODE = 34;
     private Place mPlace = null;
     private String placeUrl = "";
+    private int count = 0;
 
 
     @Override
@@ -85,7 +86,6 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
 
         if(getIntent() != null) {
             Bundle bundle = getIntent().getExtras();
-            oldList = bundle.getParcelableArrayList(MainActivity.ALL_CONTACTS);
             mPlace = bundle.getParcelable(LocationActivity.CURRENT_PLACE);
             placeUrl = bundle.getString(LocationActivity.PLACE_URL);
         }
@@ -95,7 +95,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
                 Intent intent = new Intent(ContactActivity.this, EventActivity.class);
                 intent.putParcelableArrayListExtra(ContactActivity.SELECTED_CONTACT, mSelectedContactList);
                 intent.putExtra(ParseConstant.USERNAME_COLUMN, getUsername());
-                if(oldList != null) intent.putExtra(ContactActivity.TOTAL_COUNT, oldList.size());
+                intent.putExtra(ContactActivity.TOTAL_COUNT, count);
                 intent.putExtra(LocationActivity.CURRENT_PLACE, mPlace);
                 intent.putExtra(LocationActivity.PLACE_URL, placeUrl);
                 ContactActivity.this.startActivity(intent);
@@ -283,6 +283,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
                 mContactList.add(contact);
             }
         }
+        if(mSearchTerm == null || mSearchTerm.isEmpty()) count = mContactList.size();
         mAdapter.swapCursor(cursor);
         mAdapter.notifyDataSetChanged();
         //Update listview after clearing search box.

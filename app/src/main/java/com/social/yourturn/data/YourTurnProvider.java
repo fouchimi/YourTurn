@@ -26,7 +26,7 @@ public class YourTurnProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        mOpenHelper = new YourTurnDbHelper(getContext());
+        mOpenHelper = YourTurnDbHelper.getInstance(getContext());
         return true;
     }
 

@@ -1,5 +1,7 @@
 package com.social.yourturn;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -8,6 +10,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Typeface;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -16,6 +20,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -49,6 +54,7 @@ import java.util.Iterator;
 import bolts.Continuation;
 import bolts.Task;
 import bolts.TaskCompletionSource;
+import me.leolin.shortcutbadger.ShortcutBadger;
 
 public class ChatActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -69,10 +75,11 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
     Runnable mRefreshMessagesRunnable = new Runnable() {
         @Override
         public void run() {
-            if(contact != null && getSupportActionBar() != null) checkStatus(contact, getSupportActionBar());
+            if(contact != null && actionBar != null) checkStatus(contact, actionBar);
             myHandler.postDelayed(this, POLL_INTERVAL);
         }
     };
+    private ActionBar actionBar;
 
 
     @Override
@@ -82,8 +89,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        toolbar.setNavigationOnClickListener(v -> finish());
 
         mEditText = (EditText) findViewById(R.id.etMessage);
         mButton = (ImageButton) findViewById(R.id.btSend);
@@ -105,12 +110,29 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
 
         if(intent != null) {
             contact = intent.getParcelableExtra(getString(R.string.selected_contact));
+            boolean flag = intent.getBooleanExtra("clearCount", false);
+            if(flag){
+                ShortcutBadger.removeCount(this);
+                HashMap<String, Object> payload = new HashMap<>();
+
+                payload.put("targetId", getUsername());
+                payload.put("clearCounter", flag);
+                ParseCloud.callFunctionInBackground("offlineChannel", payload, (object, e) -> {
+                    if(e == null) {
+                        Log.d(TAG, "Message successfully sent !");
+                    }else {
+                        Log.d(TAG, e.getMessage());
+                    }
+                });
+            }
             getSupportLoaderManager().initLoader(LOADER_ID, null, this);
 
-            if(getSupportActionBar() != null && contact != null){
-                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-                getSupportActionBar().setDisplayShowHomeEnabled(true);
-                getSupportActionBar().setTitle(WordUtils.capitalize(contact.getName().toLowerCase(), null));
+            actionBar = getSupportActionBar();
+
+            if(actionBar != null && contact != null){
+                actionBar.setDisplayHomeAsUpEnabled(true);
+                actionBar.setDisplayShowHomeEnabled(true);
+                actionBar.setTitle(WordUtils.capitalize(contact.getName().toLowerCase(), null));
 
             }
         }
@@ -125,89 +147,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
 
         myHandler.postDelayed(mRefreshMessagesRunnable, POLL_INTERVAL);
 
-        mButton.setOnClickListener(v -> {
-            if(mEditText.getText().toString().length() > 0){
-                String data = mEditText.getText().toString();
-                Message message = new Message();
-                message.setBody(data.trim());
-                message.setSenderId(getUsername());
-                message.setReceiverKey(contact.getPhoneNumber());
-
-                saveMessageInDb(message);
-                mEditText.setText("");
-                emptyTextView.setVisibility(View.GONE);
-
-                saveMessageAsync(message).continueWithTask(new Continuation<Void, Task<Void>>() {
-                    @Override
-                    public Task<Void> then(Task<Void> task) throws Exception {
-                        if(task.isFaulted()){
-                            Toast.makeText(ChatActivity.this, "Failed to save message !", Toast.LENGTH_LONG).show();
-                        }else {
-                            Log.d(TAG, "Message successfully saved !");
-
-                            ParseQuery<ParseObject> query = new ParseQuery<>(ParseConstant.ONLINE_TABLE);
-                            query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
-
-                            checkFriendStatusAsync(query).continueWithTask(new Continuation<ParseObject, Task<Void>>() {
-                                @Override
-                                public Task<Void> then(Task<ParseObject> task) throws Exception {
-                                    if(task.isFaulted()){
-                                        ParseObject onlineTable = new ParseObject(ParseConstant.ONLINE_TABLE);
-                                        onlineTable.put(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
-                                        onlineTable.put(ParseConstant.STATUS, false);
-                                        onlineTable.saveInBackground(e -> {
-                                            if(e == null){
-                                                Log.d(TAG, "Online table updated successfully");
-                                            }else {
-                                                Log.d(TAG, "An error occur");
-                                            }
-                                        });
-                                    }else if(task.isCompleted()){
-
-                                        ParseObject row = task.getResult();
-                                        setFriendOnline(row.getBoolean(ParseConstant.STATUS));
-                                        if(contact != null){
-                                            DateTime dateTime = new DateTime();
-
-                                            HashMap<String, Object> payload = new HashMap<>();
-                                            payload.put("senderId", message.getSenderKey());
-                                            payload.put("targetId", message.getReceiverKey());
-                                            payload.put("message", message.getBody());
-                                            payload.put("createdAt", dateTime.getMillis());
-                                            payload.put("updatedAt", dateTime.getMillis());
-                                            if(isFriendOnline()){
-                                                ParseCloud.callFunctionInBackground("messageChannel", payload, (object, e) -> {
-                                                    if(e == null) {
-                                                        Log.d(TAG, "Message successfully sent !");
-                                                    }else {
-                                                        Log.d(TAG, e.getMessage());
-                                                    }
-                                                });
-                                            }else {
-                                                payload.put("status", isFriendOnline());
-                                                ParseCloud.callFunctionInBackground("offlineChannel", payload, (object, e) -> {
-                                                    if(e == null) {
-                                                        Log.d(TAG, "Message successfully sent !");
-                                                    }else {
-                                                        Log.d(TAG, e.getMessage());
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    }
-                                    return null;
-                                }
-                            });
-
-                        }
-                        return null;
-                    }
-                });
-
-            }else {
-                Toast.makeText(ChatActivity.this, "Can't send empty text", Toast.LENGTH_LONG).show();
-            }
-        });
+        mButton.setOnClickListener(new ButtonClickListener());
 
         rvChat.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
             if (bottom < oldBottom) {
@@ -227,7 +167,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         isFriendOnline = friendOnline;
     }
 
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -235,7 +174,7 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         LocalBroadcastManager.getInstance(this).registerReceiver(offlineBroadcastReceiver, new IntentFilter(OfflineChannelReceiver.intentAction));
         IntentFilter filter = new IntentFilter("com.parse.push.intent.RECEIVE");
         registerReceiver(messageBroadcastReceiver, filter);
-        if(contact != null && getSupportActionBar() != null) checkStatus(contact, getSupportActionBar());
+        if(contact != null && actionBar != null) checkStatus(contact, actionBar);
     }
 
     @Override
@@ -256,20 +195,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             }else {
                 tcs.setError(e);
                 Log.d(TAG, "Message couldn't be saved successfully");
-            }
-        });
-
-        return tcs.getTask();
-    }
-
-    private Task<ParseObject> checkFriendStatusAsync(ParseQuery<ParseObject> query){
-        final TaskCompletionSource<ParseObject> tcs = new TaskCompletionSource<>();
-
-        query.getFirstInBackground((row, e) -> {
-            if(e == null){
-                tcs.setResult(row);
-            }else {
-                tcs.setError(e);
             }
         });
 
@@ -535,6 +460,69 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             }
 
             if(messageCursor != null ) messageCursor.close();
+        }
+    }
+
+    public class ButtonClickListener implements View.OnClickListener {
+
+        @Override
+        public void onClick(View v) {
+            if(mEditText.getText().toString().length() > 0){
+                String data = mEditText.getText().toString();
+                Message message = new Message();
+                message.setBody(data.trim());
+                message.setSenderId(getUsername());
+                message.setReceiverKey(contact.getPhoneNumber());
+
+                saveMessageInDb(message);
+                mEditText.setText("");
+                emptyTextView.setVisibility(View.GONE);
+
+                saveMessageAsync(message).continueWithTask(new Continuation<Void, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(Task<Void> task) throws Exception {
+                        if(task.isFaulted()){
+                            Toast.makeText(ChatActivity.this, "Failed to save message !", Toast.LENGTH_LONG).show();
+                        }else if(task.isCompleted()){
+                            Log.d(TAG, "Message successfully saved !");
+
+                            if(contact != null && !message.getSenderKey().equals(message.getReceiverKey())){
+                                DateTime dateTime = new DateTime();
+
+                                HashMap<String, Object> payload = new HashMap<>();
+                                payload.put("senderId", message.getSenderKey());
+                                payload.put("targetId", message.getReceiverKey());
+                                payload.put("message", message.getBody());
+                                payload.put("createdAt", dateTime.getMillis());
+                                payload.put("updatedAt", dateTime.getMillis());
+                                if(isFriendOnline()){
+                                    ParseCloud.callFunctionInBackground("messageChannel", payload, (object, e) -> {
+                                        if(e == null) {
+                                            Log.d(TAG, "Message successfully sent !");
+                                        }else {
+                                            Log.d(TAG, e.getMessage());
+                                        }
+                                    });
+                                }else {
+                                    payload.put("status", isFriendOnline());
+                                    ParseCloud.callFunctionInBackground("offlineChannel", payload, (object, e) -> {
+                                        if(e == null) {
+                                            Log.d(TAG, "Message successfully sent !");
+                                        }else {
+                                            Log.d(TAG, e.getMessage());
+                                        }
+                                    });
+                                }
+                            }
+
+                        }
+                        return null;
+                    }
+                });
+
+            }else {
+                Toast.makeText(ChatActivity.this, "Can't send empty text", Toast.LENGTH_LONG).show();
+            }
         }
     }
 }

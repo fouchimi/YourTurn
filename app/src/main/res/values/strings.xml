@@ -127,5 +127,6 @@
     <string name="message">message</string>
     <string name="createdAt">createdAt</string>
     <string name="updatedAt">updatedAt</string>
+    <string name="resetCounter">resetCounter</string>
 
 </resources>

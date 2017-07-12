@@ -139,8 +139,7 @@ public class Contact implements Parcelable {
         if (other == this) return true;
         if (!(other instanceof Contact))return false;
         Contact contact = (Contact) other;
-        if(this.getId().equals(contact.getId()) && (
-                this.getName().equals(contact.getName()))
+        if((this.getName().equals(contact.getName()))
                 && this.getPhoneNumber().equals(contact.getPhoneNumber())) return true;
         else return false;
     }
@@ -148,7 +147,6 @@ public class Contact implements Parcelable {
     @Override
     public int hashCode() {
         int result = 17;
-        result = 31 * result + id.hashCode();
         result = 31 * result + name.hashCode();
         result = 31 * result + phoneNumber.hashCode();
         return result;

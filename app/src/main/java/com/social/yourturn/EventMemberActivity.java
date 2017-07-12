@@ -39,8 +39,6 @@ public class EventMemberActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        toolbar.setNavigationOnClickListener(v -> finish());
-
         Intent intent = getIntent();
         if(intent != null) {
             mEvent = intent.getParcelableExtra(EventFragment.EVENT_KEY);
@@ -61,7 +59,7 @@ public class EventMemberActivity extends AppCompatActivity {
                     @Override
                     public Task<Void> then(Task<ParseObject> task) throws Exception {
                         if(task.isFaulted()){
-                            Log.d(TAG, "An error occured while fetching score");
+                            Log.d(TAG, "An error occur while fetching score");
                         }else {
                             Log.d(TAG, "Score fetched successfully");
                             // update member entry

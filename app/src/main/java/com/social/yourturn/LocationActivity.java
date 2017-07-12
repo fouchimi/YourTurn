@@ -31,10 +31,8 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.social.yourturn.asynctasks.FetchPlaceAddressTask;
 import com.social.yourturn.asynctasks.FetchPlaceTask;
-import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Place;
 
-import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -48,7 +46,6 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
     public static final String CURRENT_PLACE = "current_place";
     public static final String PLACE_URL = "place_url";
     private String url = "";
-    private ArrayList<Contact> mContactList;
     private  View dialogView = null;
     private String placeUrl = null;
 
@@ -59,11 +56,6 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_location);
-
-        if(getIntent() != null) {
-            Bundle bundle = getIntent().getExtras();
-            mContactList = bundle.getParcelableArrayList(MainActivity.ALL_CONTACTS);
-        }
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
     }
@@ -121,7 +113,12 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CHECK_SETTINGS && resultCode == RESULT_OK) getLastLocation();
-        else showSnackbar(getString(R.string.no_location_detected));
+        else {
+            showSnackBar(getString(R.string.no_location_detected));
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
     }
 
 
@@ -141,7 +138,10 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
                         Log.d(TAG, url);
                     } else {
                         Log.w(TAG, "getLastLocation:exception", task.getException());
-                        showSnackbar(getString(R.string.no_location_detected));
+                        showSnackBar(getString(R.string.no_location_detected));
+                        Intent intent = new Intent(this, MainActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
                     }
                 });
     }
@@ -158,7 +158,7 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
         }
     }
 
-    private void showSnackbar(final String text) {
+    private void showSnackBar(final String text) {
         View container = findViewById(R.id.container);
         if (container != null) {
             Snackbar.make(container, text, Snackbar.LENGTH_LONG).show();
@@ -189,7 +189,7 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
         if (shouldProvideRationale) {
             Log.i(TAG, "Displaying permission rationale to provide additional context.");
 
-            showSnackbar(R.string.location_permission_rationale, android.R.string.ok,
+            showSnackBar(R.string.location_permission_rationale, android.R.string.ok,
                     view -> {
                         // Request permission
                         startLocationPermissionRequest();
@@ -201,7 +201,7 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
         }
     }
 
-    private void showSnackbar(final int mainTextStringId, final int actionStringId, View.OnClickListener listener) {
+    private void showSnackBar(final int mainTextStringId, final int actionStringId, View.OnClickListener listener) {
         Snackbar.make(findViewById(android.R.id.content),
                 getString(mainTextStringId),
                 Snackbar.LENGTH_INDEFINITE)
@@ -243,7 +243,6 @@ public class LocationActivity extends AppCompatActivity implements FetchPlaceTas
 
         dialogBuilder.setPositiveButton(R.string.proceed_text, (dialog, which) -> {
             Intent contactIntent = new Intent(LocationActivity.this, ContactActivity.class);
-            contactIntent.putParcelableArrayListExtra(MainActivity.ALL_CONTACTS, mContactList);
             contactIntent.putExtra(LocationActivity.CURRENT_PLACE, place);
             contactIntent.putExtra(LocationActivity.PLACE_URL,  placeUrl);
             startActivity(contactIntent);

@@ -45,6 +45,7 @@ import com.social.yourturn.models.Contact;
 import com.social.yourturn.utils.ParseConstant;
 import com.social.yourturn.utils.Utils;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
@@ -64,7 +65,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             Manifest.permission.READ_PHONE_STATE};
     private static final int LOADER_ID = 1;
     private ArrayList<Contact> mContactList;
-    public static final String ALL_CONTACTS = "Contacts";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +80,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, PERMISSION_ALL);
             }else {
                 Intent intent = new Intent(getApplicationContext(), LocationActivity.class);
-                intent.putExtra(ALL_CONTACTS, mContactList);
                 startActivity(intent);
             }
 
@@ -288,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         mContactList = new ArrayList<>();
         if(loader.getId() == LOADER_ID){
-            Vector<ContentValues> contactVector = new Vector<>();
+
             MatrixCursor newCursor = new MatrixCursor(ContactsQuery.PROJECTION);
             String contactId = "", displayName = "", phoneNumber = "";
             if (cursor.moveToFirst()) {
@@ -304,35 +303,84 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                         phoneNumber = sanitizePhoneNumber(cursor.getString(ContactsQuery.PHONE_NUMBER));
 
                         if(displayName.matches("\\d+") || displayName.startsWith("+")) continue;
-
-                        DateTime dayTime = new DateTime();
-
-                        ContentValues contactValue = new ContentValues();
-                        contactValue.put(YourTurnContract.MemberEntry._ID, contactId);
-                        contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, displayName);
-                        contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER, phoneNumber);
-                        contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE, dayTime.getMillis());
-                        contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_UPDATED_DATE, dayTime.getMillis());
-                        contactVector.add(contactValue);
                         mContactList.add(new Contact(contactId, displayName, phoneNumber));
                     }
                 } while (cursor.moveToNext());
             }
 
             newCursor.close();
-
-            // Dump data into member table here
-            if (contactVector.size() > 0 ) {
-                ContentValues[] cvArray = new ContentValues[contactVector.size()];
-                contactVector.toArray(cvArray);
-                Cursor memberCursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, null, null, null);
-                if(memberCursor.getCount() == 0)
-                    getContentResolver().bulkInsert(YourTurnContract.MemberEntry.CONTENT_URI, cvArray);
-                if(memberCursor != null) memberCursor.close();
-                Log.d(TAG, "Member Bulk insert successful");
-            }
         }
 
+       // Query members table first
+        ArrayList<Contact> membersList = new ArrayList<>();
+        Cursor memberQuery = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null, null, null, null);
+        if(memberQuery != null & memberQuery.getCount() > 0){
+            while(memberQuery.moveToNext()){
+                String contactId = memberQuery.getString(memberQuery.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_CONTACT_ID));
+                String displayName = memberQuery.getString(memberQuery.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME));
+                String phoneNumber = memberQuery.getString(memberQuery.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER));
+
+                membersList.add(new Contact(contactId, displayName.toUpperCase(), phoneNumber));
+            }
+
+            // compare membersList size with mContactList to find newest added contacts
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                membersList.stream().filter(contact -> mContactList.contains(contact)).forEach(contact -> {
+                    mContactList.remove(contact);
+                });
+            }else {
+                for(Contact contact : membersList){
+                    if(mContactList.contains(contact)) mContactList.remove(contact);
+                }
+            }
+
+            if(!mContactList.isEmpty() && mContactList.size() > 1){
+                // bulk operation here
+                bulkInsert(mContactList);
+            }else if(!mContactList.isEmpty() && mContactList.size() == 1){
+                // single insert here
+                DateTime dayTime = new DateTime();
+                Contact contact = mContactList.get(0);
+                ContentValues contactValue = new ContentValues();
+                contactValue.put(YourTurnContract.MemberEntry.COLUMN_CONTACT_ID, contact.getId());
+                contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, WordUtils.capitalize(contact.getName(),null));
+                contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER, contact.getPhoneNumber());
+                contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE, dayTime.getMillis());
+                contactValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_UPDATED_DATE, dayTime.getMillis());
+
+                getContentResolver().insert(YourTurnContract.MemberEntry.CONTENT_URI, contactValue);
+
+            }else {
+                // Empty contact list
+                Log.d(TAG, "Empty contact List");
+            }
+
+            memberQuery.close();
+
+        }else {
+            //First time filling members table
+            bulkInsert(mContactList);
+        }
+
+    }
+
+    private void bulkInsert(ArrayList<Contact> list){
+        Vector<ContentValues> contactVector = new Vector<>();
+        for(Contact contact : list){
+
+            DateTime dayTime = new DateTime();
+            ContentValues contactValues = new ContentValues();
+            contactValues.put(YourTurnContract.MemberEntry.COLUMN_CONTACT_ID, contact.getId());
+            contactValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, WordUtils.capitalize(contact.getName(),null));
+            contactValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER, contact.getPhoneNumber());
+            contactValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE, dayTime.getMillis());
+            contactValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_UPDATED_DATE, dayTime.getMillis());
+            contactVector.add(contactValues);
+        }
+
+        ContentValues[] cvArray = new ContentValues[contactVector.size()];
+        contactVector.toArray(cvArray);
+        getContentResolver().bulkInsert(YourTurnContract.MemberEntry.CONTENT_URI, cvArray);
     }
 
     @Override

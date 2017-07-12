@@ -31,6 +31,7 @@ public class YourTurnContract {
         public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MEMBER;
 
         public static final String TABLE_NAME = "members";
+        public static final String COLUMN_CONTACT_ID = "contact_id";
         public static final String COLUMN_MEMBER_NAME = "display_name";
         public static final String COLUMN_MEMBER_PHONE_NUMBER = "data1";
         public static final String COLUMN_MEMBER_REGISTERED = "is_registered";

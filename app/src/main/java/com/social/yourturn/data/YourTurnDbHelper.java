@@ -18,7 +18,9 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
 
     private static final int DATABASE_VERSION = 1;
 
-    static final String DATABASE_NAME = "your_turn.db";
+    static final String DATABASE_NAME = "yourturn.db";
+
+    private static YourTurnDbHelper sInstance;
 
     public YourTurnDbHelper(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -29,7 +31,8 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
 
         final String SQL_CREATE_MEMBER_TABLE = "CREATE TABLE " + MemberEntry.TABLE_NAME + " (" +
                 YourTurnContract.MemberEntry._ID + " INTEGER PRIMARY KEY, " +
-                YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME + " TEXT NULL, " +
+                YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME + " TEXT NOT NULL, " +
+                YourTurnContract.MemberEntry.COLUMN_CONTACT_ID + " TEXT, " +
                 YourTurnContract.MemberEntry.COLUMN_MEMBER_LOOKUP_KEY + " TEXT, " +
                 YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + " TEXT NOT NULL, " +
                 YourTurnContract.MemberEntry.COLUMN_MEMBER_REGISTERED + " TEXT, " +
@@ -112,4 +115,16 @@ public class YourTurnDbHelper extends SQLiteOpenHelper{
         db.execSQL("DROP TABLE IF EXISTS " + RecentMessageEntry.TABLE_NAME);
         onCreate(db);
     }
+
+    public static synchronized YourTurnDbHelper getInstance(Context context) {
+
+        // Use the application context, which will ensure that you
+        // don't accidentally leak an Activity's context.
+        // See this article for more information: http://bit.ly/6LRzfx
+        if (sInstance == null) {
+            sInstance = new YourTurnDbHelper(context.getApplicationContext());
+        }
+        return sInstance;
+    }
+
 }

@@ -1,6 +1,5 @@
 package com.social.yourturn.broadcast;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -24,6 +23,8 @@ import org.json.JSONObject;
 
 import java.util.Iterator;
 
+import me.leolin.shortcutbadger.ShortcutBadger;
+
 /**
  * Created by ousma on 7/10/2017.
  */
@@ -31,6 +32,8 @@ import java.util.Iterator;
 public class OfflineChannelReceiver extends BroadcastReceiver {
     private static final String TAG = OfflineChannelReceiver.class.getSimpleName();
     public static final String intentAction = "com.parse.push.intent.RECEIVE";
+    private static int badgeCount = 0;
+    private static final int requestID = 0;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -44,7 +47,7 @@ public class OfflineChannelReceiver extends BroadcastReceiver {
     private void processPush(Context context, Intent intent) {
         String senderId= "", receiverId = "", messageBody="";
         long createdAt = 0L, updatedAt = 0L;
-        boolean status = true;
+        boolean status = true, clearCounter = false;
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -74,11 +77,18 @@ public class OfflineChannelReceiver extends BroadcastReceiver {
                     }else if(key.equals("status")){
                         status = json.getBoolean(key);
                         Log.d(TAG, "status: " + status);
+                    }else if(key.equals("clearCounter")){
+                        clearCounter = json.getBoolean(key);
+                        Log.d(TAG, "reset counter: " + clearCounter);
+                        break;
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
                 if(senderId.length() > 0 && receiverId.length() > 0 && messageBody.length() > 0 && !status) {
                     showNotification(context, senderId, receiverId, messageBody, createdAt, updatedAt);
+                }
+                if(clearCounter) {
+                    badgeCount = 0;
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();
@@ -102,27 +112,37 @@ public class OfflineChannelReceiver extends BroadcastReceiver {
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         Intent intent = new Intent(context, ChatActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK );
+
         Contact contact = new Contact();
         contact.setName(WordUtils.capitalize(senderName, null));
         contact.setPhoneNumber(senderId);
         contact.setThumbnailUrl(picUrl);
         intent.putExtra(context.getString(R.string.selected_contact), contact);
+        intent.putExtra("clearCount", true);
 
-        int requestID = (int) System.currentTimeMillis();
-        int flags = PendingIntent.FLAG_CANCEL_CURRENT;
-        PendingIntent pIntent = PendingIntent.getActivity(context, requestID, intent, flags);
+        PendingIntent pIntent = PendingIntent.getActivity(context, requestID, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-        Notification notification = new NotificationCompat.Builder(context)
+        badgeCount++;
+
+        NotificationCompat.Builder mBuilder = (NotificationCompat.Builder) new NotificationCompat.Builder(context)
                 .setSmallIcon(android.R.drawable.ic_menu_report_image)
-                .setContentTitle(WordUtils.capitalize(senderName.toLowerCase(), null) + " sent you a message !")
+                .setContentTitle(WordUtils.capitalize(senderName.toLowerCase(), null))
                 .setContentText(message)
                 .setContentIntent(pIntent)
                 .setSound(defaultSoundUri)
                 .setAutoCancel(true)
-                .build();
-        NotificationManager mNotificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(0, notification);
+                .setOngoing(true)
+                .setNumber(badgeCount);
+
+
+        if(ShortcutBadger.isBadgeCounterSupported(context)) {
+            ShortcutBadger.applyCount(context, badgeCount);
+            ShortcutBadger.applyNotification(context, mBuilder.build(), badgeCount);
+        }
+
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(requestID, mBuilder.build());
 
         ContentValues values = new ContentValues();
         values.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_SENDER_KEY, contact.getPhoneNumber());
