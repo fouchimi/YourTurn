@@ -128,5 +128,6 @@
     <string name="createdAt">createdAt</string>
     <string name="updatedAt">updatedAt</string>
     <string name="resetCounter">resetCounter</string>
+    <string name="todayText">Today</string>
 
 </resources>

@@ -38,5 +38,6 @@ public class ParseConstant {
     public static final String RECEIVER_ID = "receiverId";
     public static final String MESSAGE_BODY = "body";
 
-    public static final String CREATED_AT = "createdAt";
+    public static final String CREATED_AT = "createdDate";
+    public static final String UPDATED_AT = "updatedDate";
 }

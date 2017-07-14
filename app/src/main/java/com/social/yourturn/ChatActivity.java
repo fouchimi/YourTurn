@@ -48,6 +48,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -337,11 +339,15 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                 String senderId = data.getString(data.getColumnIndex(YourTurnContract.MessageEntry.COLUMN_MESSAGE_SENDER_KEY));
                 String receiverId = data.getString(data.getColumnIndex(YourTurnContract.MessageEntry.COLUMN_MESSAGE_RECEIVER_KEY));
                 String body = data.getString(data.getColumnIndex(YourTurnContract.MessageEntry.COLUMN_MESSAGE_BODY));
+                long createdDate = data.getLong(data.getColumnIndex(YourTurnContract.MessageEntry.COLUMN_MESSAGE_CREATED_DATE));
+                long updatedDate = data.getLong(data.getColumnIndex(YourTurnContract.MessageEntry.COLUMN_MESSAGE_UPDATED_DATE));
 
                 Message message = new Message();
                 message.setBody(body);
                 message.setSenderId(senderId);
                 message.setReceiverKey(receiverId);
+                message.setCreatedDateKey(createdDate);
+                message.setUpdatedDateKey(updatedDate);
 
                 chatList.add(message);
 
@@ -349,6 +355,24 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
 
             if(chatList.size() > 0) {
                 emptyTextView.setVisibility(View.GONE);
+                if(chatList.size() == 1){
+                    chatList.get(0).setFirstOfTheDay(true);
+                }else {
+                    chatList.get(0).setFirstOfTheDay(true);
+                    for(int i= 0; i < chatList.size()-1; i++){
+                        Calendar calendarForPrevious = Calendar.getInstance();
+                        Calendar calendarForNext = Calendar.getInstance();
+                        Date previousMessageDate = new Date(chatList.get(i).getCreatedDateKey());
+                        Date nextMessageDate = new Date(chatList.get(i+1).getCreatedDateKey());
+                        calendarForPrevious.setTime(previousMessageDate);
+                        calendarForNext.setTime(nextMessageDate);
+                        if(calendarForNext.get(Calendar.YEAR) == calendarForPrevious.get(Calendar.YEAR) &&
+                                calendarForNext.get(Calendar.DAY_OF_YEAR) != calendarForPrevious.get(Calendar.DAY_OF_YEAR)){
+                            chatList.get(i+1).setFirstOfTheDay(true);
+                        }
+                    }
+                }
+
                 mAdapter.notifyDataSetChanged();
                 rvChat.scrollToPosition(chatList.size()-1);
             }
@@ -463,16 +487,19 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         }
     }
 
-    public class ButtonClickListener implements View.OnClickListener {
+    private class ButtonClickListener implements View.OnClickListener {
 
         @Override
         public void onClick(View v) {
             if(mEditText.getText().toString().length() > 0){
                 String data = mEditText.getText().toString();
+                DateTime dateTime = new DateTime();
                 Message message = new Message();
                 message.setBody(data.trim());
                 message.setSenderId(getUsername());
                 message.setReceiverKey(contact.getPhoneNumber());
+                message.setCreatedDateKey(dateTime.getMillis());
+                message.setUpdatedDateKey(dateTime.getMillis());
 
                 saveMessageInDb(message);
                 mEditText.setText("");
@@ -487,14 +514,13 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                             Log.d(TAG, "Message successfully saved !");
 
                             if(contact != null && !message.getSenderKey().equals(message.getReceiverKey())){
-                                DateTime dateTime = new DateTime();
 
                                 HashMap<String, Object> payload = new HashMap<>();
                                 payload.put("senderId", message.getSenderKey());
                                 payload.put("targetId", message.getReceiverKey());
                                 payload.put("message", message.getBody());
-                                payload.put("createdAt", dateTime.getMillis());
-                                payload.put("updatedAt", dateTime.getMillis());
+                                payload.put("createdAt", message.getCreatedDateKey());
+                                payload.put("updatedAt", message.getUpdatedDateKey());
                                 if(isFriendOnline()){
                                     ParseCloud.callFunctionInBackground("messageChannel", payload, (object, e) -> {
                                         if(e == null) {

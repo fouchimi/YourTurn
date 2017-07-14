@@ -8,18 +8,18 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.social.yourturn.R;
-import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Message;
+import com.social.yourturn.utils.DateUtils;
 import com.social.yourturn.utils.ParseConstant;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
-
-import de.hdodenhof.circleimageview.CircleImageView;
+import java.util.Locale;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -58,16 +58,26 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     public void onBindViewHolder(ViewHolder holder, int position) {
         Message message = mMessages.get(position);
 
-        if (holder.getItemViewType() == TYPE_1) {
-            holder.senderLayout.setVisibility(View.VISIBLE);
-            holder.message.setText(message.getBody());
-        } else {
-            holder.receiverLayout.setVisibility(View.VISIBLE);
-            holder.message.setText(message.getBody());
+        if (holder.getItemViewType() == TYPE_1) holder.senderLayout.setVisibility(View.VISIBLE);
+        else holder.receiverLayout.setVisibility(View.VISIBLE);
+
+        if(message.isFirstOfTheDay()) {
+            holder.dateHeaderLayout.setVisibility(View.VISIBLE);
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+            SimpleDateFormat simpleDateFormatDay = new SimpleDateFormat("EEEE", Locale.getDefault());
+
+            if(DateUtils.isSameDay(message.getCreatedDateKey())){
+                holder.chatScreenDay.setText(R.string.todayText);
+                holder.chatScreenDate.setText(simpleDateFormat.format(message.getCreatedDateKey()));
+            }else {
+                holder.chatScreenDay.setText(simpleDateFormatDay.format(message.getCreatedDateKey()));
+                holder.chatScreenDate.setText(simpleDateFormat.format(message.getCreatedDateKey()));
+            }
         }
 
+        holder.message.setText(message.getBody());
+        holder.createdTime.setText(DateUtils.getFormattedDate(message.getCreatedDateKey()));
 
-        Log.d(TAG, "sending messages");
     }
 
     @Override
@@ -82,18 +92,22 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        //CircleImageView imageOther;
-        TextView message;
+
+        TextView message, createdTime, chatScreenDay, chatScreenDate;
         CardView cardView;
         RelativeLayout senderLayout, receiverLayout;
+        LinearLayout dateHeaderLayout;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            //imageOther = (CircleImageView) itemView.findViewById(R.id.profileOtherUrl);
             cardView = (CardView) itemView.findViewById(R.id.message_cardview);
             message = (TextView) itemView.findViewById(R.id.message);
+            createdTime = (TextView) itemView.findViewById(R.id.createdAtTime);
             senderLayout = (RelativeLayout) itemView.findViewById(R.id.sender_layout);
-            receiverLayout = (RelativeLayout) itemView.findViewById(R.id.rec_layout);
+            receiverLayout = (RelativeLayout) itemView.findViewById(R.id.receiver_layout);
+            dateHeaderLayout = (LinearLayout) itemView.findViewById(R.id.dateHeaderLayout);
+            chatScreenDay = (TextView) itemView.findViewById(R.id.chat_screen_day);
+            chatScreenDate = (TextView) itemView.findViewById(R.id.chat_screen_date);
         }
     }
 

@@ -16,6 +16,7 @@
     <color name="transparent">#00000000</color>
     <color name="hint_color">#bdbdbd</color>
     <color name="yellow">#FFFDD835</color>
+    <color name="brown">#8D6E63</color>
 
     <color name="activatedColor">#ff0099cc</color>
     <color name="highlightColor">#ff0099ee</color>
