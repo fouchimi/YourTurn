@@ -158,7 +158,6 @@ public class GroupListActivity extends AppCompatActivity  {
                         for(String id : ids){
                             registered(id);
                         }
-                        saveScoreInSharedPreference(currentUserValue);
                         Intent confirmPaymentIntent = new Intent(GroupListActivity.this, EventRecordActivity.class);
                         Event event = new Event();
                         event.setEventId(eventId);
@@ -559,10 +558,4 @@ public class GroupListActivity extends AppCompatActivity  {
 
     }
 
-    private void saveScoreInSharedPreference(String score){
-        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.current_score), Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString(ParseConstant.USER_SCORE_COLUMN, score);
-        editor.apply();
-    }
 }
