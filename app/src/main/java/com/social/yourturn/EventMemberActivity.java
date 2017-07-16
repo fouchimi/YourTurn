@@ -1,7 +1,8 @@
 package com.social.yourturn;
 
-import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,8 +13,6 @@ import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
 import com.social.yourturn.adapters.EventMemberAdapter;
 import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.EventFragment;
@@ -21,10 +20,6 @@ import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Event;
 import com.social.yourturn.utils.ParseConstant;
 
-
-import bolts.Continuation;
-import bolts.Task;
-import bolts.TaskCompletionSource;
 
 public class EventMemberActivity extends AppCompatActivity {
 
@@ -39,57 +34,34 @@ public class EventMemberActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        if(getSupportActionBar() != null){
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
+
         Intent intent = getIntent();
         if(intent != null) {
             mEvent = intent.getParcelableExtra(EventFragment.EVENT_KEY);
-            if(getSupportActionBar() != null) {
-                getSupportActionBar().setTitle(mEvent.getName());
-                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-                getSupportActionBar().setDisplayShowHomeEnabled(true);
-            }
+            if(getSupportActionBar() != null) getSupportActionBar().setTitle(mEvent.getName());
             EventMemberAdapter adapter = new EventMemberAdapter(this, mEvent, mEvent.getContactList());
             ListView mListView = (ListView) findViewById(R.id.members_list_view);
             mListView.setAdapter(adapter);
 
             for(Contact contact : mEvent.getContactList()){
-                ParseQuery<ParseObject> query = ParseQuery.getQuery(ParseConstant.SCORE_TABLE);
-                query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
+                Cursor cursor = getContentResolver().query(YourTurnContract.LedgerEntry.CONTENT_URI,
+                        new String[]{YourTurnContract.LedgerEntry.COLUMN_USER_PAID}, YourTurnContract.LedgerEntry.COLUMN_USER_KEY + "=?",
+                        new String[]{contact.getPhoneNumber()}, null);
 
-                fetchScore(query).continueWithTask(new Continuation<ParseObject, Task<Void>>() {
-                    @Override
-                    public Task<Void> then(Task<ParseObject> task) throws Exception {
-                        if(task.isFaulted()){
-                            Log.d(TAG, "An error occur while fetching score");
-                        }else {
-                            Log.d(TAG, "Score fetched successfully");
-                            // update member entry
-                            ParseObject row = task.getResult();
-                            ContentValues scoreValue = new ContentValues();
-                            String score = row.getString(ParseConstant.USER_SCORE_COLUMN);
-                            scoreValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_SCORE, score);
-                            getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI,
-                                    scoreValue,
-                                    YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{contact.getPhoneNumber()});
-                            contact.setScore(score);
-                            adapter.notifyDataSetChanged();
-                        }
-                        return null;
-                    }
-                });
+                if(cursor != null && cursor.getCount() > 0){
+                    cursor.moveToFirst();
+                    String score = cursor.getString(cursor.getColumnIndex(YourTurnContract.LedgerEntry.COLUMN_USER_PAID));
+                    contact.setScore(score);
+                    adapter.notifyDataSetChanged();
+                }
+
+                cursor.close();
             }
         }
-    }
-
-    private Task<ParseObject> fetchScore(ParseQuery<ParseObject> query) {
-        final TaskCompletionSource<ParseObject> tcs = new TaskCompletionSource<>();
-        query.getFirstInBackground((row, e) -> {
-            if (e == null) {
-                tcs.setResult(row);
-            } else {
-                tcs.setError(e);
-            }
-        });
-        return tcs.getTask();
     }
 
     @Override
@@ -132,5 +104,10 @@ public class EventMemberActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private String getUsername() {
+        SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
+        return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
     }
 }

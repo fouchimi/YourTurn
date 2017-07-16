@@ -129,5 +129,6 @@
     <string name="updatedAt">updatedAt</string>
     <string name="resetCounter">resetCounter</string>
     <string name="todayText">Today</string>
+    <string name="current_score">current_score</string>
 
 </resources>

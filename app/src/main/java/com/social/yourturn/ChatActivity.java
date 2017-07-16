@@ -1,7 +1,5 @@
 package com.social.yourturn;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -10,9 +8,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Typeface;
-import android.media.RingtoneManager;
-import android.net.Uri;
-import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -20,7 +15,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -62,28 +56,16 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private static final String TAG = ChatActivity.class.getSimpleName();
     private EditText mEditText;
-    RecyclerView rvChat;
-    ArrayList<Message> chatList;
-    ChatAdapter mAdapter;
-    ImageButton mButton;
-    private boolean isFriendOnline;
+    private RecyclerView rvChat;
+    private ArrayList<Message> chatList;
+    private ChatAdapter mAdapter;
+    private boolean isFriendOnline = false, online = false;
     private TextView emptyTextView;
     private Contact contact = null;
     private MessageBroadcastReceiver messageBroadcastReceiver = new MessageBroadcastReceiver();
+    private SenderHandshakeReceiver senderBroadcastReceiver = new SenderHandshakeReceiver();
     private static final int LOADER_ID = 12;
     private BroadcastReceiver offlineBroadcastReceiver;
-    static final int POLL_INTERVAL = 1000;
-    Handler myHandler = new Handler();
-    Runnable mRefreshMessagesRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if(contact != null && actionBar != null) checkStatus(contact, actionBar);
-            myHandler.postDelayed(this, POLL_INTERVAL);
-        }
-    };
-    private ActionBar actionBar;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,8 +74,13 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        if(getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
+
         mEditText = (EditText) findViewById(R.id.etMessage);
-        mButton = (ImageButton) findViewById(R.id.btSend);
+        ImageButton mButton = (ImageButton) findViewById(R.id.btSend);
 
         Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/RobotoCondensed-Bold.ttf");
         emptyTextView = (TextView) findViewById(R.id.empty_view);
@@ -129,14 +116,9 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             }
             getSupportLoaderManager().initLoader(LOADER_ID, null, this);
 
-            actionBar = getSupportActionBar();
+            ActionBar actionBar = getSupportActionBar();
 
-            if(actionBar != null && contact != null){
-                actionBar.setDisplayHomeAsUpEnabled(true);
-                actionBar.setDisplayShowHomeEnabled(true);
-                actionBar.setTitle(WordUtils.capitalize(contact.getName().toLowerCase(), null));
-
-            }
+            if(actionBar != null && contact != null) actionBar.setTitle(WordUtils.capitalize(contact.getName().toLowerCase(), null));
         }
 
         offlineBroadcastReceiver = new BroadcastReceiver() {
@@ -146,8 +128,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                 Toast.makeText(getApplicationContext(), "On Received invoked !", Toast.LENGTH_SHORT).show();
             }
         };
-
-        myHandler.postDelayed(mRefreshMessagesRunnable, POLL_INTERVAL);
 
         mButton.setOnClickListener(new ButtonClickListener());
 
@@ -176,15 +156,39 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         LocalBroadcastManager.getInstance(this).registerReceiver(offlineBroadcastReceiver, new IntentFilter(OfflineChannelReceiver.intentAction));
         IntentFilter filter = new IntentFilter("com.parse.push.intent.RECEIVE");
         registerReceiver(messageBroadcastReceiver, filter);
-        if(contact != null && actionBar != null) checkStatus(contact, actionBar);
+        registerReceiver(senderBroadcastReceiver, filter);
+
+        online = true;
+        HashMap<String, Object> payload = new HashMap<>();
+        payload.put("connectedStatus", online);
+        payload.put("targetId", contact.getPhoneNumber());
+
+        ParseCloud.callFunctionInBackground("handShakeChannel", payload, (object, e) -> {
+            if(e == null) {
+                Log.d(TAG, "first handshake sent !");
+            }else {
+                Log.d(TAG, e.getMessage());
+            }
+        });
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        online = false;
+        HashMap<String, Object> payload = new HashMap<>();
+        payload.put("connectedStatus", online);
+        payload.put("targetId", contact.getPhoneNumber());
+        ParseCloud.callFunctionInBackground("handShakeChannel", payload, (object, e) -> {
+            if(e == null) {
+                Log.d(TAG, "Disconnecting ...  !");
+                unregisterReceiver(senderBroadcastReceiver);
+            }else {
+                Log.d(TAG, e.getMessage());
+            }
+        });
         unregisterReceiver(messageBroadcastReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(offlineBroadcastReceiver);
-        updateStatus(getUsername());
     }
 
     private Task<Void> saveMessageAsync(ParseObject messageObject){
@@ -206,43 +210,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
     private String getUsername() {
         SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
         return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
-    }
-
-    private void checkStatus(Contact contact, ActionBar actionBar){
-        ParseQuery<ParseObject> query = new ParseQuery<>(ParseConstant.ONLINE_TABLE);
-        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
-
-        try {
-            if(query.count() > 0){
-                query.getFirstInBackground((row, e) -> {
-                    if(e == null){
-                        isFriendOnline = row.getBoolean(ParseConstant.STATUS);
-                        setFriendOnline(isFriendOnline);
-                        if(isFriendOnline) actionBar.setSubtitle(contact.getPhoneNumber());
-                        else actionBar.setSubtitle("");
-                    }else {
-                        Log.d(TAG, e.getMessage());
-                        Toast.makeText(ChatActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                });
-            }else {
-                ParseObject onlineTable = new ParseObject(ParseConstant.ONLINE_TABLE);
-                onlineTable.put(ParseConstant.USERNAME_COLUMN, contact.getPhoneNumber());
-                onlineTable.put(ParseConstant.STATUS, false);
-                onlineTable.saveInBackground(e -> {
-                    if(e == null){
-                        Log.d(TAG, "Online table updated successfully");
-                        actionBar.setSubtitle("");
-                    }else {
-                        Log.d(TAG, "An error occur");
-                    }
-                });
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        return;
     }
 
     private void saveMessageInDb(Message message){
@@ -296,29 +263,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         return;
     }
 
-    private void updateStatus(String username){
-        ParseQuery<ParseObject> query = new ParseQuery<>(ParseConstant.ONLINE_TABLE);
-        query.whereEqualTo(ParseConstant.USERNAME_COLUMN, username);
-
-        query.getFirstInBackground((row, e) -> {
-            if(e == null){
-                row.put(ParseConstant.STATUS, false);
-                row.saveInBackground(e1 -> {
-                    if(e1 == null){
-                        Log.d(TAG, "You logged out successfully");
-                    }else {
-                        Log.d(TAG, "Record could not be found");
-                    }
-                });
-            }else {
-                Log.d(TAG, e.getMessage());
-                Toast.makeText(ChatActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
-
-        return;
-    }
-
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if(id == LOADER_ID && contact != null){
@@ -359,16 +303,16 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                     chatList.get(0).setFirstOfTheDay(true);
                 }else {
                     chatList.get(0).setFirstOfTheDay(true);
-                    for(int i= 0; i < chatList.size()-1; i++){
+                    for(int i= 1; i < chatList.size(); i++){
                         Calendar calendarForPrevious = Calendar.getInstance();
                         Calendar calendarForNext = Calendar.getInstance();
-                        Date previousMessageDate = new Date(chatList.get(i).getCreatedDateKey());
-                        Date nextMessageDate = new Date(chatList.get(i+1).getCreatedDateKey());
+                        Date previousMessageDate = new Date(chatList.get(i-1).getCreatedDateKey());
+                        Date nextMessageDate = new Date(chatList.get(i).getCreatedDateKey());
                         calendarForPrevious.setTime(previousMessageDate);
                         calendarForNext.setTime(nextMessageDate);
                         if(calendarForNext.get(Calendar.YEAR) == calendarForPrevious.get(Calendar.YEAR) &&
                                 calendarForNext.get(Calendar.DAY_OF_YEAR) != calendarForPrevious.get(Calendar.DAY_OF_YEAR)){
-                            chatList.get(i+1).setFirstOfTheDay(true);
+                            chatList.get(i).setFirstOfTheDay(true);
                         }
                     }
                 }
@@ -386,6 +330,10 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private interface ViewListener{
         void updateView(Context context, String sender, String receiver);
+    }
+
+    private interface ActionBarSubtitleListener{
+        void updateActionBar(boolean flag);
     }
 
     private class MessageBroadcastReceiver extends BroadcastReceiver implements ViewListener {
@@ -484,6 +432,74 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             }
 
             if(messageCursor != null ) messageCursor.close();
+        }
+    }
+
+    private class SenderHandshakeReceiver extends BroadcastReceiver implements ActionBarSubtitleListener {
+        private static final String intentAction = "com.parse.push.intent.RECEIVE";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent == null) {
+                Log.d(TAG, "Reply Broadcast Receiver intent null");
+            }else {
+                processPush(intent);
+            }
+        }
+
+        private void processPush(Intent intent) {
+            boolean connectedStatus = false;
+            String targetId = "";
+            String action = intent.getAction();
+            Log.d(TAG, "got action " + action);
+            if(action.equals(intentAction)){
+                String channel = intent.getExtras().getString("com.parse.Channel");
+                Log.d(TAG, "got action " + action + " on channel " + channel + " with:");
+                try{
+                    JSONObject json = new JSONObject(intent.getExtras().getString("com.parse.Data"));
+                    // Iterate the placeParse keys if needed
+                    Iterator<String> itr = json.keys();
+                    while(itr.hasNext()){
+                        String key = (String) itr.next();
+                        if(key.equals("connectedStatus")) {
+                            connectedStatus = json.getBoolean(key);
+                            Log.d(TAG, "connected Status: " + connectedStatus);
+                        }else if(key.equals("targetId")){
+                            targetId = json.getString(key);
+                            Log.d(TAG, "targetId: " + targetId);
+                        }
+                    }
+                    updateActionBar(connectedStatus);
+                }catch (JSONException ex){
+                    ex.printStackTrace();
+                    Log.d(TAG, ex.getMessage());
+                }
+            }
+        }
+
+        @Override
+        public void updateActionBar(boolean isConnected) {
+            if(isConnected) {
+                getSupportActionBar().setSubtitle(contact.getPhoneNumber());
+                setFriendOnline(true);
+
+               if(online){
+                   HashMap<String, Object> payload = new HashMap<>();
+                   payload.put("connectedStatus", online);
+                   payload.put("targetId", contact.getPhoneNumber());
+
+                   ParseCloud.callFunctionInBackground("handShakeChannel", payload, (object, e) -> {
+                       if(e == null) {
+                           Log.d(TAG, "connection reply !");
+                       }else {
+                           Log.d(TAG, e.getMessage());
+                       }
+                   });
+               }
+            }else {
+                getSupportActionBar().setSubtitle("");
+                setFriendOnline(false);
+            }
         }
     }
 

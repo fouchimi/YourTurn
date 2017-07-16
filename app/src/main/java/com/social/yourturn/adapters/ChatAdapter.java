@@ -29,8 +29,6 @@ import static android.content.Context.MODE_PRIVATE;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
-    private static final String TAG = ChatAdapter.class.getSimpleName();
-
     private static final int TYPE_1 = 0;
     private static final int TYPE_2 = 1;
     private List<Message> mMessages;
@@ -73,6 +71,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
                 holder.chatScreenDay.setText(simpleDateFormatDay.format(message.getCreatedDateKey()));
                 holder.chatScreenDate.setText(simpleDateFormat.format(message.getCreatedDateKey()));
             }
+        }else {
+            holder.dateHeaderLayout.setVisibility(View.GONE);
         }
 
         holder.message.setText(message.getBody());
