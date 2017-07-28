@@ -19,6 +19,9 @@ public class Contact implements Parcelable {
     private String score;
     private String requested;
     private String paid;
+    private String lastMessage;
+    private long createdDate;
+    private long updatedDate;
 
     public Contact() {
 
@@ -94,6 +97,30 @@ public class Contact implements Parcelable {
         this.selected = selected;
     }
 
+    public void setLastMessage(String lastMessage) {
+        this.lastMessage = lastMessage;
+    }
+
+    public String getLastMessage() {
+        return lastMessage;
+    }
+
+    public void setCreatedDate(long createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public long getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setUpdatedDate(long updatedDate) {
+        this.updatedDate = updatedDate;
+    }
+
+    public long getUpdatedDate() {
+        return updatedDate;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -108,6 +135,9 @@ public class Contact implements Parcelable {
         requested = in.readString();
         paid = in.readString();
         selected = in.readByte() != 0;
+        lastMessage = in.readString();
+        createdDate = in.readLong();
+        updatedDate = in.readLong();
     }
 
     @Override
@@ -120,7 +150,9 @@ public class Contact implements Parcelable {
         dest.writeString(requested);
         dest.writeString(paid);
         dest.writeByte((byte) (selected ? 1 : 0));
-
+        dest.writeString(lastMessage);
+        dest.writeLong(createdDate);
+        dest.writeLong(updatedDate);
     }
 
     public static final Parcelable.Creator<Contact> CREATOR = new Parcelable.Creator<Contact>(){

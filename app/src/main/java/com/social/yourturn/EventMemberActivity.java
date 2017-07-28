@@ -1,7 +1,6 @@
 package com.social.yourturn;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -18,7 +17,6 @@ import com.social.yourturn.data.YourTurnContract;
 import com.social.yourturn.fragments.EventFragment;
 import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Event;
-import com.social.yourturn.utils.ParseConstant;
 
 
 public class EventMemberActivity extends AppCompatActivity {
@@ -48,13 +46,13 @@ public class EventMemberActivity extends AppCompatActivity {
             mListView.setAdapter(adapter);
 
             for(Contact contact : mEvent.getContactList()){
-                Cursor cursor = getContentResolver().query(YourTurnContract.LedgerEntry.CONTENT_URI,
-                        new String[]{YourTurnContract.LedgerEntry.COLUMN_USER_PAID}, YourTurnContract.LedgerEntry.COLUMN_USER_KEY + "=?",
+                Cursor cursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI,
+                        new String[]{YourTurnContract.MemberEntry.COLUMN_MEMBER_SCORE}, YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
                         new String[]{contact.getPhoneNumber()}, null);
 
                 if(cursor != null && cursor.getCount() > 0){
                     cursor.moveToFirst();
-                    String score = cursor.getString(cursor.getColumnIndex(YourTurnContract.LedgerEntry.COLUMN_USER_PAID));
+                    String score = cursor.getString(cursor.getColumnIndex(YourTurnContract.MemberEntry.COLUMN_MEMBER_SCORE));
                     contact.setScore(score);
                     adapter.notifyDataSetChanged();
                 }
@@ -106,8 +104,4 @@ public class EventMemberActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private String getUsername() {
-        SharedPreferences shared = getSharedPreferences(getString(R.string.user_credentials), MODE_PRIVATE);
-        return (shared.getString(ParseConstant.USERNAME_COLUMN, ""));
-    }
 }

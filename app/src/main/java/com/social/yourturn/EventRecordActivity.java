@@ -28,6 +28,7 @@ import com.social.yourturn.models.Contact;
 import com.social.yourturn.models.Event;
 import com.social.yourturn.utils.ParseConstant;
 
+import org.joda.time.DateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -112,12 +113,11 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
         final TaskCompletionSource<ParseObject> tcs = new TaskCompletionSource<>();
         query.getFirstInBackground((row, e) -> {
             if(e == null){
-                tcs.setResult(row);
                 String parsedScore = row.getString(ParseConstant.USER_SCORE_COLUMN);
                 registered(phoneNumber);
                 if(parsedScore == null) {
                     row.put(ParseConstant.USERNAME_COLUMN, phoneNumber);
-                    row.put(ParseConstant.USER_SCORE_COLUMN, String.valueOf(Double.parseDouble(parsedScore) + Double.parseDouble(score)));
+                    row.put(ParseConstant.USER_SCORE_COLUMN, String.valueOf(Double.parseDouble(score)));
                 }
                 else{
                     double scoredValue = Double.parseDouble(parsedScore);
@@ -126,13 +126,33 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
                 }
                 row.saveInBackground(ex -> {
                     if(ex == null){
+                        tcs.setResult(row);
                         Log.d(TAG, "Score saved successfully");
+                        ContentValues values = new ContentValues();
+                        double scoredValue = Double.parseDouble(parsedScore);
+                        String finalScore = String.valueOf(scoredValue + Double.parseDouble(score));
+                        Cursor cursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null,
+                                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{phoneNumber}, null);
+                        if(cursor != null && cursor.getCount() <=0 ){
+                            ContentValues memberValue = new ContentValues();
+                            DateTime dayTime = new DateTime();
+                            memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, getString(R.string.current_user));
+                            memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER, phoneNumber);
+                            memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE, dayTime.getMillis());
+                            memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_UPDATED_DATE, dayTime.getMillis());
+                            getContentResolver().insert(YourTurnContract.MemberEntry.CONTENT_URI, memberValue);
+                        }
+                        cursor.close();
+                        values.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_SCORE, finalScore);
+                        long updatedScoreId = getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, values,
+                                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
+                                new String[]{phoneNumber});
+                        Log.d(TAG, "Id: " + updatedScoreId);
                     }else {
                         Log.d(TAG, "Error occur!");
                     }
                 });
             }else {
-                tcs.setError(null);
                 // will create score table if not existing
                 ParseObject scoreTable = new ParseObject(ParseConstant.SCORE_TABLE);
                 scoreTable.put(ParseConstant.USERNAME_COLUMN, phoneNumber);
@@ -141,8 +161,28 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
                 scoreTable.saveInBackground(e1 -> {
                     if(e1 == null){
                         Log.d(TAG, "Score saved successfully");
+                        tcs.setResult(scoreTable);
+                        Cursor cursor = getContentResolver().query(YourTurnContract.MemberEntry.CONTENT_URI, null,
+                                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{phoneNumber}, null);
+                        if(cursor != null && cursor.getCount() <=0 ){
+                            ContentValues memberValue = new ContentValues();
+                            DateTime dayTime = new DateTime();
+                            memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_NAME, getString(R.string.current_user));
+                            memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER, phoneNumber);
+                            memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_CREATED_DATE, dayTime.getMillis());
+                            memberValue.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_UPDATED_DATE, dayTime.getMillis());
+                            getContentResolver().insert(YourTurnContract.MemberEntry.CONTENT_URI, memberValue);
+                        }
+                        cursor.close();
+                        ContentValues values = new ContentValues();
+                        values.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_SCORE, score);
+                        long updatedScoreId = getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, values,
+                                YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?",
+                                new String[]{phoneNumber});
+                        Log.d(TAG, "Id: " + updatedScoreId);
                     }else {
                         Log.d(TAG, e1.getMessage());
+                        tcs.setError(e);
                     }
                 });
             }
@@ -175,7 +215,6 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
                 ledger_group_table.put(ParseConstant.LEDGER_TOTAL_AMOUNT, totalAmount);
 
                 ledgerList.add(ledger_group_table);
-
             }
 
             return savedLedgerAsync(ledgerList);
@@ -183,7 +222,7 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
         }).onSuccessTask(task -> {
 
             // Create a trivial completed task as a base case.
-            ArrayList<Task<ParseObject>> tasks = new ArrayList<>();
+            List<Task<ParseObject>> tasks = new ArrayList<>();
 
             for(Contact contact : contactList){
                 final ParseQuery<ParseObject> query = new ParseQuery<>(ParseConstant.SCORE_TABLE);
@@ -205,16 +244,20 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
                 }else {
                     Toast.makeText(EventRecordActivity.this, "Payment successfully saved", Toast.LENGTH_LONG).show();
 
-                    String userIds = "";
+                    String userIds = "", senderScore="", scoreList="";
 
-                    for(Contact contact : contactList ){
-                        if(!contact.getPhoneNumber().equals(getUsername())){
-                            userIds += contact.getPhoneNumber() + ",";
+                    for(ParseObject row : task.getResult() ){
+                        if(!row.getString(ParseConstant.USERNAME_COLUMN).equals(getUsername())){
+                            userIds += row.getString(ParseConstant.USERNAME_COLUMN) + ",";
+                            scoreList += row.getString(ParseConstant.USER_SCORE_COLUMN) + ",";
+                        }else {
+                            senderScore = row.getString(ParseConstant.USER_SCORE_COLUMN);
                         }
                     }
 
-                    if(userIds != null && userIds.length() > 0){
+                    if(userIds.length() > 0){
                         userIds = userIds.substring(0, userIds.length()-1);
+                        scoreList = scoreList.substring(0, scoreList.length()-1);
                     }
 
                     // Send Event creation here
@@ -224,6 +267,8 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
                     payload.put("eventName", event.getName());
                     payload.put("eventUrl", event.getEventUrl());
                     payload.put("targetIds", userIds);
+                    payload.put("senderScore", senderScore);
+                    payload.put("scoreList", scoreList);
                     ParseCloud.callFunctionInBackground("eventChannel", payload, (object, e) -> {
                         if(e == null) {
                             Log.d(TAG, "Event creation was successful");
@@ -289,7 +334,7 @@ public class EventRecordActivity extends AppCompatActivity implements LoaderMana
 
         Iterator<Map.Entry<String, Double>> itr = map.entrySet().iterator();
         while (itr.hasNext()){
-            Map.Entry<String, Double> pair = (Map.Entry<String, Double>)itr.next();
+            Map.Entry<String, Double> pair = itr.next();
             for(Contact contact : contactList){
                 if(contact.getPhoneNumber().equals(pair.getKey())) {
                     contact.setScore(String.valueOf(pair.getValue()));

@@ -34,21 +34,16 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
     private final static String TAG = EventAdapter.class.getSimpleName();
     private Context mContext;
     private ArrayList<Event> mEventList;
-    private final View.OnClickListener mOnClickListener = new MyOnClickListener();
-    private RecyclerView mRecyclerView;
 
-    public EventAdapter(Context context, ArrayList<Event> eventList, RecyclerView rv){
+    public EventAdapter(Context context, ArrayList<Event> eventList){
         mContext = context;
         mEventList = eventList;
-        mRecyclerView = rv;
     }
 
     @Override
     public GroupViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         final View view = LayoutInflater.from(mContext).inflate(R.layout.frag_group_item_layout, null);
-        view.setOnClickListener(mOnClickListener);
-        GroupViewHolder viewHolder = new GroupViewHolder(view);
-        return viewHolder;
+        return new GroupViewHolder(view);
     }
 
     @Override
@@ -101,28 +96,26 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
         return mEventList.size();
     }
 
-    public static class GroupViewHolder extends RecyclerView.ViewHolder {
-        public CircleImageView eventUrlView;
-        public TextView eventName;
-        public TextView eventNumber;
-        public TextView requestedText, paidText;
+    public class GroupViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        CircleImageView eventUrlView;
+        TextView eventName;
+        TextView eventNumber;
+        TextView requestedText, paidText;
 
-        public GroupViewHolder(View itemView) {
-            super(itemView);
-            this.eventName = (TextView) itemView.findViewById(R.id.group_name);
-            this.eventNumber = (TextView) itemView.findViewById(R.id.group_number);
-            this.eventUrlView = (CircleImageView) itemView.findViewById(R.id.group_thumbnail);
-            this.requestedText = (TextView) itemView.findViewById(R.id.requestText);
-            this.paidText = (TextView) itemView.findViewById(R.id.paidText);
+         GroupViewHolder(View itemView) {
+             super(itemView);
+             this.eventName = (TextView) itemView.findViewById(R.id.group_name);
+             this.eventNumber = (TextView) itemView.findViewById(R.id.group_number);
+             this.eventUrlView = (CircleImageView) itemView.findViewById(R.id.group_thumbnail);
+             this.requestedText = (TextView) itemView.findViewById(R.id.requestText);
+             this.paidText = (TextView) itemView.findViewById(R.id.paidText);
+             itemView.setOnClickListener(this);
         }
-    }
-
-    public class MyOnClickListener implements View.OnClickListener {
 
         @Override
         public void onClick(View v) {
             Intent intent = new Intent(mContext, EventMemberActivity.class);
-            int itemPosition = mRecyclerView.getChildLayoutPosition(v);
+            int itemPosition = getLayoutPosition();
             Event event = getEvent(itemPosition);
 
             Contact creatorContact = null;
@@ -149,7 +142,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.GroupViewHol
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             mContext.startActivity(intent);
         }
-
     }
 
     private String getProfilePic(){

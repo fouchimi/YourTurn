@@ -74,9 +74,11 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        if(getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        ActionBar actionBar = getSupportActionBar();
+
+        if(actionBar!= null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
         }
 
         mEditText = (EditText) findViewById(R.id.etMessage);
@@ -100,8 +102,8 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         if(intent != null) {
             contact = intent.getParcelableExtra(getString(R.string.selected_contact));
             boolean flag = intent.getBooleanExtra("clearCount", false);
+            ShortcutBadger.removeCount(this);
             if(flag){
-                ShortcutBadger.removeCount(this);
                 HashMap<String, Object> payload = new HashMap<>();
 
                 payload.put("targetId", getUsername());
@@ -115,8 +117,6 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
                 });
             }
             getSupportLoaderManager().initLoader(LOADER_ID, null, this);
-
-            ActionBar actionBar = getSupportActionBar();
 
             if(actionBar != null && contact != null) actionBar.setTitle(WordUtils.capitalize(contact.getName().toLowerCase(), null));
         }
@@ -223,6 +223,38 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
         messageValues.put(YourTurnContract.MessageEntry.COLUMN_MESSAGE_UPDATED_DATE, dateTime.getMillis());
 
         getContentResolver().insert(YourTurnContract.MessageEntry.CONTENT_URI, messageValues);
+
+        ContentValues recentValues = new ContentValues();
+        recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY, message.getSenderKey());
+        recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY, message.getReceiverKey());
+        recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_BODY, message.getBody());
+        recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_TYPE, "text");
+        recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_CREATED_DATE, dateTime.getMillis());
+        recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_UPDATED_DATE, dateTime.getMillis());
+
+        Cursor recentMessageCursor = getContentResolver().query(YourTurnContract.RecentMessageEntry.CONTENT_URI, new String[]{YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY,
+                        YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY, YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_UPDATED_DATE},
+                "(" + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + "=?" + " AND "
+                        + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + "=?" + ")" + " OR "
+                + "(" + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + "=?" + " AND " +
+                        YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + "=?" + ")",
+                new String[]{message.getSenderKey(), message.getReceiverKey(), message.getReceiverKey(), message.getSenderKey()},
+                YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_UPDATED_DATE + " DESC LIMIT 1");
+
+        if(recentMessageCursor != null && recentMessageCursor.getCount() == 0){
+            getContentResolver().insert(YourTurnContract.RecentMessageEntry.CONTENT_URI, recentValues);
+            Log.d(TAG, "insert last message");
+        }else {
+            long updated_id = getContentResolver().update(YourTurnContract.RecentMessageEntry.CONTENT_URI, recentValues,
+                    "(" + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + "=?" + " AND "
+                    + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + "=?" + ")" + " OR "
+                    + "(" + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + "=?" + " AND " +
+                            YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + "=?" + ")",
+                    new String[]{message.getSenderKey(), message.getReceiverKey(), message.getReceiverKey(), message.getSenderKey()});
+            Log.d(TAG, "updated id: " + updated_id);
+        }
+
+        recentMessageCursor.close();
     }
 
     private void updateLoginStatus(String username){
@@ -405,6 +437,36 @@ public class ChatActivity extends AppCompatActivity implements LoaderManager.Loa
             parseMessage.setReceiverKey(receiverId);
 
             context.getContentResolver().insert(YourTurnContract.MessageEntry.CONTENT_URI, values);
+
+            ContentValues recentValues = new ContentValues();
+            recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY, parseMessage.getSenderKey());
+            recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY, parseMessage.getReceiverKey());
+            recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_BODY, parseMessage.getBody());
+            recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_TYPE, "text");
+            recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_CREATED_DATE, createdAt);
+            recentValues.put(YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_UPDATED_DATE, updatedAt);
+
+            Cursor recentMessageCursor = getContentResolver().query(YourTurnContract.RecentMessageEntry.CONTENT_URI, new String[]{YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY,
+                            YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY, YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_UPDATED_DATE},
+                    "(" + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + "=?" + " AND "
+                            + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + "=?" + ")" + " OR "
+                            + "(" + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + "=?" + " AND " +
+                            YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + "=?" + ")",
+                    new String[]{parseMessage.getSenderKey(), parseMessage.getReceiverKey(), parseMessage.getReceiverKey(), parseMessage.getSenderKey()},
+                    YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_UPDATED_DATE + " DESC LIMIT 1");
+
+            if(recentMessageCursor != null && recentMessageCursor.getCount() == 0){
+                getContentResolver().insert(YourTurnContract.RecentMessageEntry.CONTENT_URI, recentValues);
+                Log.d(TAG, "inserted last message");
+            }else {
+                long updated_id = getContentResolver().update(YourTurnContract.RecentMessageEntry.CONTENT_URI, recentValues,
+                        "(" + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + "=?" + " AND "
+                                + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + "=?" + ")" + " OR "
+                                + "(" + YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_USER_KEY + "=?" + " AND " +
+                                YourTurnContract.RecentMessageEntry.COLUMN_MESSAGE_RECEIVER_KEY + "=?" + ")",
+                        new String[]{parseMessage.getSenderKey(), parseMessage.getReceiverKey(), parseMessage.getReceiverKey(), parseMessage.getSenderKey()});
+                Log.d(TAG, "updated id: " + updated_id);
+            }
 
             updateView(context, senderId, receiverId);
         }

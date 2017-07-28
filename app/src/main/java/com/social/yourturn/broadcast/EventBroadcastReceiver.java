@@ -42,7 +42,7 @@ public class EventBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void processPush(Context context, Intent intent) {
-        String senderId = "", eventId = "", eventName = "", targetIds = "", eventUrl="";
+        String senderId = "", eventId = "", eventName = "", targetIds = "", eventUrl="", scoreList="", senderScore="";
         String action = intent.getAction();
         Log.d(TAG, "got action " + action);
         if(action.equals(intentAction)){
@@ -68,11 +68,17 @@ public class EventBroadcastReceiver extends BroadcastReceiver {
                     }else if(key.equals("eventUrl")){
                         eventUrl = json.getString(key);
                         Log.d(TAG, "event Url: " + eventUrl);
+                    }else if(key.equals("scoreList")){
+                        scoreList = json.getString(key);
+                        Log.d(TAG, "score List: " + scoreList);
+                    }else if(key.equals("senderScore")){
+                        senderScore = json.getString(key);
+                        Log.d(TAG, "Sender Score: " + senderScore);
                     }
                     Log.d(TAG, "..." + key + " => " + json.getString(key) + ", ");
                 }
-                if(senderId.length() > 0 && eventName.length() > 0 && eventId.length() > 0 && targetIds.length() > 0){
-                    createNotification(context, senderId,  eventName, eventId, eventUrl, targetIds);
+                if(senderId.length() > 0 && eventName.length() > 0 && eventId.length() > 0 && targetIds.length() > 0 && scoreList.length() > 0 && senderScore.length() > 0){
+                    createNotification(context, senderId,  eventName, eventId, eventUrl, targetIds, scoreList, senderScore);
                 }
             }catch (JSONException ex){
                 ex.printStackTrace();
@@ -103,7 +109,20 @@ public class EventBroadcastReceiver extends BroadcastReceiver {
         }
     }
 
-    private void createNotification(final Context context, String senderId, String eventName, String eventId, String eventUrl, String targetIds){
+    private void updateScoreEntry(Context context, String memberList, String scoreList){
+
+        String[] scores = scoreList.split(",");
+        String[] ids = memberList.split(",");
+        for(int i = 0; i < scores.length; i++){
+            ContentValues scoreValues = new ContentValues();
+            scoreValues.put(YourTurnContract.MemberEntry.COLUMN_MEMBER_SCORE, scores[i]);
+            long updatedScoreId = context.getContentResolver().update(YourTurnContract.MemberEntry.CONTENT_URI, scoreValues,
+                    YourTurnContract.MemberEntry.COLUMN_MEMBER_PHONE_NUMBER + "=?", new String[]{ids[i]});
+            Log.d(TAG, "updated Score Id: " + updatedScoreId);
+        }
+    }
+
+    private void createNotification(final Context context, String senderId, String eventName, String eventId, String eventUrl, String targetIds, String scoreList, String senderScore){
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
@@ -138,6 +157,6 @@ public class EventBroadcastReceiver extends BroadcastReceiver {
         mNotificationManager.notify(NOTIFICATION_ID, notification.build());
 
         insertEventEntry(context, eventId, eventName, senderId, eventUrl, targetIds + "," + senderId);
-
+        updateScoreEntry(context, targetIds +"," + senderId, scoreList + "," + senderScore);
     }
 }

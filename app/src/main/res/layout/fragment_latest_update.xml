@@ -4,7 +4,15 @@
     android:layout_height="match_parent"
     tools:context="com.social.yourturn.fragments.ChatFragment">
 
-    <!-- TODO: Update blank fragment layout -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="@dimen/mar_4dp"
+        android:layout_marginLeft="@dimen/mar_4dp"
+        android:layout_gravity="center" />
+
     <TextView
         android:id="@+id/empty_view"
         android:layout_width="match_parent"
@@ -15,10 +23,10 @@
         android:text="@string/chat_text" />
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/latest_activity_rv"
+        android:id="@+id/latest_chats"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone">
-    </android.support.v7.widget.RecyclerView>
+        android:clickable="true"
+        android:visibility="gone" />
 
 </FrameLayout>

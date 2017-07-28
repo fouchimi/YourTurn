@@ -60,7 +60,7 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(linearLayoutManager);
         mEventList = new ArrayList<>();
-        mEventAdapter = new EventAdapter(getActivity(), mEventList, mRecyclerView);
+        mEventAdapter = new EventAdapter(getActivity(), mEventList);
         mRecyclerView.setAdapter(mEventAdapter);
         return view;
     }
@@ -167,11 +167,6 @@ public class EventFragment extends Fragment implements LoaderManager.LoaderCallb
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
     }
 
 }

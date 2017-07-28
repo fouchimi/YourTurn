@@ -278,6 +278,8 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
                 String phoneNumber = cursor.getString(MemberQuery.PHONE_NUMBER);
                 String imageUrl = cursor.getString(MemberQuery.THUMBNAIL);
 
+                if(phoneNumber.equals(getUsername())) continue;
+
                 Contact contact = new Contact(contactId, displayName, phoneNumber);
                 contact.setThumbnailUrl(imageUrl);
                 mContactList.add(contact);

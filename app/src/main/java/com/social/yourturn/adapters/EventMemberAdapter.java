@@ -124,7 +124,6 @@ public class EventMemberAdapter extends BaseAdapter {
         @Override
         public void onClick(View v) {
             Intent intent = new Intent(mContext, ChatActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.putExtra(mContext.getString(R.string.selected_contact), mContact);
             Log.d(TAG, "Contact name: " + mContact.getName());
             mContext.startActivity(intent);
